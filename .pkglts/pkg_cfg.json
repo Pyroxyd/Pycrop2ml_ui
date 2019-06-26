@@ -1,0 +1,58 @@
+{
+  "_pkglts": {
+    "auto_install": true,
+    "install_front_end": "stdout",
+    "use_prompts": false,
+    "version": 12
+  },
+  "base": {
+    "authors": [
+      [
+        "Romaric JUSTES",
+        "romaric.justes@orange.fr"
+      ]
+    ],
+    "namespace": null,
+    "namespace_method": "pkg_util",
+    "pkgname": "pycrop2ml_ui",
+    "url": "https://github.com/Pyroxyd/Pycrop2ml_ui"
+  },
+  "data": {
+    "filetype": [
+      ".json",
+      ".xml",
+      ".ini"
+    ],
+    "use_ext_dir": false
+  },
+  "doc": {
+    "description": "A Python library to generate user interface for Crop2ML",
+    "fmt": "rst",
+    "keywords": []
+  },
+  "license": {
+    "name": "MIT",
+    "organization": "AMEI",
+    "project": "{{ base.pkgname }}",
+    "year": 2017
+  },
+  "pysetup": {
+    "intended_versions": [
+      "27", "37"
+    ],
+    "require": []
+  },
+  "sphinx": {
+    "autodoc_dvlpt": true,
+    "build_dir": "build/sphinx",
+    "theme": "default"
+  },
+  "test": {
+    "suite_name": "pytest"
+  },
+  "version": {
+    "major": 0,
+    "minor": 1,
+    "post": 1
+  }
+}
