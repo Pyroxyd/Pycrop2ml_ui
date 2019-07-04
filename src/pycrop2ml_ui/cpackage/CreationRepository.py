@@ -6,7 +6,7 @@ from IPython.display import display
 from cookiecutter.main import cookiecutter
 from path import Path
 
-from pycrop2ml_ui.browser.Path import FileBrowser
+from pycrop2ml_ui.browser.PathFetcher import FileBrowser
 
 class mkdirModel:
 
