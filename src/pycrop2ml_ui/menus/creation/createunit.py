@@ -96,8 +96,38 @@ class createUnit():
 
 
 
+    def createAlgo(self):
+
+        try:
+            algo = open("{}/algo/pyx/{}.pyx".format(self.datas['Path'], self.datas['Model name']), 'w')
+
+        except IOError as ioerr:
+            with self.out2:
+                print("Algorithm file {}.pyx could not be created. {}".format(self.datas['Model name'], ioerr))
+
+        else:
+
+            algo.write('# inputs : ')
+            for i in range(0,len(self.dataframeInputs['Name'])):
+
+                if any([self.dataframeInputs['Type'][i] == 'input', self.dataframeInputs['Type'][i] == 'input & output']):
+                    algo.write('{}({}):[default={},min={},max={}], '.format(self.dataframeInputs['Name'][i],self.dataframeInputs['DataType'][i],self.dataframeInputs['Default'][i],self.dataframeInputs['Min'][i],self.dataframeInputs['Max'][i]))
+
+            algo.write('\n# outputs : ')
+            for i in range(0,len(self.dataframeInputs['Name'])):
+
+                if any([self.dataframeInputs['Type'][i] == 'output', self.dataframeInputs['Type'][i] == 'input & output']):                    
+                    algo.write('{}({}):[default={},min={},max={}], '.format(self.dataframeInputs['Name'][i],self.dataframeInputs['DataType'][i],self.dataframeInputs['Default'][i],self.dataframeInputs['Min'][i],self.dataframeInputs['Max'][i]))
+
+            with self.out2:
+                print("Algorithm file created.")
+            algo.close()
+
+
 
     def createXML(self):
+
+        self.dataframeInputs = self.inouttab.get_changed_df()
 
         try:
             f = open("{}/unit.{}.xml".format(self.datas['Path'], self.datas['Model name']), 'w')
@@ -109,112 +139,86 @@ class createUnit():
         else:
 
             f.write('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE Model PUBLIC " " "https://raw.githubusercontent.com/AgriculturalModelExchangeInitiative/crop2ml/master/ModelUnit.dtd">\n')
-            f.write('<ModelUnit modelid="{}.{}" name="{}" timestep="1" version="1.0">'.format(os.path.basename(self.datas['Path']),self.datas['Model name'],self.datas['Model name']))
+            f.write('<ModelUnit modelid="{}.{}" name="{}" timestep="1" version="1.0">'.format(os.path.basename(os.path.basename(self.datas['Path'])),self.datas['Model name'],self.datas['Model name']))
             f.write('\n\t<Description>\n\t\t<Title>{} Model</Title>'.format(self.datas['Model name'])+
                 '\n\t\t<Authors>{}</Authors>'.format(self.datas['Author'])+
                 '\n\t\t<Institution>{}</Institution>'.format(self.datas['Institution'])+
                 '\n\t\t<Reference>{}</Reference>'.format(self.datas['Reference'])+
                 '\n\t\t<Abstract>{}</Abstract>'.format(self.datas['Description'])+'\n\t</Description>')
             
+
             f.write('\n\n\t<Inputs>')
             for i in range(0,len(self.dataframeInputs['Name'])):
 
                 if any([self.dataframeInputs['Type'][i] == 'input', self.dataframeInputs['Type'][i] == 'input & output']):
 
-                    if(self.dataframeInputs['InputType'][i]=='variable'):
-                        f.write('\n\t\t<Input name="{}" description="{}" inputtype="{}" variablecategory="{}" datatype="{}" default="{}" min="{}" max="{}" unit="{}" uri="{}"/>'.format(self.dataframeInputs['Name'][i],self.dataframeInputs['Description'][i],self.dataframeInputs['InputType'][i],self.dataframeInputs['Category'][i],self.dataframeInputs['DataType'][i],self.dataframeInputs['Default'][i],self.dataframeInputs['Min'][i],self.dataframeInputs['Max'][i],self.dataframeInputs['Unit'][i],self.dataframeInputs['uri'][i]))
+                    if self.dataframeInputs['InputType'][i] == 'variable':
+                        f.write('\n\t\t<Input name="{}" description="{}" inputtype="{}" variablecategory="{}" datatype="{}" default="{}" min="{}" max="{}" unit="{}" uri="{}"/>'.format(self.dataframeInputs['Name'][i],self.dataframeInputs['Description'][i],self.dataframeInputs['InputType'][i],self.dataframeInputs['Category'][i],self.dataframeInputs['DataType'][i],self.dataframeInputs['Default'][i],self.dataframeInputs['Min'][i],self.dataframeInputs['Max'][i],self.dataframeInputs['Unit'][i],self.dataframeInputs['Uri'][i]))
                 
                     else:
-                        f.write('\n\t\t<Input name="{}" description="{}" inputtype="{}" parametercategory="{}" datatype="{}" default="{}" min="{}" max="{}" unit="{}" uri="{}"/>'.format(self.dataframeInputs['Name'][i],self.dataframeInputs['Description'][i],self.dataframeInputs['InputType'][i],self.dataframeInputs['Category'][i],self.dataframeInputs['DataType'][i],self.dataframeInputs['Default'][i],self.dataframeInputs['Min'][i],self.dataframeInputs['Max'][i],self.dataframeInputs['Unit'][i],self.dataframeInputs['uri'][i]))
+                        f.write('\n\t\t<Input name="{}" description="{}" inputtype="{}" parametercategory="{}" datatype="{}" default="{}" min="{}" max="{}" unit="{}" uri="{}"/>'.format(self.dataframeInputs['Name'][i],self.dataframeInputs['Description'][i],self.dataframeInputs['InputType'][i],self.dataframeInputs['Category'][i],self.dataframeInputs['DataType'][i],self.dataframeInputs['Default'][i],self.dataframeInputs['Min'][i],self.dataframeInputs['Max'][i],self.dataframeInputs['Unit'][i],self.dataframeInputs['Uri'][i]))
                 
             f.write('\n\t</Inputs>\n')
 
 
-            f.write('\n\t<Outputs>')            
+            f.write('\n\t<Outputs>')
+
+
             for i in range(0,len(self.dataframeInputs['Name'])):
 
                 if any([self.dataframeInputs['Type'][i] == 'output', self.dataframeInputs['Type'][i] == 'input & output']):
 
                     if(self.dataframeInputs['InputType'][i]=='variable'):
-                        f.write('\n\t\t<Output name="{}" description="{}" inputtype="{}" variablecategory="{}" datatype="{}" default="{}" min="{}" max="{}" unit="{}" uri="{}"/>'.format(self.dataframeInputs['Name'][i],self.dataframeInputs['Description'][i],self.dataframeInputs['InputType'][i],self.dataframeInputs['Category'][i],self.dataframeInputs['DataType'][i],self.dataframeInputs['Default'][i],self.dataframeInputs['Min'][i],self.dataframeInputs['Max'][i],self.dataframeInputs['Unit'][i],self.dataframeInputs['uri'][i]))
+                        f.write('\n\t\t<Output name="{}" description="{}" inputtype="{}" variablecategory="{}" datatype="{}" default="{}" min="{}" max="{}" unit="{}" uri="{}"/>'.format(self.dataframeInputs['Name'][i],self.dataframeInputs['Description'][i],self.dataframeInputs['InputType'][i],self.dataframeInputs['Category'][i],self.dataframeInputs['DataType'][i],self.dataframeInputs['Default'][i],self.dataframeInputs['Min'][i],self.dataframeInputs['Max'][i],self.dataframeInputs['Unit'][i],self.dataframeInputs['Uri'][i]))
                 
                     else:
-                        f.write('\n\t\t<Output name="{}" description="{}" inputtype="{}" parametercategory="{}" datatype="{}" default="{}" min="{}" max="{}" unit="{}" uri="{}"/>'.format(self.dataframeInputs['Name'][i],self.dataframeInputs['Description'][i],self.dataframeInputs['InputType'][i],self.dataframeInputs['Category'][i],self.dataframeInputs['DataType'][i],self.dataframeInputs['Default'][i],self.dataframeInputs['Min'][i],self.dataframeInputs['Max'][i],self.dataframeInputs['Unit'][i],self.dataframeInputs['uri'][i]))
+                        f.write('\n\t\t<Output name="{}" description="{}" inputtype="{}" parametercategory="{}" datatype="{}" default="{}" min="{}" max="{}" unit="{}" uri="{}"/>'.format(self.dataframeInputs['Name'][i],self.dataframeInputs['Description'][i],self.dataframeInputs['InputType'][i],self.dataframeInputs['Category'][i],self.dataframeInputs['DataType'][i],self.dataframeInputs['Default'][i],self.dataframeInputs['Min'][i],self.dataframeInputs['Max'][i],self.dataframeInputs['Unit'][i],self.dataframeInputs['Uri'][i]))
                     
             f.write('\n\t</Outputs>')
 
-             
-            try:
-                algo = open("{}/algo/pyx/{}.pyx".format(self.datas['Path'], self.datas['Model name']), 'w')
-
-            except IOError as ioerr:
-                with self.out2:
-                    print("Algorithm file {}.pyx could not be created. {}".format(self.datas['Model name'], ioerr))
-
-            else:
-
-                algo.write('# inputs : ')
-                for i in range(0,len(self.dataframeInputs['Name'])):
-
-                    if any([self.dataframeInputs['Type'][i] == 'input', self.dataframeInputs['Type'][i] == 'input & output']):
-                        algo.write('{}({}):[default={},min={},max={}], '.format(self.dataframeInputs['Name'][i],self.dataframeInputs['DataType'][i],self.dataframeInputs['Default'][i],self.dataframeInputs['Min'][i],self.dataframeInputs['Max'][i]))
-
-                algo.write('\n# outputs : ')
-                for i in range(0,len(self.dataframeInputs['Name'])):
-
-                    if any([self.dataframeInputs['Type'][i] == 'output', self.dataframeInputs['Type'][i] == 'input & output']):                    
-                        algo.write('{}({}):[default={},min={},max={}], '.format(self.dataframeInputs['Name'][i],self.dataframeInputs['DataType'][i],self.dataframeInputs['Default'][i],self.dataframeInputs['Min'][i],self.dataframeInputs['Max'][i]))
-
-                with self.out2:
-                    print("Algorithm file created.")
-                algo.close()
-
-            
+            self.createAlgo()           
 
             f.write('\n\n\t<Algorithm language="Cyml" platform="" filename="algo/pyx/{}.pyx" />'.format(self.datas['Model name']))
             
 
-            if self.paramsets:
+            f.write('\n\n\t<Parametersets>')
 
-                f.write('\n\n\t<Parametersets>')
+            for param in self.paramsets:
 
-                for param in self.paramsets:
-
-                    f.write('\n\n\t\t<Parameterset name="{}" description="{}" >'.format(param.name, param.description))
+                f.write('\n\n\t\t<Parameterset name="{}" description="{}" >'.format(param.name, param.description))
                     
-                    for k,v in param.dictparam.items():
+                for k,v in param.dictparam.items():
                         
-                        f.write('\n\t\t\t<Param name="{}">{}</Param>'.format(k, v))
+                    f.write('\n\t\t\t<Param name="{}">{}</Param>'.format(k, v))
                     
-                    f.write('\n\t\t</Parameterset>')
+                f.write('\n\t\t</Parameterset>')
                 
-                f.write('\n\t</Parametersets>')
-            
-            if self.testsets:
+            f.write('\n\t</Parametersets>')
 
-                f.write('\n\n\t<Testsets>')
+
+            f.write('\n\n\t<Testsets>')
                 
-                for i in self.testsets:
+            for i in self.testsets:
 
-                    f.write('\n\t\t<Testset name="{}" parameterset="{}" description={} >'.format(i.name, i.paramset, i.description))
+                f.write('\n\t\t<Testset name="{}" parameterset="{}" description="{}" >'.format(i.name, i.paramset, i.description))
                     
-                    for test in i.listetest:
+                for test in i.listetest:
 
-                        f.write('\n\t\t\t<Test name="{}" >'.format(test.name))
+                    f.write('\n\t\t\t<Test name="{}" >'.format(test.name))
                         
-                        for k,v in test.valuesIn.items():
+                    for k,v in test.valuesIn.items():
 
-                            f.write('\n\t\t\t\t<InputValue name="{}">{}</InputValue>'.format(k,v))
+                        f.write('\n\t\t\t\t<InputValue name="{}">{}</InputValue>'.format(k,v))
                         
-                        for k,v in test.valuesOut.items():
+                    for k,v in test.valuesOut.items():
 
-                            f.write('\n\t\t\t\t\t<OutputValue name="{}">{}</OutputValue>'.format(k,v))
+                        f.write('\n\t\t\t\t\t<OutputValue name="{}">{}</OutputValue>'.format(k,v))
                     
-                        f.write('\n\t\t\t</Test>')
+                    f.write('\n\t\t\t</Test>')
                     
-                    f.write('\n\t\t</Testset>')
+                f.write('\n\t\t</Testset>')
                 
-                f.write('\n\t</Testsets')
+            f.write('\n\t</Testsets>')
 
 
 
