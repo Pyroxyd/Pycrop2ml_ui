@@ -85,7 +85,7 @@ class createUnit():
         #TESTSETS table
         self.testsetname = wg.Textarea(value='',description='Testset name',disabled=False)
         self.testsetdesc = wg.Textarea(value='',description='Description',disabled=False)
-        self.testsetselecter = wg.Dropdown(options=[''],value='',description='Select a ParametersSet:',disabled=False)
+        self.testsetselecter = wg.Dropdown(options=[''],value='',description='ParametersSet:',disabled=False)
         self.testsetbutton = wg.Button(value=False,description='Apply',disabled=False,button_style='success')
         
         self.testsets = []
@@ -93,6 +93,7 @@ class createUnit():
 
 
         self.datas = dict()
+
 
 
 
@@ -138,8 +139,9 @@ class createUnit():
 
         else:
 
+            split = re.split(r'\\', self.datas['Path'])
             f.write('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE Model PUBLIC " " "https://raw.githubusercontent.com/AgriculturalModelExchangeInitiative/crop2ml/master/ModelUnit.dtd">\n')
-            f.write('<ModelUnit modelid="{}.{}" name="{}" timestep="1" version="1.0">'.format(os.path.basename(os.path.basename(self.datas['Path'])),self.datas['Model name'],self.datas['Model name']))
+            f.write('<ModelUnit modelid="{}.{}.{}" name="{}" timestep="1" version="1.0">'.format(split[-4],split[-2],self.datas['Model name'],self.datas['Model name']))
             f.write('\n\t<Description>\n\t\t<Title>{} Model</Title>'.format(self.datas['Model name'])+
                 '\n\t\t<Authors>{}</Authors>'.format(self.datas['Author'])+
                 '\n\t\t<Institution>{}</Institution>'.format(self.datas['Institution'])+
@@ -229,10 +231,11 @@ class createUnit():
             f.close()
 
 
+
     def display_isParamset(self):
 
-        tmp1 = wg.Button(value=False,description='New ParametersSet',disabled=False,background_color='blue')
-        tmp2 = wg.Button(value=False,description='Go to TestsSet',disabled=False,background_color='blue')
+        tmp1 = wg.Button(value=False,description='New ParametersSet',disabled=False,button_style='primary')
+        tmp2 = wg.Button(value=False,description='Go to TestsSet',disabled=False,button_style='primary')
         tmp3 = wg.Button(value=False,description='End',disabled=False,button_style='success')
 
         self.out.clear_output()
@@ -260,8 +263,8 @@ class createUnit():
 
     def display_isTestset(self):
 
-        tmp1 = wg.Button(value=False,description='New TestSet',disabled=False,background_color='#decade')
-        tmp2 = wg.Button(value=False,description='New Test',disabled=False,background_color='#decade')
+        tmp1 = wg.Button(value=False,description='New TestSet',disabled=False,button_style='primary')
+        tmp2 = wg.Button(value=False,description='New Test',disabled=False,button_style='primary')
         tmp3 = wg.Button(value=False,description='End',disabled=False,button_style='success')
 
         self.out.clear_output()
@@ -286,6 +289,7 @@ class createUnit():
         tmp1.on_click(event1)
         tmp2.on_click(event2)
         tmp3.on_click(event3)
+
 
 
     def displayTestsSet(self):
@@ -343,7 +347,8 @@ class createUnit():
 
 
         qgridtab = qgrid.show_grid(dataframe, show_toolbar=False)
-        apply = wg.Button(value=False,description='Apply',disabled=False,background_color='#decade')
+        apply = wg.Button(value=False,description='Apply',disabled=False,button_style='success')
+
 
 
         def eventApply(b):
@@ -443,7 +448,8 @@ class createUnit():
         del self
         return
 
-    
+
+
     def displayTest(self):
 
         self.out.clear_output()
@@ -556,7 +562,7 @@ class createUnit():
         button.on_click(eventTest)
 
 
-
+        
     def eventTest(self, b):
         
         self.out2.clear_output()

@@ -18,7 +18,7 @@ class mkdirModel:
         self.input4 = wg.Textarea(value='',description='Description',disabled=False)
 
         self.inputPath = wg.Textarea(value='',description='Path',disabled=True)
-        self.buttonPath = wg.Button(value=False,description='Browse',disabled=False,background_color='#d0d0ff')
+        self.buttonPath = wg.Button(value=False,description='Browse',disabled=False,button_style='primary')
 
         self.create = wg.Button(value=False,description='Create',disabled=False,button_style='success')
         self.cancel = wg.Button(value=False,description='Cancel',disabled=False,button_style='danger')

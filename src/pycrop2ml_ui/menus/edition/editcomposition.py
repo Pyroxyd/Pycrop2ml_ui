@@ -18,8 +18,8 @@ class editComposition():
         self.out2 = wg.Output()
 
         #buttons
-        self.end = wg.Button(value=False,description='End',disabled=False,button_style='success')
-        self.abort = wg.Button(value=False,description='Abort',disabled=False,button_style='danger')
+        self.apply = wg.Button(value=False,description='Apply',disabled=False,button_style='success')
+        self.cancel = wg.Button(value=False,description='Cancel',disabled=False,button_style='danger')
 
         #datas
         self.datas = dict()
@@ -71,9 +71,7 @@ class editComposition():
                 print("Modifying the file ...")
 
 
-            buffer = ''
-            for line in f:
-                buffer = buffer + line
+            buffer = f.read()
 
             f.close()
 
@@ -120,7 +118,7 @@ class editComposition():
 
 
 
-    def eventEnd(self, b):
+    def eventApply(self, b):
 
         self.out.clear_output()
         self.out2.clear_output()
@@ -130,7 +128,7 @@ class editComposition():
     
 
 
-    def eventAbort(self, b):
+    def eventCancel(self, b):
 
         self.out.clear_output()
         self.out2.clear_output()
@@ -181,7 +179,7 @@ class editComposition():
             self.tab.set_title(1, 'Links')
 
         with self.out:
-            display(wg.VBox([self.tab, wg.HBox([self.end, self.abort])]))
+            display(wg.VBox([self.tab, wg.HBox([self.apply, self.cancel])]))
         
-        self.end.on_click(self.eventEnd)
-        self.abort.on_click(self.eventAbort)
+        self.apply.on_click(self.eventApply)
+        self.cancel.on_click(self.eventCancel)

@@ -23,20 +23,20 @@ class createMenu():
         self.author = wg.Textarea(value='',description='Author',disabled=False)
         self.institution = wg.Textarea(value='',description='Institution',disabled=False)
         self.description = wg.Textarea(value='',description='Description',disabled=False)
-        self.package = wg.Textarea(value='',description='Package',disabled=True) 
+        self.package = wg.Textarea(value='',description='Path',disabled=True) 
         self.reference = wg.Textarea(value='',description='Reference',disabled=False)
 
         #model type
-        self.toggle = wg.ToggleButtons(options=["unit", "composition"], description="Model type :", disabled=False)
+        self.toggle = wg.ToggleButtons(options=["unit", "composition"], description="Model type", disabled=False)
 
         #buttons
-        self.save = wg.Button(value=False,description='Save',disabled=False,button_style='success')
+        self.apply = wg.Button(value=False,description='Apply',disabled=False,button_style='success')
         self.create = wg.Button(value=False,description='Create',disabled=False,button_style='success')
-        self.cancel = wg.Button(value=False,description='Cancel',disabled=False,button_style='danger')
-        self.browse = wg.Button(value=False,description='Browse',disabled=False,background_color='#d0d0ff')
+        self.cancel = wg.Button(value=False,description='Cancel',disabled=False,button_style='warning')
+        self.browse = wg.Button(value=False,description='Browse',disabled=False,button_style='primary')
 
         #global menu displayer
-        self.displayer = wg.VBox([self.toggle, wg.HBox([self.package, self.browse, self.create]), self.modelName, self.author, self.institution, self.description, self.reference, wg.HBox([self.save, self.cancel])])
+        self.displayer = wg.VBox([self.toggle, wg.HBox([self.package, self.browse, self.create]), self.modelName, self.author, self.institution, self.description, self.reference, wg.HBox([self.apply, self.cancel])])
 
         #outputs
         self.out = wg.Output()
@@ -58,32 +58,35 @@ class createMenu():
         self.out2.clear_output()
         
         if(any([(os.path.exists("{}/unit.{}.xml".format(self.export["Path"],self.modelName.value)) and self.export['Model type']=='unit'), (os.path.exists("{}/crop2ml/composition.{}.xml".format(self.export["Path"],self.modelName.value)) and self.export['Model type']=='composition')])):
-            with self.out2:
-                print("This file already exists.")
-            return False
+            
+            raise Exception("File composition|unit.{}.xml already exists.".format(self.modelName.value))
         
         else:
+
             if(self.export['Model type'] == 'unit'):
                 try:
                     tmpFile = open("{}/unit.{}.xml".format(self.export["Path"], self.export['Model name']), 'w')
+                
                 except IOError as ioerr:
-                    with self.out2:
-                        print('File {} could not be opened. {}'.format(self.export['Path'], ioerr))
-                    return False
+                    
+                    raise Exception('File {} could not be opened. {}'.format(self.export['Path'], ioerr))
+                
                 else:
+
                     tmpFile.close()
                     return True
                 
             else:
+
                 try:
                     tmpFile = open("{}/composition.{}.xml".format(self.export["Path"], self.export['Model name']), 'w')
 
                 except IOError as ioerr:
-                    with self.out2:
-                        print('File {} could not be opened. {}'.format(self.export['Path'], ioerr))
-                    return False
+
+                    raise Exception('File {} could not be opened. {}'.format(self.export['Path'], ioerr))
 
                 else:
+
                     tmpFile.close()
                     return True
 
@@ -97,7 +100,8 @@ class createMenu():
 
 
 
-    def eventSave(self, b):
+    def eventApply(self, b):
+
         self.out2.clear_output()
         if(self.modelName.value and self.author.value and self.institution.value and self.description.value and self.package.value and self.reference.value):
             if(os.path.exists(self.package.value)):
@@ -108,7 +112,7 @@ class createMenu():
                 if self.createFile():
 
                     with self.out:
-                        print("Creating {}.{}.xml ...".format(self.export['Model type'], self.export['Model name']))
+                        display(wg.HTML(value="<b>Creating {}.{}.xml</b>".format(self.export['Model type'], self.export['Model name'])))
 
                         if self.export['Model type'] == 'unit':
                             self.unit.display(self.export)
@@ -180,7 +184,7 @@ class createMenu():
             display(self.displayer)
         display(self.out2)
 
-        self.save.on_click(self.eventSave)
+        self.apply.on_click(self.eventApply)
         self.cancel.on_click(self.eventCancel)
         self.create.on_click(self.eventCreate)
         self.browse.on_click(self.eventBrowse)

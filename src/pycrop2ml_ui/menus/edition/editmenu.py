@@ -27,9 +27,9 @@ class editMenu():
         self.selecter = wg.Dropdown(options=['None'],value='None',description='Select a model:',disabled=True)
 
         #buttons
-        self.browse = wg.Button(value=False,description='Browse',disabled=False,background_color='#d0d0ff')
+        self.browse = wg.Button(value=False,description='Browse',disabled=False,button_style='primary')
         self.edit = wg.Button(value=False,description='Apply',disabled=False,button_style='success')
-        self.cancel = wg.Button(value=False,description='Cancel',disabled=False,button_style='danger')
+        self.cancel = wg.Button(value=False,description='Cancel',disabled=False,button_style='warning')
 
         #global displayer
         self.displayer = wg.VBox([wg.HBox([self.modelPath, self.browse]), self.selecter, wg.HBox([self.edit, self.cancel])])
@@ -50,23 +50,23 @@ class editMenu():
             if typemodel.group(1) == 'unit':
                 self.out.clear_output()
                 with self.out:                  
-                    print("Editing {}".format(self.selecter.value))
+                    display(wg.HTML(value="<b>Editing {}</b>".format(self.selecter.value)))
                     self.table.display({'Path': self.paths[self.selecter.value], 'Model type': typemodel.group(1), 'Model name': typemodel.group(2), 'Option': '2'})
 
             
             elif typemodel.group(1) == 'composition':
                 self.out.clear_output()
                 with self.out:
-                    print("Editing {}".format(self.selecter.value))
+                    display(wg.HTML(value="<b>Editing {}</b>".format(self.selecter.value)))
                     self.list.display({'Path': self.paths[self.selecter.value], 'Model type': typemodel.group(1), 'Model name': typemodel.group(2)})
             
             else:
-                with self.out2:
-                    print("The selected file does not match with a model ({}).".format(self.selecter.value))
+                
+                raise Exception("File {} does not match with a model.".format(self.selecter.value))
 
         else:
-            with self.out2:
-                print("The selected file does not match with a model ({}).".format(self.selecter.value))
+            
+            raise Exception("File {} does not match with a model.".format(self.selecter.value))
 
 
 

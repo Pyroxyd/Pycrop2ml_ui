@@ -68,8 +68,10 @@ class createComposition():
                 print('File composition.{}.xml could not be opened. {}'.format(self.datas['Model name'], ioerr))
 
         else:
+
+            split = re.split(os.path.sep, self.datas['Path'])
             f.write('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE ModelComposition PUBLIC " " "https://raw.githubusercontent.com/AgriculturalModelExchangeInitiative/crop2ml/master/ModelComposition.dtd">\n')
-            f.write('<ModelComposition modelid="{}" name="{}" timestep="1" version="1.0">'.format(self.datas['Model name'],self.datas['Model name']))
+            f.write('<ModelComposition modelid="{}.{}" name="{}" timestep="1" version="1.0">'.format(split[-5], self.datas['Model name'],self.datas['Model name']))
             f.write('\n\t<Description>\n\t\t<Title>{} Model</Title>'.format(self.datas['Model name'])+
                 '\n\t\t<Authors>{}</Authors>'.format(self.datas['Author'])+
                 '\n\t\t<Institution>{}</Institution>'.format(self.datas['Institution'])+

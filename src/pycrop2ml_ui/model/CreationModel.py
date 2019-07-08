@@ -21,9 +21,9 @@ class displayMainMenu:
     def __init__(self):
 
         #buttons
-        self.create = wg.Button(value=False,description='Create a model',disabled=False)
-        self.edit = wg.Button(value=False,description='Edit a model',disabled=False)
-        self.display = wg.Button(value=False,description='Display a model',disabled=False)
+        self.create = wg.Button(value=False,description='Model creation',disabled=False)
+        self.edit = wg.Button(value=False,description='Model edition',disabled=False)
+        self.display = wg.Button(value=False,description='Model display',disabled=False)
         self.about = wg.Button(value=False,description='About',disabled=False)
 
         #global displayer
