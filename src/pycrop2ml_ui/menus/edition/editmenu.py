@@ -2,15 +2,11 @@ import ipywidgets as wg
 import os
 import re
 
-import qgrid
-import pandas
-
 from IPython.display import display
 
-from pycrop2ml_ui.cpackage.CreationRepository import mkdirModel
 from pycrop2ml_ui.browser.PathFetcher import FileBrowser
 from pycrop2ml_ui.menus.edition import editunit, editcomposition
-from pycrop2ml_ui.model import CreationModel
+from pycrop2ml_ui.model import MainMenu
 
 
 
@@ -32,10 +28,7 @@ class editMenu():
         self.cancel = wg.Button(value=False,description='Cancel',disabled=False,button_style='warning')
 
         #global displayer
-        self.displayer = wg.VBox([wg.HBox([self.modelPath, self.browse]), self.selecter, wg.HBox([self.edit, self.cancel])])
-
-        self.table = editunit.editUnit()
-        self.list = editcomposition.editComposition()
+        self.displayer = wg.VBox([wg.HTML(value='<b>Model edition : Selection</b>'), wg.HBox([self.modelPath, self.browse]), self.selecter, wg.HBox([self.edit, self.cancel])])
 
         self.paths = dict()
 
@@ -47,18 +40,23 @@ class editMenu():
         typemodel = re.search(r'(.+?)\.(.+?)\.xml',self.selecter.value)
 
         if typemodel:
+
             if typemodel.group(1) == 'unit':
+
                 self.out.clear_output()
+                
                 with self.out:                  
-                    display(wg.HTML(value="<b>Editing {}</b>".format(self.selecter.value)))
-                    self.table.display({'Path': self.paths[self.selecter.value], 'Model type': typemodel.group(1), 'Model name': typemodel.group(2), 'Option': '2'})
+                    unit = editunit.editUnit()
+                    unit.display({'Path': self.paths[self.selecter.value], 'Model type': typemodel.group(1), 'Model name': typemodel.group(2), 'Option': '2'})
 
             
             elif typemodel.group(1) == 'composition':
+
                 self.out.clear_output()
-                with self.out:
-                    display(wg.HTML(value="<b>Editing {}</b>".format(self.selecter.value)))
-                    self.list.display({'Path': self.paths[self.selecter.value], 'Model type': typemodel.group(1), 'Model name': typemodel.group(2)})
+
+                with self.out:                   
+                    composition = editcomposition.editComposition()
+                    composition.display({'Path': self.paths[self.selecter.value], 'Model type': typemodel.group(1), 'Model name': typemodel.group(2)})
             
             else:
                 
@@ -88,11 +86,22 @@ class editMenu():
 
 
     def eventCancel(self, b):
+
         self.out.clear_output()
         self.out2.clear_output()
+        
         with self.out:
-            tmp = CreationModel.displayMainMenu()
-            tmp.displayMenu()
+
+            try:
+                tmp = MainMenu.displayMainMenu()
+                tmp.displayMenu()
+
+            except:
+                raise Exception('Could not load mainmenu.')
+
+            finally:
+                del self
+            
 
     
 

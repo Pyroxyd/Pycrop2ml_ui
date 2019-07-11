@@ -7,6 +7,8 @@ import pandas
 
 from IPython.display import display
 
+from pycrop2ml_ui.menus.edition import editmenu
+
 
 
 class editComposition():
@@ -132,8 +134,17 @@ class editComposition():
 
         self.out.clear_output()
         self.out2.clear_output()
-        del self
-        return
+
+        try:
+            tmp = editmenu.editMenu()
+            tmp.displayMenu()
+
+        except:
+            raise Exception('Could not load edition menu.')
+
+        finally:
+            del self
+
         
 
 

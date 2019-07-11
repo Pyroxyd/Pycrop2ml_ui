@@ -17,8 +17,8 @@ class createComposition():
         self.out = wg.Output()
         self.out2 = wg.Output()
 
-        self.end = wg.Button(value=False,description='End',disabled=False,button_style='success')
-        self.abort = wg.Button(value=False,description='Abort',disabled=False,button_style='danger')
+        self.apply = wg.Button(value=False,description='Apply',disabled=False,button_style='success')
+        self.cancel = wg.Button(value=False,description='Cancel',disabled=False,button_style='danger')
 
         self.datas = dict()
 
@@ -31,6 +31,7 @@ class createComposition():
         self.dataFrameLinkqgrid = qgrid.show_grid(self.dataFrameLink, show_toolbar=True)
 
 
+
     def listdir(self):
 
         liste = ['']
@@ -38,6 +39,7 @@ class createComposition():
         for buffer in os.listdir(self.datas['Path']):
 
             ext = os.path.splitext(buffer)[-1].lower()
+
             if (ext == '.xml' and (not buffer == 'composition.{}.xml'.format(self.datas['Model name']))):
 
                 if re.search(r'(composition)', buffer):
@@ -47,10 +49,7 @@ class createComposition():
                     liste.append(buffer)
 
 
-        self.dataFrame = pandas.DataFrame(data={
-            'Model type': pandas.Categorical([''], categories=['','unit', 'composition']),
-            'Model name': pandas.Categorical([''], categories=liste),
-        })
+        self.dataFrame = pandas.DataFrame(data={'Model name': pandas.Categorical([''], categories=liste)})
         
 
 
@@ -58,7 +57,6 @@ class createComposition():
 
         self.dataFrame = self.dataframeqgrid.get_changed_df()
         self.dataFrameLink = self.dataFrameLinkqgrid.get_changed_df()
-        #self.dataFrameLink.sort_index(axis=1)
 
         try:
             f = open("{}/composition.{}.xml".format(self.datas['Path'], self.datas['Model name']), 'w')
@@ -69,18 +67,14 @@ class createComposition():
 
         else:
 
-            split = re.split(os.path.sep, self.datas['Path'])
+            split = re.split(r'\\', self.datas['Path'])
             f.write('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE ModelComposition PUBLIC " " "https://raw.githubusercontent.com/AgriculturalModelExchangeInitiative/crop2ml/master/ModelComposition.dtd">\n')
-            f.write('<ModelComposition modelid="{}.{}" name="{}" timestep="1" version="1.0">'.format(split[-5], self.datas['Model name'],self.datas['Model name']))
-            f.write('\n\t<Description>\n\t\t<Title>{} Model</Title>'.format(self.datas['Model name'])+
-                '\n\t\t<Authors>{}</Authors>'.format(self.datas['Author'])+
-                '\n\t\t<Institution>{}</Institution>'.format(self.datas['Institution'])+
-                '\n\t\t<Reference>{}</Reference>'.format(self.datas['Reference'])+
-                '\n\t\t<Abstract>{}</Abstract>'.format(self.datas['Description'])+'\n\t</Description>')
+            f.write('<ModelComposition modelid="{}.{}" name="{}" timestep="1" version="1.0">'.format(split[-4], self.datas['Model name'],self.datas['Model name']))
+            f.write('\n\t<Description>\n\t\t<Title>{} Model</Title>\n\t\t<Authors>{}</Authors>\n\t\t<Institution>{}</Institution>\n\t\t<Reference>{}</Reference>\n\t\t<Abstract>{}</Abstract>\n\t</Description>'.format(self.datas['Model name'], self.datas['Author'], self.datas['Institution'], self.datas['Reference'], self.datas['Abstract']))
 
             f.write('\n\t<Composition>')
 
-            for i in range(0, len(self.dataFrame['Model type'])):
+            for i in range(0, len(self.dataFrame['Model name'])):
 
                 f.write('\n\t\t<Model name="{0}" id="{1}.{0}" filename="{2}" />'.format(re.search(r'\.(.*?)\.xml',self.dataFrame['Model name'][i]).group(1), self.datas['Model name'], self.dataFrame['Model name'][i]))
 
@@ -100,21 +94,24 @@ class createComposition():
             
        
 
-    def eventEnd(self, b):
+    def eventApply(self, b):
 
         self.out.clear_output()
         self.out2.clear_output()
 
         with self.out:
-            print("Updating datas to composition.{}.xml".format(self.datas['Model name']))
+
+            display(wg.HTML(value='<b> Model creation : composition.{}.xml<br>-> XML writing</b>'.format(self.datas['Model name'])))
             self.createXML()
 
 
 
-    def eventAbort(self, b):
+    def eventCancel(self, b):
 
         self.out.clear_output()
         self.out2.clear_output()
+
+        os.remove("{}/composition.{}.xml".format(self.datas["Path"], self.datas['Model name']))
 
         del self
         return
@@ -123,20 +120,22 @@ class createComposition():
 
     def display(self, dic):
 
+        display(self.out)
+        display(self.out2)
+        
         self.datas = dic
         self.listdir()
         self.dataframeqgrid = qgrid.show_grid(self.dataFrame, show_toolbar=True)
 
-        tab = wg.Tab([self.dataframeqgrid, self.dataFrameLinkqgrid])
+        children = [self.dataframeqgrid, self.dataFrameLinkqgrid]
+        tab = wg.Tab()
+        tab.children = children
         tab.set_title(0, 'Composition')
         tab.set_title(1, 'Links')
 
-        display(self.out)
-        display(self.out2)
-
         with self.out:
-            display(wg.VBox([tab, wg.HBox([self.end, self.abort])]))
+            display(wg.VBox([wg.HTML(value='<b> Model creation : composition.{}.xml</b>'.format(self.datas['Model name'])), tab, wg.HBox([self.apply, self.cancel])]))
 
-        self.end.on_click(self.eventEnd)
-        self.abort.on_click(self.eventAbort)
+        self.apply.on_click(self.eventApply)
+        self.cancel.on_click(self.eventCancel)
 

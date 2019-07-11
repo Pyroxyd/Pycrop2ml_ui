@@ -1,16 +1,13 @@
 import ipywidgets as wg
 import os
 
-import qgrid
-import pandas
-
 from IPython.display import display
 
 from pycrop2ml_ui.menus.creation import createunit
 from pycrop2ml_ui.menus.creation import createcomposition
 
 from pycrop2ml_ui.cpackage.CreationRepository import mkdirModel
-from pycrop2ml_ui.model import CreationModel
+from pycrop2ml_ui.model import MainMenu
 from pycrop2ml_ui.browser.PathFetcher import FileBrowser
 
 
@@ -18,16 +15,16 @@ class createMenu():
 
     def __init__(self):
 
-        #input datas
-        self.modelName = wg.Textarea(value='',description='Model name',disabled=False)
+        #datas
+        self.modelName = wg.Textarea(value='',description='Name',disabled=False)
         self.author = wg.Textarea(value='',description='Author',disabled=False)
         self.institution = wg.Textarea(value='',description='Institution',disabled=False)
-        self.description = wg.Textarea(value='',description='Description',disabled=False)
-        self.package = wg.Textarea(value='',description='Path',disabled=True) 
+        self.abstract = wg.Textarea(value='',description='Abstract',disabled=False)
+        self.path = wg.Textarea(value='',description='Path',disabled=True,layout=wg.Layout(height='57px')) 
         self.reference = wg.Textarea(value='',description='Reference',disabled=False)
 
         #model type
-        self.toggle = wg.ToggleButtons(options=["unit", "composition"], description="Model type", disabled=False)
+        self.toggle = wg.ToggleButtons(options=["unit", "composition"], description="Type", disabled=False)
 
         #buttons
         self.apply = wg.Button(value=False,description='Apply',disabled=False,button_style='success')
@@ -36,20 +33,14 @@ class createMenu():
         self.browse = wg.Button(value=False,description='Browse',disabled=False,button_style='primary')
 
         #global menu displayer
-        self.displayer = wg.VBox([self.toggle, wg.HBox([self.package, self.browse, self.create]), self.modelName, self.author, self.institution, self.description, self.reference, wg.HBox([self.apply, self.cancel])])
+        self.displayer = wg.VBox([wg.HTML(value='<b>Model creation : Header</b>'), self.toggle, wg.HBox([self.path, wg.VBox([self.browse, self.create])]), self.modelName, self.author, self.institution, self.reference, self.abstract, wg.HBox([self.apply, self.cancel])])
 
         #outputs
         self.out = wg.Output()
         self.out2 = wg.Output()
 
         #model datas
-        self.export = dict()
-
-        #child creation menu
-        self.unit = createunit.createUnit()
-        self.composition = createcomposition.createComposition()
-
-
+        self.datas = dict()
 
 
 
@@ -57,44 +48,45 @@ class createMenu():
 
         self.out2.clear_output()
         
-        if(any([(os.path.exists("{}/unit.{}.xml".format(self.export["Path"],self.modelName.value)) and self.export['Model type']=='unit'), (os.path.exists("{}/crop2ml/composition.{}.xml".format(self.export["Path"],self.modelName.value)) and self.export['Model type']=='composition')])):
+        if(any([(os.path.exists("{}/unit.{}.xml".format(self.datas["Path"],self.modelName.value)) and self.datas['Model type']=='unit'),
+                (os.path.exists("{}/composition.{}.xml".format(self.datas["Path"],self.modelName.value)) and self.datas['Model type']=='composition')])):
             
             raise Exception("File composition|unit.{}.xml already exists.".format(self.modelName.value))
         
         else:
 
-            if(self.export['Model type'] == 'unit'):
+            if(self.datas['Model type'] == 'unit'):
+
                 try:
-                    tmpFile = open("{}/unit.{}.xml".format(self.export["Path"], self.export['Model name']), 'w')
+                    tmpFile = open("{}/unit.{}.xml".format(self.datas["Path"], self.datas['Model name']), 'w')
                 
-                except IOError as ioerr:
-                    
-                    raise Exception('File {} could not be opened. {}'.format(self.export['Path'], ioerr))
+                except IOError as ioerr:         
+                    raise Exception('File {} could not be opened. {}'.format(self.datas['Path'], ioerr))
                 
                 else:
-
                     tmpFile.close()
                     return True
                 
             else:
 
                 try:
-                    tmpFile = open("{}/composition.{}.xml".format(self.export["Path"], self.export['Model name']), 'w')
+                    tmpFile = open("{}/composition.{}.xml".format(self.datas["Path"], self.datas['Model name']), 'w')
 
                 except IOError as ioerr:
-
-                    raise Exception('File {} could not be opened. {}'.format(self.export['Path'], ioerr))
+                    raise Exception('File {} could not be opened. {}'.format(self.datas['Path'], ioerr))
 
                 else:
-
                     tmpFile.close()
                     return True
+
 
 
     def eventCreate(self, b):
 
         self.out2.clear_output()
+
         with self.out2:
+            
             tmp = mkdirModel()
             tmp.display()
 
@@ -103,48 +95,80 @@ class createMenu():
     def eventApply(self, b):
 
         self.out2.clear_output()
-        if(self.modelName.value and self.author.value and self.institution.value and self.description.value and self.package.value and self.reference.value):
-            if(os.path.exists(self.package.value)):
 
-                self.export = {'Path': self.package.value, 'Model type': self.toggle.value, 'Model name': self.modelName.value, 'Author': self.author.value, 'Institution': self.institution.value, 'Reference': self.reference.value, 'Description': self.description.value, 'Option': '1'}
+        if(self.modelName.value and self.author.value and self.institution.value and self.abstract.value and self.path.value and self.reference.value):
+            if(os.path.exists(self.path.value)):
+
+                self.datas = {
+                            'Path': self.path.value,
+                            'Model type': self.toggle.value,
+                            'Model name': self.modelName.value,
+                            'Author': self.author.value,
+                            'Institution': self.institution.value,
+                            'Reference': self.reference.value,
+                            'Abstract': self.abstract.value}
+
                 self.out.clear_output()
                     
                 if self.createFile():
 
                     with self.out:
-                        display(wg.HTML(value="<b>Creating {}.{}.xml</b>".format(self.export['Model type'], self.export['Model name'])))
+                        if self.datas['Model type'] == 'unit':
 
-                        if self.export['Model type'] == 'unit':
-                            self.unit.display(self.export)
+                            try:
+                                unit = createunit.createUnit()
+                                unit.display(self.datas)
+
+                            except:
+                                os.remove("{}/unit.{}.xml".format(self.datas['Path'], self.datas['Model name']))
+                                self.out.clear_output()
+                                self.out2.clear_output()
+                                raise Exception('Could not load unit creation model.')
+                            
+                            finally:                             
+                                del self
 
                         else:
-                            self.composition.display(self.export)
 
-                else:
-                    with self.out:
-                        print("File could not be opened, aborting ...")
-                    return
+                            try:
+                                composition = createcomposition.createComposition()
+                                composition.display(self.datas)
 
+                            except:
+                                os.remove("{}/composition.{}.xml".format(self.datas['Path'], self.datas['Model name']))
+                                self.out.clear_output()
+                                self.out2.clear_output()
+                                raise Exception('Could not load composition creation model.')
+
+                            finally:   
+                                del self
 
             else:
                 with self.out:
                     print("This package does not exist.")
 
+
         else:
             with self.out2:
                 print("Missing argument(s) :")
-                if(not self.package.value):
-                    print("\t- Package name")
+
+                if(not self.path.value):
+                    print("\t- path name")
+
                 if(not self.modelName.value):
                     print("\t- Model name")
+
                 if(not self.author.value):
                     print("\t- Author")
+
                 if(not self.institution.value):
                     print("\t- Institution")
+
                 if(not self.reference.value):
                     print("\t- Reference")
-                if(not self.description.value):
-                    print("\t- Description")
+
+                if(not self.abstract.value):
+                    print("\t- Abstract")
 
 
                   
@@ -154,15 +178,26 @@ class createMenu():
         self.out2.clear_output()
 
         with self.out:
-            tmp = CreationModel.displayMainMenu()
-            tmp.displayMenu()
+            
+            try:
+                tmp = MainMenu.displayMainMenu()
+                tmp.displayMenu()
+
+            except:
+                raise Exception('Could not load mainmenu.')
+
+            finally:
+                del self
+
 
 
     def eventBrowse(self, b):
 
         def eventTmp(b):
-            self.package.value = tmp.path
+
+            self.path.value = tmp.path
             self.out2.clear_output()
+
 
         self.out2.clear_output()
         tmp = FileBrowser()
@@ -171,6 +206,7 @@ class createMenu():
         with self.out2:
             display(tmp.widget())
             display(buttontmp)
+
         buttontmp.on_click(eventTmp)
 
             

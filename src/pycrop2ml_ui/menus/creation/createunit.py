@@ -75,14 +75,14 @@ class createUnit():
         
         
 
-        #PARAMETERSETS table
+        #PARAMETERSETS
         self.parametersetname = wg.Textarea(value='',description='Name',disabled=False)
         self.parametersetdesc = wg.Textarea(value='',description='Description',disabled=False)
 
         self.paramsets = []
         self.parametersset = wg.VBox([self.parametersetname, self.parametersetdesc])
     
-        #TESTSETS table
+        #TESTSETS
         self.testsetname = wg.Textarea(value='',description='Testset name',disabled=False)
         self.testsetdesc = wg.Textarea(value='',description='Description',disabled=False)
         self.testsetselecter = wg.Dropdown(options=[''],value='',description='ParametersSet:',disabled=False)
@@ -139,6 +139,9 @@ class createUnit():
 
         else:
 
+            with self.out:
+                display(wg.HTML(value='<b>Model creation : unit.{}.xml<br>-> XML writing</b>'.format(self.datas['Model name'])))
+
             split = re.split(r'\\', self.datas['Path'])
             f.write('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE Model PUBLIC " " "https://raw.githubusercontent.com/AgriculturalModelExchangeInitiative/crop2ml/master/ModelUnit.dtd">\n')
             f.write('<ModelUnit modelid="{}.{}.{}" name="{}" timestep="1" version="1.0">'.format(split[-4],split[-2],self.datas['Model name'],self.datas['Model name']))
@@ -146,7 +149,7 @@ class createUnit():
                 '\n\t\t<Authors>{}</Authors>'.format(self.datas['Author'])+
                 '\n\t\t<Institution>{}</Institution>'.format(self.datas['Institution'])+
                 '\n\t\t<Reference>{}</Reference>'.format(self.datas['Reference'])+
-                '\n\t\t<Abstract>{}</Abstract>'.format(self.datas['Description'])+'\n\t</Description>')
+                '\n\t\t<Abstract>{}</Abstract>'.format(self.datas['Abstract'])+'\n\t</Description>')
             
 
             f.write('\n\n\t<Inputs>')
@@ -241,7 +244,7 @@ class createUnit():
         self.out.clear_output()
 
         with self.out:
-            display(wg.VBox([tmp1, tmp2, tmp3]))
+            display(wg.VBox([wg.HTML(value='<b>Model creation : unit.{}.xml<br>-> ParametersSet</b>'.format(self.datas['Model name'])), tmp1, tmp2, wg.HBox([tmp3, self.cancel])]))
 
 
         def event1(b):
@@ -258,6 +261,7 @@ class createUnit():
         tmp1.on_click(event1)
         tmp2.on_click(event2)
         tmp3.on_click(event3)
+        self.cancel.on_click(self.eventCancel)
 
 
 
@@ -271,7 +275,7 @@ class createUnit():
         self.out2.clear_output()
 
         with self.out:
-            display(wg.VBox([tmp1, tmp2, tmp3]))
+            display(wg.VBox([wg.HTML(value='<b>Model creation : unit.{}.xml<br>-> TestsSet</b>'.format(self.datas['Model name'])), tmp1, tmp2, wg.HBox([tmp3, self.cancel])]))
 
         def event1(b):
             self.displayTestsSet()
@@ -289,6 +293,7 @@ class createUnit():
         tmp1.on_click(event1)
         tmp2.on_click(event2)
         tmp3.on_click(event3)
+        self.cancel.on_click(self.eventCancel)
 
 
 
@@ -304,7 +309,7 @@ class createUnit():
         self.testsetselecter.options = tmp
 
         with self.out:
-            display(self.testsettab)
+            display(wg.VBox([wg.HTML(value='<b>Model creation : unit.{}.xml<br>-> ParametersSet</b>'.format(self.datas['Model name'])), self.testsettab]))
 
         self.testsetbutton.on_click(self.eventTest)
         self.cancel.on_click(self.eventCancel)
@@ -325,6 +330,7 @@ class createUnit():
         listeMin = []
         listeMax = []
         listeDataType = []
+        listeDefault = []
 
         for i in range(0, len(self.dataframeInputs['InputType'])):
 
@@ -332,6 +338,7 @@ class createUnit():
 
                 listeName.append(format(self.dataframeInputs['Name'][i]))
                 listeValue.append('')
+                listeDefault.append(format(self.dataframeInputs['Default'][i]))
                 listeMin.append(format(self.dataframeInputs['Min'][i]))
                 listeMax.append(format(self.dataframeInputs['Max'][i]))
                 listeDataType.append(format(self.dataframeInputs['DataType'][i]))
@@ -341,6 +348,7 @@ class createUnit():
             'Parameter name': listeName,
             'DataType': listeDataType,
             'Set value': listeValue,
+            'Default': listeDefault,
             'Min': listeMin,
             'Max': listeMax
         })
@@ -374,9 +382,10 @@ class createUnit():
         self.out.clear_output()
 
         with self.out:
-            display(wg.VBox([qgridtab, apply]))
+            display(wg.VBox([wg.HTML(value='<b>Model creation : unit.{}.xml<br>-> ParametersSet</b>'.format(self.datas['Model name'])), qgridtab, wg.HBox([apply, self.cancel])]))
 
         apply.on_click(eventApply)
+        self.cancel.on_click(self.eventCancel)
 
 
     
@@ -404,7 +413,7 @@ class createUnit():
         self.out2.clear_output()
 
         with self.out:
-            display(wg.VBox([self.parametersset, wg.HBox([self.apply2, self.cancel])]))
+            display(wg.VBox([wg.HTML(value='<b>Model creation : unit.{}.xml<br>-> ParametersSet</b>'.format(self.datas['Model name'])), self.parametersset, wg.HBox([self.apply2, self.cancel])]))
 
         
         self.apply2.on_click(self.eventParam)
@@ -429,8 +438,21 @@ class createUnit():
             return True
 
 
-        if checkQgrid():            
-            self.displayParam()
+        if checkQgrid():
+
+            liste = []
+            for i in range(0,len(self.dataframeInputs['Name'])):
+                liste.append(self.dataframeInputs['InputType'][i])
+
+            if 'parameter' in liste:
+                self.displayParam()
+            
+            elif 'variable' in liste:      
+                self.displayTestsSet()
+            
+            else:
+                with self.out2:
+                    print('No input nor output !')
 
         else:
             with self.out2:
@@ -443,7 +465,7 @@ class createUnit():
         self.out.clear_output()
         self.out2.clear_output()
 
-        print('Erasing datas ...')
+        os.remove("{}/unit.{}.xml".format(self.datas["Path"], self.datas['Model name']))
 
         del self
         return
@@ -457,6 +479,7 @@ class createUnit():
 
         listeName = []
         listeValue = []
+        listeDefault = []
         listeMin = []
         listeMax = []
         listeDataType = []
@@ -470,6 +493,7 @@ class createUnit():
 
                     listeName.append(format(self.dataframeInputs['Name'][i]))
                     listeValue.append('')
+                    listeDefault.append(format(self.dataframeInputs['Default'][i]))
                     listeMin.append(format(self.dataframeInputs['Min'][i]))
                     listeMax.append(format(self.dataframeInputs['Max'][i]))
                     listeDataType.append(format(self.dataframeInputs['DataType'][i]))
@@ -480,6 +504,7 @@ class createUnit():
 
                     listeName.append(format(self.dataframeInputs['Name'][i]))
                     listeValue.append('')
+                    listeDefault.append(format(self.dataframeInputs['Default'][i]))
                     listeMin.append(format(self.dataframeInputs['Min'][i]))
                     listeMax.append(format(self.dataframeInputs['Max'][i]))
                     listeDataType.append(format(self.dataframeInputs['DataType'][i]))
@@ -492,16 +517,19 @@ class createUnit():
             'Variable name': listeName,
             'DataType': listeDataType,
             'Set value': listeValue,
+            'Default': listeDefault,
             'Min': listeMin,
             'Max': listeMax
         })
+
+        dataframe.sort_values(by='Type', ascending=True)
 
 
         testqgridtab = qgrid.show_grid(dataframe, show_toolbar=False)
         apply = wg.Button(value=False,description='Apply',disabled=False,button_style='success')
 
         with self.out:
-            display(wg.VBox([testqgridtab, apply]))
+            display(wg.VBox([wg.HTML(value='<b>Model creation : unit.{}.xml<br>-> TestsSet</b>'.format(self.datas['Model name'])), testqgridtab, wg.HBox([apply, self.cancel])]))
 
 
         def eventApply(b):
@@ -530,6 +558,7 @@ class createUnit():
                     print('Missing value(s) for variable.')
 
         apply.on_click(eventApply)
+        self.cancel.on_click(self.eventCancel)
 
 
 
@@ -543,7 +572,7 @@ class createUnit():
         self.out2.clear_output()
 
         with self.out:
-            display(wg.VBox([text, button]))
+            display(wg.VBox([wg.HTML(value='<b>Model creation : unit.{}.xml<br>-> TestsSet</b>'.format(self.datas['Model name'])), text, wg.HBox([button, self.cancel])]))
             
         def eventTest(b):
 
@@ -560,6 +589,7 @@ class createUnit():
 
 
         button.on_click(eventTest)
+        self.cancel.on_click(self.eventCancel)
 
 
         
@@ -567,7 +597,11 @@ class createUnit():
         
         self.out2.clear_output()
 
-        if self.testsetname.value and self.testsetdesc.value and self.testsetselecter.value:
+        liste = []
+        for i in range(0,len(self.dataframeInputs['Name'])):
+            liste.append(self.dataframeInputs['InputType'][i])
+
+        if self.testsetname.value and self.testsetdesc.value and any([self.testsetselecter.value, not self.testsetselecter.value and not 'parameter' in liste]):
 
             self.testsets.append(testSet(self.testsetname.value,self.testsetdesc.value,self.testsetselecter.value))
             self.testsetname.value = ''
@@ -596,8 +630,94 @@ class createUnit():
         display(self.out2)
 
         with self.out:
-            display(wg.VBox([self.inouttab, wg.HBox([self.apply, self.cancel])]))
+            display(wg.VBox([wg.HTML(value='<b>Model creation : unit.{}.xml<br>-> Inputs and Outputs</b>'.format(self.datas['Model name'])), self.inouttab, wg.HBox([self.apply, self.cancel])]))
         
 
+        def cell_edited(event, widget):
+
+            self.out2.clear_output()
+            self.inouttab.off('cell_edited', cell_edited)
+            
+            if event['column'] == 'Category':
+
+                self.dataframeInputs = self.inouttab.get_changed_df()
+
+                if self.dataframeInputs['InputType'][event['index']] == 'variable':
+
+                    if event['new'] not in ['','state','rate','auxiliary']:
+                        self.inouttab.edit_cell(event['index'], 'Category', event['old'])
+
+                        with self.out2:
+                            print("Variable category must be among the list ['state','rate','auxiliary'].")
+                
+                elif self.dataframeInputs['InputType'][event['index']] == 'parameter':
+
+                    if event['new'] not in ['','constant','species','genotypic','soil','private']:
+                        self.inouttab.edit_cell(event['index'], 'Category', event['old'])
+
+                        with self.out2:
+                            print("Parameter category must be among the list ['constant','species','genotypic','soil','private'].")
+
+                else:
+                    self.inouttab.edit_cell(event['index'], 'Category', '')
+            
+
+            if event['column'] == 'DataType':
+
+                if any([event['new'] == 'STRING', event['new'] == 'DATE']):
+                    self.inouttab.edit_cell(event['index'], 'Default', '')
+
+                if any([event['new'] == 'STRINGLIST', event['new'] == 'DATELIST']):
+                    self.inouttab.edit_cell(event['index'], 'Default', '[]')
+
+                if any([event['new'] == 'STRINGARRAY', event['new'] == 'DATEARRAY']):
+                    self.inouttab.edit_cell(event['index'], 'Default', '[[]]')
+
+                if event['new'] == 'DOUBLE':
+                    self.inouttab.edit_cell(event['index'], 'Default', '0.0')
+                
+                if event['new'] == 'DOUBLELIST':
+                    self.inouttab.edit_cell(event['index'], 'Default', '[0.0]')
+                
+                if event['new'] == 'DOUBLEARRAY':
+                    self.inouttab.edit_cell(event['index'], 'Default', '[[0.0]]')
+
+                if event['new'] == 'INT':
+                    self.inouttab.edit_cell(event['index'], 'Default', '0')
+                
+                if event['new'] == 'INTLIST':
+                    self.inouttab.edit_cell(event['index'], 'Default', '[0]')
+                
+                if event['new'] == 'INTARRAY':
+                    self.inouttab.edit_cell(event['index'], 'Default', '[[0]]')
+
+                if event['new'] == 'BOOLEAN':
+                    self.inouttab.edit_cell(event['index'], 'Default', 'False')
+
+
+            self.inouttab.on('cell_edited', cell_edited)
+        
+
+        def row_added(event, widget):
+
+            self.inouttab.off('cell_edited', cell_edited)
+
+            self.inouttab.edit_cell(event['index'], 'Type', '')
+            self.inouttab.edit_cell(event['index'], 'Name', '')
+            self.inouttab.edit_cell(event['index'], 'Description', '')
+            self.inouttab.edit_cell(event['index'], 'InputType', '')
+            self.inouttab.edit_cell(event['index'], 'DataType', '')
+            self.inouttab.edit_cell(event['index'], 'Category', '')
+            self.inouttab.edit_cell(event['index'], 'Default', '')
+            self.inouttab.edit_cell(event['index'], 'Min', '')
+            self.inouttab.edit_cell(event['index'], 'Max', '')
+            self.inouttab.edit_cell(event['index'], 'Unit', '')
+            self.inouttab.edit_cell(event['index'], 'Uri', '')
+
+            self.inouttab.on('cell_edited', cell_edited)
+
+
+        self.inouttab.on('cell_edited', cell_edited)
+        self.inouttab.on('row_added', row_added)
         self.apply.on_click(self.eventApplyInout)
         self.cancel.on_click(self.eventCancel)
