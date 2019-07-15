@@ -15,82 +15,85 @@ class editMenu():
     def __init__(self):
            
         #outputs
-        self.out = wg.Output()
-        self.out2 = wg.Output()
+        self._out = wg.Output()
+        self._out2 = wg.Output()
 
         #inputs
-        self.modelPath = wg.Textarea(value='',description='Model path:',disabled=True)
-        self.selecter = wg.Dropdown(options=['None'],value='None',description='Select a model:',disabled=True)
+        self._modelPath = wg.Textarea(value='',description='Model path:',disabled=True,layout=wg.Layout(width='400px',height='57px'))
+        self._selecter = wg.Dropdown(options=['None'],value='None',description='Model:',disabled=True,layout=wg.Layout(width='400px',height='35px'))
 
         #buttons
-        self.browse = wg.Button(value=False,description='Browse',disabled=False,button_style='primary')
-        self.edit = wg.Button(value=False,description='Apply',disabled=False,button_style='success')
-        self.cancel = wg.Button(value=False,description='Cancel',disabled=False,button_style='warning')
+        self._browse = wg.Button(value=False,description='Browse',disabled=False,button_style='primary')
+        self._edit = wg.Button(value=False,description='Apply',disabled=False,button_style='success')
+        self._cancel = wg.Button(value=False,description='Cancel',disabled=False,button_style='warning')
+
+        self._pathing = wg.VBox([wg.HBox([self._modelPath, self._browse]), self._selecter])
 
         #global displayer
-        self.displayer = wg.VBox([wg.HTML(value='<b>Model edition : Selection</b>'), wg.HBox([self.modelPath, self.browse]), self.selecter, wg.HBox([self.edit, self.cancel])])
+        self._displayer = wg.VBox([wg.HTML(value='<font size="5"><b>Model edition : Selection</b></font>'), self._pathing, wg.HBox([self._edit, self._cancel])],layout=wg.Layout(align_items='center',border='1px'))
 
-        self.paths = dict()
+        self._paths = dict()
 
 
 
-    def eventEdit(self, b):
-        self.out2.clear_output()
+    def _eventBrowse(self, b):
+
+        self._out2.clear_output()
         
-        typemodel = re.search(r'(.+?)\.(.+?)\.xml',self.selecter.value)
+        typemodel = re.search(r'(.+?)\.(.+?)\.xml',self._selecter.value)
 
         if typemodel:
 
             if typemodel.group(1) == 'unit':
 
-                self.out.clear_output()
+                self._out.clear_output()
                 
-                with self.out:                  
+                with self._out:                  
                     unit = editunit.editUnit()
-                    unit.display({'Path': self.paths[self.selecter.value], 'Model type': typemodel.group(1), 'Model name': typemodel.group(2), 'Option': '2'})
+                    unit.display({'Path': self._modelPath.value, 'Model type': typemodel.group(1), 'Model name': typemodel.group(2)})
 
             
             elif typemodel.group(1) == 'composition':
 
-                self.out.clear_output()
+                self._out.clear_output()
 
-                with self.out:                   
+                with self._out:                   
                     composition = editcomposition.editComposition()
-                    composition.display({'Path': self.paths[self.selecter.value], 'Model type': typemodel.group(1), 'Model name': typemodel.group(2)})
+                    composition.display({'Path': self._modelPath.value, 'Model type': typemodel.group(1), 'Model name': typemodel.group(2)})
             
             else:
                 
-                raise Exception("File {} does not match with a model.".format(self.selecter.value))
+                raise Exception("File {} does not match with a model.".format(self._selecter.value))
 
         else:
             
-            raise Exception("File {} does not match with a model.".format(self.selecter.value))
+            raise Exception("File {} does not match with a model.".format(self._selecter.value))
 
 
 
 
-    def eventBrowse(self, b):
+    def _eventBrowse(self, b):
 
         def eventTmp(b):
-            self.modelPath.value = tmp.path
-            self.out2.clear_output()
+            self._modelPath.value = tmp.path
+            self._out2.clear_output()
 
-        self.out2.clear_output()
+        self._out2.clear_output()
         tmp = FileBrowser()
         buttontmp = wg.Button(value=False,description='Select',disabled=False,button_style='success')
 
-        with self.out2:
+        with self._out2:
             display(wg.VBox([tmp.widget(), buttontmp]))
         buttontmp.on_click(eventTmp)
 
 
 
-    def eventCancel(self, b):
+    def _eventCancel(self, b):
 
-        self.out.clear_output()
-        self.out2.clear_output()
+        self._out.clear_output()
+        self._out2.clear_output()
         
-        with self.out:
+        with self._out:
 
             try:
                 tmp = MainMenu.displayMainMenu()
@@ -107,26 +110,26 @@ class editMenu():
 
     def displayMenu(self):
 
-        def on_value_change(change):
+        def _on_value_change(change):
 
-            self.paths.clear()
+            self._paths.clear()
             tmp = []
-            for f in os.listdir(self.modelPath.value):
+            for f in os.listdir(self._modelPath.value):
                 ext = os.path.splitext(f)[-1].lower()
                 if ext == '.xml':
-                    self.paths[f] = os.path.join(self.modelPath.value,f)
+                    self._paths[f] = os.path.join(self._modelPath.value,f)
                     tmp.append(f)
             
-            self.selecter.options = tmp    
-            self.selecter.disabled = False
+            self._selecter.options = tmp    
+            self._selecter.disabled = False
 
 
-        display(self.out)
-        with self.out:
-            display(self.displayer)
-        display(self.out2)
+        display(self._out)
+        with self._out:
+            display(self._displayer)
+        display(self._out2)
 
-        self.edit.on_click(self.eventEdit)
-        self.browse.on_click(self.eventBrowse)
-        self.cancel.on_click(self.eventCancel)
-        self.modelPath.observe(on_value_change, names='value')
+        self._edit.on_click(self._eventBrowse)
+        self._browse.on_click(self._eventBrowse)
+        self._cancel.on_click(self._eventCancel)
+        self._modelPath.observe(_on_value_change, names='value')

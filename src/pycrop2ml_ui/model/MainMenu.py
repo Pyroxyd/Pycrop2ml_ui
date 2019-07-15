@@ -13,27 +13,27 @@ class displayMainMenu:
     def __init__(self):
 
         #buttons
-        self.layout = wg.Layout(width='200px', height='40px')
-        self.create = wg.Button(value=False,description='Model creation',disabled=False,layout=self.layout)
-        self.edit = wg.Button(value=False,description='Model edition',disabled=False,layout=self.layout)
-        self.display = wg.Button(value=False,description='Model display',disabled=False,layout=self.layout)
-        self.about = wg.Button(value=False,description='About',disabled=False,layout=self.layout)
+        self._layout = wg.Layout(width='300px', height='60px')
+        self._create = wg.Button(value=False,description='Model creation',disabled=False,layout=self._layout)
+        self._edit = wg.Button(value=False,description='Model edition',disabled=False,layout=self._layout)
+        self._display = wg.Button(value=False,description='Model display',disabled=False,layout=self._layout)
+        self._about = wg.Button(value=False,description='About',disabled=False,layout=self._layout)
 
         #global displayer
-        self.displayer = wg.VBox([wg.HTML(value='<b>Model manager for Pycrop2ml</b>'), self.create, self.edit, self.display, self.about])
+        self._displayer = wg.VBox([wg.HTML(value='<font size="5"><b>Model manager for Pycrop2ml</b></font>'), self._create, self._edit, self._display, self._about])
 
         #outputs
-        self.out = wg.Output()
-        self.out2 = wg.Output()
+        self._out = wg.Output()
+        self._out2 = wg.Output()
 
 
 
-    def eventCreate(self, b):
+    def _eventCreate(self, b):
 
-        self.out.clear_output()
-        self.out2.clear_output()
+        self._out.clear_output()
+        self._out2.clear_output()
 
-        with self.out:
+        with self._out:
 
             try:
                 createWg = createmenu.createMenu()
@@ -46,12 +46,12 @@ class displayMainMenu:
                 del self
             
 
-    def eventEdit(self, b):
+    def _eventEdit(self, b):
 
-        self.out.clear_output()
-        self.out2.clear_output()
+        self._out.clear_output()
+        self._out2.clear_output()
 
-        with self.out:
+        with self._out:
 
             try:
                 editWg = editmenu.editMenu()
@@ -64,38 +64,38 @@ class displayMainMenu:
                 del self
 
 
-    def eventDisplay(self, b):
+    def _eventDisplay(self, b):
 
-        self.out2.clear_output()
+        self._out2.clear_output()
 
-        with self.out2:
+        with self._out2:
             print("display !")
 
 
-    def eventAbout(self, b):
+    def _eventAbout(self, b):
 
-        self.out2.clear_output()
+        self._out2.clear_output()
 
-        with self.out2:
+        with self._out2:
             print("""
 This widget provides a user interface to create a Crop2ML model including any needed parameter.\n
 You may use it for model edition and model display aswell.\n
-Both ipywidgets and qgrid are required for running this tool, they are enabled with the JupyterLab extension crop2ml.\n""")
+Both ipywidgets and qgrid are required for running this interface with the JupyterLab extension crop2ml.\n""")
 
 
 
     def displayMenu(self):
 
-        display(self.out)
-        display(self.out2)
+        display(self._out)
+        display(self._out2)
 
-        with self.out:
-            display(self.displayer)
+        with self._out:
+            display(self._displayer)
         
-        self.create.on_click(self.eventCreate)
-        self.edit.on_click(self.eventEdit)
-        self.display.on_click(self.eventDisplay)
-        self.about.on_click(self.eventAbout)
+        self._create.on_click(self._eventCreate)
+        self._edit.on_click(self._eventEdit)
+        self._display.on_click(self._eventDisplay)
+        self._about.on_click(self._eventAbout)
         
 
 
