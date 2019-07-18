@@ -8,10 +8,16 @@ import pandas
 from IPython.display import display
 
 from pycrop2ml_ui.cpackage.CreationRepository import mkdirModel
+from pycropml.pparse import model_parser
+from pycropml.transpiler.generators import docGenerator
 
 
 
 class paramSet():
+
+    """
+    Class for storing a parametersSet
+    """
 
     def __init__(self, name, description):
 
@@ -22,6 +28,10 @@ class paramSet():
 
 class test():
 
+    """
+    Class for storing a test
+    """
+
     def __init__(self, name):
 
         self.name = name
@@ -30,6 +40,10 @@ class test():
 
 
 class testSet():
+
+    """
+    Class for storing a testSet
+    """
 
     def __init__(self, name, description, paramset):
 
@@ -41,6 +55,10 @@ class testSet():
 
 
 class createUnit():
+
+    """
+    Class providing a display of unit model creation menu for pycrop2ml's user interface.
+    """
 
 
     def __init__(self):
@@ -95,47 +113,120 @@ class createUnit():
         self._datas = dict()
 
 
+    def _createInit(self):
+        
+        """
+        Creates the init file with the model description inside of it
+        """
+
+        try:
+            init = open("{}\\algo\\pyx\\init.{}.pyx".format(self._datas['Path'], self._datas['Model name']), 'w')
+
+        except IOError as ioerr:
+            self._out.clear_output()
+            self._out2.clear_output()
+            raise Exception("Algorithm file init.{}.pyx could not be created. {}".format(self._datas['Model name'], ioerr))
+
+        else:
+
+            split = re.split(r'\\', self._datas['Path'])
+
+            parse = ''
+            for i in split[:-1]:
+                parse += i + r'\\'
+
+            parsing = model_parser(parse)
+            index = None
+
+            for j in range(0,len(parsing)):
+                if parsing[j].name == self._datas['Model name']:
+                    index = j
+                    break
+
+            if index is None:
+                init.close()
+                self._out.clear_output()
+                self._out2.clear_output()
+
+                raise Exception('Critical error : model not found.')
+            
+            doc = docGenerator.DocGenerator(parsing[index])
+
+            init.write(doc.desc)
+            init.write('\n{}'.format(doc.inputs_doc))
+            init.write('\n{}'.format(doc.outputs_doc))
+
+            init.close()
+
+            with self._out2:
+                print('Init file successfully updated.')
+
 
 
     def _createAlgo(self):
 
+        """
+        Initializes the algorithm file with the model description inside of it
+        """
+
         try:
-            algo = open("{}/algo/pyx/{}.pyx".format(self._datas['Path'], self._datas['Model name']), 'w')
+            algo = open("{}\\algo\\pyx\\{}.pyx".format(self._datas['Path'], self._datas['Model name']), 'w')
 
         except IOError as ioerr:
-            with self._out2:
-                print("Algorithm file {}.pyx could not be created. {}".format(self._datas['Model name'], ioerr))
+            self._out.clear_output()
+            self._out2.clear_output()
+            raise Exception("Algorithm file {}.pyx could not be created. {}".format(self._datas['Model name'], ioerr))
 
         else:
 
-            algo.write('# inputs : ')
-            for i in range(0,len(self._dataframeInputs['Name'])):
+            split = re.split(r'\\', self._datas['Path'])
 
-                if any([self._dataframeInputs['Type'][i] == 'input', self._dataframeInputs['Type'][i] == 'input & output']):
-                    algo.write('{}({}):[default={},min={},max={}], '.format(self._dataframeInputs['Name'][i],self._dataframeInputs['DataType'][i],self._dataframeInputs['Default'][i],self._dataframeInputs['Min'][i],self._dataframeInputs['Max'][i]))
+            parse = ''
+            for i in split[:-1]:
+                parse += i + r'\\'
 
-            algo.write('\n# outputs : ')
-            for i in range(0,len(self._dataframeInputs['Name'])):
+            parsing = model_parser(parse)
+            index = None
 
-                if any([self._dataframeInputs['Type'][i] == 'output', self._dataframeInputs['Type'][i] == 'input & output']):                    
-                    algo.write('{}({}):[default={},min={},max={}], '.format(self._dataframeInputs['Name'][i],self._dataframeInputs['DataType'][i],self._dataframeInputs['Default'][i],self._dataframeInputs['Min'][i],self._dataframeInputs['Max'][i]))
+            for j in range(0,len(parsing)):
+                if parsing[j].name == self._datas['Model name']:
+                    index = j
+                    break
+
+            if index is None:
+                algo.close()
+                self._out.clear_output()
+                self._out2.clear_output()
+
+                raise Exception('Critical error : model not found.')
+            
+            doc = docGenerator.DocGenerator(parsing[index])
+
+            algo.write(doc.desc)
+            algo.write('\n{}'.format(doc.inputs_doc))
+            algo.write('\n{}'.format(doc.outputs_doc))
+
+            algo.close()
 
             with self._out2:
-                print("Algorithm file created.")
-            algo.close()
+                print('Algorithm file successfully updated.')
 
 
 
     def _createXML(self):
 
+        """
+        Saves all gathered datas in an xml format
+        """
+
         self._dataframeInputs = self._inouttab.get_changed_df()
+        self._dataframeInputs.reset_index(inplace=True)
 
         try:
             f = open("{}/unit.{}.xml".format(self._datas['Path'], self._datas['Model name']), 'w')
 
         except IOError as ioerr:
-            with self._out2:
-                print('File unit.{}.xml could not be opened. {}'.format(self._datas['Model name'], ioerr))
+            raise Exception('File unit.{}.xml could not be opened. {}'.format(self._datas['Model name'], ioerr))
 
         else:
 
@@ -146,7 +237,7 @@ class createUnit():
             f.write('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE Model PUBLIC " " "https://raw.githubusercontent.com/AgriculturalModelExchangeInitiative/crop2ml/master/ModelUnit.dtd">\n')
             f.write('<ModelUnit modelid="{}.{}.{}" name="{}" timestep="1" version="1.0">'.format(split[-4],split[-2],self._datas['Model name'],self._datas['Model name']))
             f.write('\n\t<Description>\n\t\t<Title>{} Model</Title>'.format(self._datas['Model name'])+
-                '\n\t\t<Authors>{}</Authors>'.format(self._datas['Author'])+
+                '\n\t\t<Authors>{}</Authors>'.format(self._datas['Authors'])+
                 '\n\t\t<Institution>{}</Institution>'.format(self._datas['Institution'])+
                 '\n\t\t<Reference>{}</Reference>'.format(self._datas['Reference'])+
                 '\n\t\t<Abstract>{}</Abstract>'.format(self._datas['Abstract'])+'\n\t</Description>')
@@ -173,17 +264,14 @@ class createUnit():
 
                 if any([self._dataframeInputs['Type'][i] == 'output', self._dataframeInputs['Type'][i] == 'input & output']):
 
-                    if(self._dataframeInputs['InputType'][i]=='variable'):
-                        f.write('\n\t\t<Output name="{}" description="{}" inputtype="{}" variablecategory="{}" datatype="{}" default="{}" min="{}" max="{}" unit="{}" uri="{}"/>'.format(self._dataframeInputs['Name'][i],self._dataframeInputs['Description'][i],self._dataframeInputs['InputType'][i],self._dataframeInputs['Category'][i],self._dataframeInputs['DataType'][i],self._dataframeInputs['Default'][i],self._dataframeInputs['Min'][i],self._dataframeInputs['Max'][i],self._dataframeInputs['Unit'][i],self._dataframeInputs['Uri'][i]))
-                
-                    else:
-                        f.write('\n\t\t<Output name="{}" description="{}" inputtype="{}" parametercategory="{}" datatype="{}" default="{}" min="{}" max="{}" unit="{}" uri="{}"/>'.format(self._dataframeInputs['Name'][i],self._dataframeInputs['Description'][i],self._dataframeInputs['InputType'][i],self._dataframeInputs['Category'][i],self._dataframeInputs['DataType'][i],self._dataframeInputs['Default'][i],self._dataframeInputs['Min'][i],self._dataframeInputs['Max'][i],self._dataframeInputs['Unit'][i],self._dataframeInputs['Uri'][i]))
-                    
+                    f.write('\n\t\t<Output name="{}" description="{}" variablecategory="{}" datatype="{}" min="{}" max="{}" unit="{}" uri="{}"/>'.format(self._dataframeInputs['Name'][i],self._dataframeInputs['Description'][i],self._dataframeInputs['Category'][i],self._dataframeInputs['DataType'][i],self._dataframeInputs['Min'][i],self._dataframeInputs['Max'][i],self._dataframeInputs['Unit'][i],self._dataframeInputs['Uri'][i]))
+                                   
             f.write('\n\t</Outputs>')
 
-            self._createAlgo()           
 
             f.write('\n\n\t<Algorithm language="Cyml" platform="" filename="algo/pyx/{}.pyx" />'.format(self._datas['Model name']))
+
+            f.write('\n\n\t<Initialization name="init.{0}" language="Cyml" filename="algo/pyx/init.{0}.pyx" />'.format(self._datas['Model name']))
             
 
             f.write('\n\n\t<Parametersets>')
@@ -230,12 +318,20 @@ class createUnit():
             f.write("\n\n</ModelUnit>")
 
             with self._out2:
-                print('File successfully updated.')            
+                print('Xml file successfully updated.')
+
             f.close()
+
+            self._createAlgo()
+            self._createInit()       
 
 
 
     def _display_isParamset(self):
+
+        """
+        Displays a menu to know wheter to create a new parametersSet or to display testsSet creation
+        """
 
         tmp1 = wg.Button(value=False,description='New ParametersSet',disabled=False,button_style='primary')
         tmp2 = wg.Button(value=False,description='Go to TestsSet',disabled=False,button_style='primary')
@@ -266,6 +362,10 @@ class createUnit():
 
 
     def _display_isTestset(self):
+
+        """
+        Displays a menu to know wheter to create a new testsSet/test or to end the creation and write the xml format
+        """
 
         tmp1 = wg.Button(value=False,description='New TestSet',disabled=False,button_style='primary')
         tmp2 = wg.Button(value=False,description='New Test',disabled=False,button_style='primary')
@@ -299,6 +399,10 @@ class createUnit():
 
     def _displayTestsSet(self):
 
+        """
+        Displays testsSet creation menu
+        """
+
         self._out.clear_output()
         self._out2.clear_output()
 
@@ -317,6 +421,10 @@ class createUnit():
 
 
     def _getParams(self):
+
+        """
+        Collects the parameters' list
+        """
         
 
         self._paramsets.append(paramSet(self._parametersetname.value, self._parametersetdescription.value))
@@ -324,6 +432,7 @@ class createUnit():
         self._parametersetname.value = ''
 
         self._dataframeInputs = self._inouttab.get_changed_df()
+        self._dataframeInputs.reset_index(inplace=True)
 
         listeName = []
         listeValue = []
@@ -362,10 +471,11 @@ class createUnit():
         def eventApply(b):
 
             dataframe = qgridtab.get_changed_df()
+            dataframe.reset_index(inplace=True)
 
             self._out2.clear_output()
 
-            if not '' in dataframe['Set value']:
+            if not any([dataframe['Set value'][i] == '' for i in range(0,len(dataframe['Set value']))]):
             
                 for i in range(0, len(dataframe['Min'])):
                     self._paramsets[-1].dictparam[dataframe['Parameter name'][i]] = dataframe['Set value'][i]
@@ -389,8 +499,11 @@ class createUnit():
 
 
     
-    
     def _eventParam(self, b):
+
+        """
+        Handles apply2 button on_click event
+        """
 
         self._out2.clear_output()
 
@@ -409,6 +522,10 @@ class createUnit():
 
     def _displayParam(self):
 
+        """
+        Displays the parametersSet creation menu
+        """
+
         self._out.clear_output()
         self._out2.clear_output()
 
@@ -421,14 +538,22 @@ class createUnit():
 
 
 
-
     def _eventApplyInout(self, b):
+
+        """
+        Handles apply button on_click event
+        """
 
         self._out2.clear_output()
 
         def _checkQgrid():
 
+            """
+            Checks wheter the whole required data set is verified in the dataframe
+            """
+
             self._dataframeInputs = self._inouttab.get_changed_df()
+            self._dataframeInputs.reset_index(inplace=True)
 
             for i in range(0, len(self._dataframeInputs['Name'])):
 
@@ -461,17 +586,24 @@ class createUnit():
 
     def _eventCancel(self, b):
 
+        """
+        Handles cancel button on_click event
+        """
+
         self._out.clear_output()
         self._out2.clear_output()
 
         os.remove("{}/unit.{}.xml".format(self._datas["Path"], self._datas['Model name']))
 
-        del self
         return
 
 
 
     def _displayTest(self):
+
+        """
+        Displays a qgrid containing every variable in the model having a value to input
+        """
 
         self._out.clear_output()
         self._out2.clear_output()
@@ -512,7 +644,7 @@ class createUnit():
 
         
         dataframe = pandas.DataFrame(data={
-            'Type': listeType,
+            'Type': pandas.Categorical(listeType, categories=['input','output'], ordered=True),
             'Variable name': listeName,
             'DataType': listeDataType,
             'Set value': listeValue,
@@ -521,7 +653,8 @@ class createUnit():
             'Max': listeMax
         })
 
-        dataframe.sort_values(by='Type', ascending=True)
+        dataframe.sort_values(by='Type',ascending=True,inplace=True)
+        dataframe.reset_index(inplace=True)
 
 
         testqgridtab = qgrid.show_grid(dataframe, show_toolbar=False)
@@ -577,8 +710,11 @@ class createUnit():
 
 
 
-
     def _createTest(self):
+
+        """
+        Display the test creation menu
+        """
 
         text = wg.Textarea(value='',description='Test name',disabled=False)
         button = wg.Button(value=False,description='Apply',disabled=False,button_style='success')
@@ -589,7 +725,12 @@ class createUnit():
         with self._out:
             display(wg.VBox([wg.HTML(value='<b>Model creation : unit.{}.xml<br>-> TestsSet</b>'.format(self._datas['Model name'])), text, wg.HBox([button, self._cancel])]))
             
+        
         def _eventTest(b):
+
+            """
+            Handles apply:test button on_click event
+            """
 
             self._out2.clear_output()
                 
@@ -639,21 +780,58 @@ class createUnit():
     
     def _cell_edited(self, event, widget):
 
+        """
+        Handles every event occuring when a cell is edited in the qgrid widget
+        """
+
         self._out2.clear_output()
         self._inouttab.off('cell_edited', self._cell_edited)
 
+        self._dataframeInputs = self._inouttab.get_changed_df()
+
+        #UPDATE TYPE
+        if event['column'] == 'Type':
+
+            if event['new'] == event['old']:
+                pass
+            
+            elif event['new'] == '':
+                self._inouttab.edit_cell(event['index'], 'Category', '')
+                self._inouttab.edit_cell(event['index'], 'InputType', '')
+
+            elif event['new'] == 'output' or event['new'] == 'input & output':
+                if self._dataframeInputs['InputType'][event['index']] == 'parameter':
+                    self._inouttab.edit_cell(event['index'], 'Category', '')
+                
+                self._inouttab.edit_cell(event['index'], 'InputType', 'variable')
+            
+            if event['new'] == 'output':
+                self._inouttab.edit_cell(event['index'], 'Default', '')
+
 
         #UPDATE INPUTTYPE
-        if event['column'] == 'InputType':
+        elif event['column'] == 'InputType':
 
-            if not event['new'] == event['old']:
-                self._inouttab.edit_cell(event['index'], 'Category', '')
+            if event['new'] == event['old']:
+                pass
+
+            else:
+                if event['new'] == 'parameter':
+                    if self._dataframeInputs['Type'][event['index']] == 'output' or self._dataframeInputs['Type'][event['index']] == 'input & output':
+                        self._inouttab.edit_cell(event['index'], 'InputType', event['old'])
+
+                        with self._out2:
+                            print('Warning : a parameter is always an input.')
+                    
+                    else:
+                        self._inouttab.edit_cell(event['index'], 'Category', '')
+                
+                else:
+                    self._inouttab.edit_cell(event['index'], 'Category', '')
 
         
         #UPDATE CATEGORY
-        if event['column'] == 'Category':
-
-            self._dataframeInputs = self._inouttab.get_changed_df()
+        elif event['column'] == 'Category':
 
             if self._dataframeInputs['InputType'][event['index']] == 'variable':
 
@@ -661,7 +839,7 @@ class createUnit():
                     self._inouttab.edit_cell(event['index'], 'Category', event['old'])
 
                     with self._out2:
-                        print("Variable category must be among the list ['state','rate','auxiliary'].")
+                        print("Warning : variable category must be among the list ['state','rate','auxiliary'].")
             
             elif self._dataframeInputs['InputType'][event['index']] == 'parameter':
 
@@ -669,13 +847,13 @@ class createUnit():
                     self._inouttab.edit_cell(event['index'], 'Category', event['old'])
 
                     with self._out2:
-                        print("Parameter category must be among the list ['constant','species','genotypic','soil','private'].")
+                        print("Warning : parameter category must be among the list ['constant','species','genotypic','soil','private'].")
 
             else:
                 self._inouttab.edit_cell(event['index'], 'Category', '')
                 
                 with self._out2:
-                    print('You must assign an input type before giving a category.')
+                    print('Warning : You must assign an input type before giving a category.')
         
 
         #UPDATE DATATYPE
@@ -684,205 +862,213 @@ class createUnit():
             self._inouttab.edit_cell(event['index'], 'Min', '')
             self._inouttab.edit_cell(event['index'], 'Max', '')
 
-            if event['new'] in ['STRING','DATE','']:
+            if not self._dataframeInputs['Type'][event['index']] == 'output':
+
+                if event['new'] in ['STRING','DATE','']:
+                    self._inouttab.edit_cell(event['index'], 'Default', '')
+
+                if any([event['new'] == 'STRINGLIST', event['new'] == 'DATELIST']):
+                    self._inouttab.edit_cell(event['index'], 'Default', '[]')
+
+                if any([event['new'] == 'STRINGARRAY', event['new'] == 'DATEARRAY']):
+                    self._inouttab.edit_cell(event['index'], 'Default', '[[]]')
+
+                if event['new'] == 'DOUBLE':
+                    self._inouttab.edit_cell(event['index'], 'Default', '0.0')
+                
+                if event['new'] == 'DOUBLELIST':
+                    self._inouttab.edit_cell(event['index'], 'Default', '[0.0]')
+                
+                if event['new'] == 'DOUBLEARRAY':
+                    self._inouttab.edit_cell(event['index'], 'Default', '[[0.0]]')
+
+                if event['new'] == 'INT':
+                    self._inouttab.edit_cell(event['index'], 'Default', '0')
+                
+                if event['new'] == 'INTLIST':
+                    self._inouttab.edit_cell(event['index'], 'Default', '[0]')
+                
+                if event['new'] == 'INTARRAY':
+                    self._inouttab.edit_cell(event['index'], 'Default', '[[0]]')
+
+                if event['new'] == 'BOOLEAN':
+                    self._inouttab.edit_cell(event['index'], 'Default', 'False')
+            
+            else:
                 self._inouttab.edit_cell(event['index'], 'Default', '')
 
-            if any([event['new'] == 'STRINGLIST', event['new'] == 'DATELIST']):
-                self._inouttab.edit_cell(event['index'], 'Default', '[]')
-
-            if any([event['new'] == 'STRINGARRAY', event['new'] == 'DATEARRAY']):
-                self._inouttab.edit_cell(event['index'], 'Default', '[[]]')
-
-            if event['new'] == 'DOUBLE':
-                self._inouttab.edit_cell(event['index'], 'Default', '0.0')
-            
-            if event['new'] == 'DOUBLELIST':
-                self._inouttab.edit_cell(event['index'], 'Default', '[0.0]')
-            
-            if event['new'] == 'DOUBLEARRAY':
-                self._inouttab.edit_cell(event['index'], 'Default', '[[0.0]]')
-
-            if event['new'] == 'INT':
-                self._inouttab.edit_cell(event['index'], 'Default', '0')
-            
-            if event['new'] == 'INTLIST':
-                self._inouttab.edit_cell(event['index'], 'Default', '[0]')
-            
-            if event['new'] == 'INTARRAY':
-                self._inouttab.edit_cell(event['index'], 'Default', '[[0]]')
-
-            if event['new'] == 'BOOLEAN':
-                self._inouttab.edit_cell(event['index'], 'Default', 'False')
         
 
         #UPDATE DEFAULT
         elif event['column'] == 'Default' and not event['new'] == event['old']:
 
-            self._dataframeInputs = self._inouttab.get_changed_df()
+            if self._dataframeInputs['Type'][event['index']] == 'output':
+                self._inouttab.edit_cell(event['index'], 'Default', '')
 
-            if self._dataframeInputs['DataType'][event['index']] in ['DATELIST','DATEARRAY','']:                
-                self._inouttab.edit_cell(event['index'], 'Default', event['old'])
-            
-            if self._dataframeInputs['DataType'][event['index']] == 'DATE':
-                if not re.search(r'^(?:(?:31(\/|-)(?:0?[13578]|1[02]))\1|(?:(?:29|30)(\/|-)(?:0?[13-9]|1[0-2])\2))(?:(?:1[6-9]|[2-9]\d)?\d{2})$|^(?:29(\/|-)0?2\3(?:(?:(?:1[6-9]|[2-9]\d)?(?:0[48]|[2468][048]|[13579][26])|(?:(?:16|[2468][048]|[3579][26])00))))$|^(?:0?[1-9]|1\d|2[0-8])(\/|-)(?:(?:0?[1-9])|(?:1[0-2]))\4(?:(?:1[6-9]|[2-9]\d)?\d{2})$', event['new']):
+            else:      
+                if self._dataframeInputs['DataType'][event['index']] in ['DATELIST','DATEARRAY','']:                
                     self._inouttab.edit_cell(event['index'], 'Default', event['old'])
-
-                    with self._out2:
-                        print('Bad DATE format : use dd/mm/yyyy or dd-mm-yyyy.')
-            
-            if self._dataframeInputs['DataType'][event['index']] == 'BOOLEAN':
-                if not any([self._dataframeInputs['Default'][event['index']] == 'True', self._dataframeInputs['Default'][event['index']] == 'False']):
-                    self._inouttab.edit_cell(event['index'], 'Default', event['old'])
-
-                    with self._out2:
-                        print('Bad BOOLEAN format : use True|False.')
-
-            
-            if self._dataframeInputs['DataType'][event['index']] == 'INT':
-
-                search = re.search(r'^-? ?\d+\.', event['new'])
-                if search:
-                    if any([self._dataframeInputs['Min'][event['index']] and (float(self._dataframeInputs['Min'][event['index']]) > float(event['new'])),
-                            self._dataframeInputs['Max'][event['index']] and (float(self._dataframeInputs['Max'][event['index']]) < float(event['new']))
-                            ]):
+                
+                if self._dataframeInputs['DataType'][event['index']] == 'DATE':
+                    if not re.search(r'^(?:(?:31(\/|-)(?:0?[13578]|1[02]))\1|(?:(?:29|30)(\/|-)(?:0?[13-9]|1[0-2])\2))(?:(?:1[6-9]|[2-9]\d)?\d{2})$|^(?:29(\/|-)0?2\3(?:(?:(?:1[6-9]|[2-9]\d)?(?:0[48]|[2468][048]|[13579][26])|(?:(?:16|[2468][048]|[3579][26])00))))$|^(?:0?[1-9]|1\d|2[0-8])(\/|-)(?:(?:0?[1-9])|(?:1[0-2]))\4(?:(?:1[6-9]|[2-9]\d)?\d{2})$', event['new']):
                         self._inouttab.edit_cell(event['index'], 'Default', event['old'])
 
                         with self._out2:
-                            print('Default value must be in between Min and Max.')
-
-                    else:                            
-                        self._inouttab.edit_cell(event['index'], 'Default', event['new'][:search.end()-1])
-
-                elif re.search(r'^-? ?\d+$', event['new']):
-                    if any([self._dataframeInputs['Min'][event['index']] and (float(self._dataframeInputs['Min'][event['index']]) > float(event['new'])),
-                            self._dataframeInputs['Max'][event['index']] and (float(self._dataframeInputs['Max'][event['index']]) < float(event['new']))
-                            ]):
+                            print('Error : bad DATE format -> use dd/mm/yyyy or dd-mm-yyyy.')
+                
+                if self._dataframeInputs['DataType'][event['index']] == 'BOOLEAN':
+                    if not any([self._dataframeInputs['Default'][event['index']] == 'True', self._dataframeInputs['Default'][event['index']] == 'False']):
                         self._inouttab.edit_cell(event['index'], 'Default', event['old'])
 
                         with self._out2:
-                            print('Default value must be in between Min and Max.')
+                            print('Error : bad BOOLEAN format -> use True|False.')
 
-                else:
+                
+                if self._dataframeInputs['DataType'][event['index']] == 'INT':
 
-                    self._inouttab.edit_cell(event['index'], 'Default', event['old'])
+                    search = re.search(r'^-? ?\d+\.', event['new'])
+                    if search:
+                        if any([self._dataframeInputs['Min'][event['index']] and (float(self._dataframeInputs['Min'][event['index']]) > float(event['new'])),
+                                self._dataframeInputs['Max'][event['index']] and (float(self._dataframeInputs['Max'][event['index']]) < float(event['new']))
+                                ]):
+                            self._inouttab.edit_cell(event['index'], 'Default', event['old'])
 
-                    with self._out2:
-                        print(r'Bad INT format : use -?[0-9]+ .')
+                            with self._out2:
+                                print('Error : default value must be in between Min and Max.')
 
-            
-            if self._dataframeInputs['DataType'][event['index']] == 'DOUBLE':
+                        else:                            
+                            self._inouttab.edit_cell(event['index'], 'Default', event['new'][:search.end()-1])
 
-                if re.search(r'^-? ?\d+\.$', event['new']):
-                    if any([self._dataframeInputs['Min'][event['index']] and (float(self._dataframeInputs['Min'][event['index']]) > float(event['new'])),
-                            self._dataframeInputs['Max'][event['index']] and (float(self._dataframeInputs['Max'][event['index']]) < float(event['new']))
-                            ]):
-                        self._inouttab.edit_cell(event['index'], 'Default', event['old'])
+                    elif re.search(r'^-? ?\d+$', event['new']):
+                        if any([self._dataframeInputs['Min'][event['index']] and (float(self._dataframeInputs['Min'][event['index']]) > float(event['new'])),
+                                self._dataframeInputs['Max'][event['index']] and (float(self._dataframeInputs['Max'][event['index']]) < float(event['new']))
+                                ]):
+                            self._inouttab.edit_cell(event['index'], 'Default', event['old'])
 
-                        with self._out2:
-                            print('Default value must be in between Min and Max.')
+                            with self._out2:
+                                print('Error : default value must be in between Min and Max.')
 
                     else:
-                        self._inouttab.edit_cell(event['index'], 'Default', event['new']+'0')
+
+                        self._inouttab.edit_cell(event['index'], 'Default', event['old'])
+
+                        with self._out2:
+                            print(r'Error : bad INT format -> use -?[0-9]+ .')
+
+                
+                if self._dataframeInputs['DataType'][event['index']] == 'DOUBLE':
+
+                    if re.search(r'^-? ?\d+\.$', event['new']):
+                        if any([self._dataframeInputs['Min'][event['index']] and (float(self._dataframeInputs['Min'][event['index']]) > float(event['new'])),
+                                self._dataframeInputs['Max'][event['index']] and (float(self._dataframeInputs['Max'][event['index']]) < float(event['new']))
+                                ]):
+                            self._inouttab.edit_cell(event['index'], 'Default', event['old'])
+
+                            with self._out2:
+                                print('Error : default value must be in between Min and Max.')
+
+                        else:
+                            self._inouttab.edit_cell(event['index'], 'Default', event['new']+'0')
+                        
+                    elif re.search(r'^-? ?\d+\.\d+$', event['new']):
+                        if any([self._dataframeInputs['Min'][event['index']] and (float(self._dataframeInputs['Min'][event['index']]) > float(event['new'])),
+                                self._dataframeInputs['Max'][event['index']] and (float(self._dataframeInputs['Max'][event['index']]) < float(event['new']))
+                                ]):
+                            self._inouttab.edit_cell(event['index'], 'Default', event['old'])
+
+                            with self._out2:
+                                print('Error : default value must be in between Min and Max.')
+
+                    elif re.search(r'^-? ?\d+$', event['new']):
+                        if any([self._dataframeInputs['Min'][event['index']] and (float(self._dataframeInputs['Min'][event['index']]) > float(event['new'])),
+                                self._dataframeInputs['Max'][event['index']] and (float(self._dataframeInputs['Max'][event['index']]) < float(event['new']))
+                                ]):
+                            self._inouttab.edit_cell(event['index'], 'Default', event['old'])
+
+                            with self._out2:
+                                print('Error : default value must be in between Min and Max.')
+
+                        else:
+                            self._inouttab.edit_cell(event['index'], 'Default', event['new']+'.0')
+
+                    else:
+                        self._inouttab.edit_cell(event['index'], 'Default', event['old'])
+
+                        with self._out2:
+                            print(r'Error : bad DOUBLE format -> use -?[0-9]+.[0-9]* .')
+
+
+                if self._dataframeInputs['DataType'][event['index']] == 'DOUBLELIST':
+
+                    if re.search(r'^(\[(?:-? ?\d+\.\d*)?(?:,-? ?\d+\.\d*)*\])$', event['new'].replace(' ','')):
+                        self._inouttab.edit_cell(event['index'], 'Default', event['new'].replace(' ',''))
+
+                    else:
+                        self._inouttab.edit_cell(event['index'], 'Default', event['old'])
+
+                        with self._out2:
+                            print(r'Error : bad DOUBLELIST format -> use [{DOUBLE},*] .','\n',r'{DOUBLE} = -?[0-9]+.[0-9]* .')
+
+
+                if self._dataframeInputs['DataType'][event['index']] == 'INTLIST':
+                    if re.search(r'^(\[(?:-? ?\d+)(?:,-? ?\d+)*\])$', event['new'].replace(' ','')):
+                        self._inouttab.edit_cell(event['index'], 'Default', event['new'].replace(' ',''))
                     
-                elif re.search(r'^-? ?\d+\.\d+$', event['new']):
-                    if any([self._dataframeInputs['Min'][event['index']] and (float(self._dataframeInputs['Min'][event['index']]) > float(event['new'])),
-                            self._dataframeInputs['Max'][event['index']] and (float(self._dataframeInputs['Max'][event['index']]) < float(event['new']))
-                            ]):
-                        self._inouttab.edit_cell(event['index'], 'Default', event['old'])
-
-                        with self._out2:
-                            print('Default value must be in between Min and Max.')
-
-                elif re.search(r'^-? ?\d+$', event['new']):
-                    if any([self._dataframeInputs['Min'][event['index']] and (float(self._dataframeInputs['Min'][event['index']]) > float(event['new'])),
-                            self._dataframeInputs['Max'][event['index']] and (float(self._dataframeInputs['Max'][event['index']]) < float(event['new']))
-                            ]):
-                        self._inouttab.edit_cell(event['index'], 'Default', event['old'])
-
-                        with self._out2:
-                            print('Default value must be in between Min and Max.')
-
                     else:
-                        self._inouttab.edit_cell(event['index'], 'Default', event['new']+'.0')
+                        self._inouttab.edit_cell(event['index'], 'Default', event['old'])
 
-                else:
-                    self._inouttab.edit_cell(event['index'], 'Default', event['old'])
-
-                    with self._out2:
-                        print(r'Bad DOUBLE format : use -?[0-9]+.[0-9]* .')
-
-
-            if self._dataframeInputs['DataType'][event['index']] == 'DOUBLELIST':
-
-                if re.search(r'^(\[(?:-? ?\d+\.\d*)?(?:,-? ?\d+\.\d*)*\])$', event['new'].replace(' ','')):
-                    self._inouttab.edit_cell(event['index'], 'Default', event['new'].replace(' ',''))
-
-                else:
-                    self._inouttab.edit_cell(event['index'], 'Default', event['old'])
-
-                    with self._out2:
-                        print(r'Bad DOUBLELIST format : use [{DOUBLE},*] .','\n',r'{DOUBLE} = -?[0-9]+.[0-9]* .')
-
-
-            if self._dataframeInputs['DataType'][event['index']] == 'INTLIST':
-                if re.search(r'^(\[(?:-? ?\d+)(?:,-? ?\d+)*\])$', event['new'].replace(' ','')):
-                    self._inouttab.edit_cell(event['index'], 'Default', event['new'].replace(' ',''))
+                        with self._out2:
+                            print(r'Error : bad INTLIST format -> use [{INT},*] .','\n',r'{INT} = -?[0-9]+ .')
                 
-                else:
-                    self._inouttab.edit_cell(event['index'], 'Default', event['old'])
 
-                    with self._out2:
-                        print(r'Bad INTLIST format : use [{INT},*] .','\n',r'{INT} = -?[0-9]+ .')
-            
+                if self._dataframeInputs['DataType'][event['index']] == 'DOUBLEARRAY':
 
-            if self._dataframeInputs['DataType'][event['index']] == 'DOUBLEARRAY':
+                    if re.search(r'^\[(?:\[(?:-? ?\d+\.\d*)?(?:,-? ?\d+\.\d*)*\])?(?:,\[(?:-? ?\d+\.\d*)?(?:,-? ?\d+\.\d*)*\])*]$', event['new'].replace(' ','')):
+                        self._inouttab.edit_cell(event['index'], 'Default', event['new'].replace(' ',''))
+                    
+                    else:
+                        self._inouttab.edit_cell(event['index'], 'Default', event['old'])
 
-                if re.search(r'^\[(?:\[(?:-? ?\d+\.\d*)?(?:,-? ?\d+\.\d*)*\])?(?:,\[(?:-? ?\d+\.\d*)?(?:,-? ?\d+\.\d*)*\])*]$', event['new'].replace(' ','')):
-                    self._inouttab.edit_cell(event['index'], 'Default', event['new'].replace(' ',''))
+                        with self._out2:
+                            print(r'Error : bad DOUBLEARRAY format -> use [[{DOUBLE},*],*] .','\n',r'{DOUBLE} = -?[0-9]+.[0-9]* .')
                 
-                else:
-                    self._inouttab.edit_cell(event['index'], 'Default', event['old'])
 
-                    with self._out2:
-                        print(r'Bad DOUBLEARRAY format : use [[{DOUBLE},*],*] .','\n',r'{DOUBLE} = -?[0-9]+.[0-9]* .')
-            
+                if self._dataframeInputs['DataType'][event['index']] == 'INTARRAY':
 
-            if self._dataframeInputs['DataType'][event['index']] == 'INTARRAY':
+                    if re.search(r'^\[(?:\[(?:-? ?\d+)?(?:,-? ?\d+)*\])?(?:,\[(?:-? ?\d+)?(?:,-? ?\d+)*\])*]$', event['new'].replace(' ','')):
+                        self._inouttab.edit_cell(event['index'], 'Default', event['new'].replace(' ',''))
+                    
+                    else:
+                        self._inouttab.edit_cell(event['index'], 'Default', event['old'])
 
-                if re.search(r'^\[(?:\[(?:-? ?\d+)?(?:,-? ?\d+)*\])?(?:,\[(?:-? ?\d+)?(?:,-? ?\d+)*\])*]$', event['new'].replace(' ','')):
-                    self._inouttab.edit_cell(event['index'], 'Default', event['new'].replace(' ',''))
+                        with self._out2:
+                            print(r'Error : bad DOUBLEARRAY format -> use [[{INT},*],*] .','\n',r'{INT} = -?[0-9]+ .')
+
                 
-                else:
-                    self._inouttab.edit_cell(event['index'], 'Default', event['old'])
+                if self._dataframeInputs['DataType'][event['index']] == 'STRINGLIST':
 
-                    with self._out2:
-                        print(r'Bad DOUBLEARRAY format : use [[{INT},*],*] .','\n',r'{INT} = -?[0-9]+ .')
+                    if not re.search(r"^\[(?: *'[^\[\],']*' *)?(?:, *'[^\[\],']*' *)*\]$", event['new'].strip()):
+                        self._inouttab.edit_cell(event['index'], 'Default', event['old'])
 
-            
-            if self._dataframeInputs['DataType'][event['index']] == 'STRINGLIST':
-
-                if not re.search(r"^\[(?: *'[^\[\],']*' *)?(?:, *'[^\[\],']*' *)*\]$", event['new'].strip()):
-                    self._inouttab.edit_cell(event['index'], 'Default', event['old'])
-
-                    with self._out2:
-                        print(r"Bad STRINGLIST format : use ['',*] .")
-                
-                else:
-                    tmp = event['new'].strip()[1:-1].split(',')
-                    tmp = [x.strip() for x in tmp]
-                    string = '['
-                    for i in tmp:
-                        string += i+','
-                    self._inouttab.edit_cell(event['index'], 'Default', string[:-1]+']')
+                        with self._out2:
+                            print(r"Error : bad STRINGLIST format -> use ['',*] .")
+                    
+                    else:
+                        tmp = event['new'].strip()[1:-1].split(',')
+                        tmp = [x.strip() for x in tmp]
+                        string = '['
+                        for i in tmp:
+                            string += i+','
+                        self._inouttab.edit_cell(event['index'], 'Default', string[:-1]+']')
 
 
-            if self._dataframeInputs['DataType'][event['index']] == 'STRINGARRAY':
+                if self._dataframeInputs['DataType'][event['index']] == 'STRINGARRAY':
 
-                if not re.search(r"^\[ *(?:\[(?: *'[^\[\],']*' *)?(?:, *'[^\[\],']*' *)*\])?(?: *, *\[(?: *'[^\[\],']*' *)?(?:, *'[^\[\],']*' *)*\] *)* *\]$", event['new'].strip()):
-                    self._inouttab.edit_cell(event['index'], 'Default', event['old'])
+                    if not re.search(r"^\[ *(?:\[(?: *'[^\[\],']*' *)?(?:, *'[^\[\],']*' *)*\])?(?: *, *\[(?: *'[^\[\],']*' *)?(?:, *'[^\[\],']*' *)*\] *)* *\]$", event['new'].strip()):
+                        self._inouttab.edit_cell(event['index'], 'Default', event['old'])
 
-                    with self._out2:
-                        print(r"Bad STRINGLIST format : use [['',*],*] .")
+                        with self._out2:
+                            print(r"Error : bad STRINGLIST format -> use [['',*],*] .")
         
         
         #UPDATE MIN
@@ -890,75 +1076,82 @@ class createUnit():
 
             self._dataframeInputs = self._inouttab.get_changed_df()
 
-            if self._dataframeInputs['DataType'][event['index']] == 'INT':
-
-                search = re.search(r'^-? ?\d+\.', event['new'])
-                if search:
-                    if self._dataframeInputs['Default'][event['index']] and (float(self._dataframeInputs['Default'][event['index']]) < float(event['new'][:search.end()-1])):
-                        self._inouttab.edit_cell(event['index'], 'Min', event['old'])
-
-                        with self._out2:
-                            print('Minimum > Default !')
-
-                    else:
-                        self._inouttab.edit_cell(event['index'], 'Min', event['new'][:search.end()-1])
-
-
-                elif re.search(r'^-? ?\d+$', event['new']):
-                    if self._dataframeInputs['Default'][event['index']] and (float(self._dataframeInputs['Default'][event['index']]) < float(event['new'])):
-                        self._inouttab.edit_cell(event['index'], 'Min', event['old'])
-
-                        with self._out2:
-                            print('Minimum > Default !')
-
-                else:
-
-                    self._inouttab.edit_cell(event['index'], 'Min', event['old'])
-
-                    with self._out2:
-                        print(r'Bad INT format : use -?[0-9]+ .')
-
-            
-            elif self._dataframeInputs['DataType'][event['index']] == 'DOUBLE':
-
-                if re.search(r'^-? ?\d+\.$', event['new']):
-                    if self._dataframeInputs['Default'][event['index']] and (float(self._dataframeInputs['Default'][event['index']]) < float(event['new']+'0')):
-                        self._inouttab.edit_cell(event['index'], 'Min', event['old'])
-
-                        with self._out2:
-                            print('Minimum > Default !')
-
-                    self._inouttab.edit_cell(event['index'], 'Min', event['new']+'0')
-                    
-                elif re.search(r'^-? ?\d+\.\d+$', event['new']):
-                    if self._dataframeInputs['Default'][event['index']] and (float(self._dataframeInputs['Default'][event['index']]) < float(event['new'])):
-                        self._inouttab.edit_cell(event['index'], 'Min', event['old'])
-
-                        with self._out2:
-                            print('Minimum > Default !')
-
-                elif re.search(r'^-? ?\d+$', event['new']):
-                    if self._dataframeInputs['Default'][event['index']] and (float(self._dataframeInputs['Default'][event['index']]) < float(event['new'])):
-                        self._inouttab.edit_cell(event['index'], 'Min', event['old'])
-
-                        with self._out2:
-                            print('Minimum > Default !')
-
-                    else:
-                        self._inouttab.edit_cell(event['index'], 'Min', event['new']+'.0')
-
-                else:
-                    self._inouttab.edit_cell(event['index'], 'Min', event['old'])
-
-                    with self._out2:
-                        print(r'Bad DOUBLE format : use -?[0-9]+.[0-9]* .')
-                
-
-            else:
+            if self._dataframeInputs['Max'][event['index']] and (float(self._dataframeInputs['Max'][event['index']]) < float(self._dataframeInputs['Min'][event['index']])):
                 self._inouttab.edit_cell(event['index'], 'Min', event['old'])
 
                 with self._out2:
-                    print('This data type does not handle min nand max, or is not defined yet.')
+                    print('Error : Minimum > Maximum.')
+
+            else:
+                if self._dataframeInputs['DataType'][event['index']] == 'INT':
+
+                    search = re.search(r'^-? ?\d+\.', event['new'])
+                    if search:
+                        if self._dataframeInputs['Default'][event['index']] and (float(self._dataframeInputs['Default'][event['index']]) < float(event['new'][:search.end()-1])):
+                            self._inouttab.edit_cell(event['index'], 'Min', event['old'])
+
+                            with self._out2:
+                                print('Error : Minimum > Default.')
+
+                        else:
+                            self._inouttab.edit_cell(event['index'], 'Min', event['new'][:search.end()-1])
+
+
+                    elif re.search(r'^-? ?\d+$', event['new']):
+                        if self._dataframeInputs['Default'][event['index']] and (float(self._dataframeInputs['Default'][event['index']]) < float(event['new'])):
+                            self._inouttab.edit_cell(event['index'], 'Min', event['old'])
+
+                            with self._out2:
+                                print('Error : Minimum > Default.')
+
+                    else:
+
+                        self._inouttab.edit_cell(event['index'], 'Min', event['old'])
+
+                        with self._out2:
+                            print(r'Error : bad INT format -> use -?[0-9]+ .')
+
+                
+                elif self._dataframeInputs['DataType'][event['index']] == 'DOUBLE':
+
+                    if re.search(r'^-? ?\d+\.$', event['new']):
+                        if self._dataframeInputs['Default'][event['index']] and (float(self._dataframeInputs['Default'][event['index']]) < float(event['new']+'0')):
+                            self._inouttab.edit_cell(event['index'], 'Min', event['old'])
+
+                            with self._out2:
+                                print('Error : Minimum > Default.')
+
+                        self._inouttab.edit_cell(event['index'], 'Min', event['new']+'0')
+                        
+                    elif re.search(r'^-? ?\d+\.\d+$', event['new']):
+                        if self._dataframeInputs['Default'][event['index']] and (float(self._dataframeInputs['Default'][event['index']]) < float(event['new'])):
+                            self._inouttab.edit_cell(event['index'], 'Min', event['old'])
+
+                            with self._out2:
+                                print('Error : Minimum > Default.')
+
+                    elif re.search(r'^-? ?\d+$', event['new']):
+                        if self._dataframeInputs['Default'][event['index']] and (float(self._dataframeInputs['Default'][event['index']]) < float(event['new'])):
+                            self._inouttab.edit_cell(event['index'], 'Min', event['old'])
+
+                            with self._out2:
+                                print('Error : Minimum > Default.')
+
+                        else:
+                            self._inouttab.edit_cell(event['index'], 'Min', event['new']+'.0')
+
+                    else:
+                        self._inouttab.edit_cell(event['index'], 'Min', event['old'])
+
+                        with self._out2:
+                            print(r'Error : bad DOUBLE format -> use -?[0-9]+.[0-9]* .')
+                    
+
+                else:
+                    self._inouttab.edit_cell(event['index'], 'Min', event['old'])
+
+                    with self._out2:
+                        print('Error : this data type does not handle min nand max, or is not defined yet.')
         
 
         #UPDATE MAX
@@ -966,76 +1159,82 @@ class createUnit():
 
             self._dataframeInputs = self._inouttab.get_changed_df()
 
-            if self._dataframeInputs['DataType'][event['index']] == 'INT':
-
-                search = re.search(r'^-? ?\d+\.', event['new'])
-                if search:
-                    if self._dataframeInputs['Default'][event['index']] and (self._dataframeInputs['Default'][event['index']] > event['new'][:search.end()-1]):
-                        self._inouttab.edit_cell(event['index'], 'Max', event['old'])
-
-                        with self._out2:
-                            print('Maximum < Default !')
-
-                    else:
-                        self._inouttab.edit_cell(event['index'], 'Max', event['new'][:search.end()-1])
-
-
-                elif re.search(r'^-? ?\d+$', event['new']):
-                    if self._dataframeInputs['Default'][event['index']] and (self._dataframeInputs['Default'][event['index']] > event['new']):
-                        self._inouttab.edit_cell(event['index'], 'Max', event['old'])
-
-                        with self._out2:
-                            print('Maximum < Default !')
-
-                else:
-
-                    self._inouttab.edit_cell(event['index'], 'Max', event['old'])
-
-                    with self._out2:
-                        print(r'Bad INT format : use -?[0-9]+ .')
-
-            
-            elif self._dataframeInputs['DataType'][event['index']] == 'DOUBLE':
-
-                if re.search(r'^-? ?\d+\.$', event['new']):
-                    if self._dataframeInputs['Default'][event['index']] and (self._dataframeInputs['Default'][event['index']] > event['new']+'0'):
-                        self._inouttab.edit_cell(event['index'], 'Max', event['old'])
-
-                        with self._out2:
-                            print('Maximum < Default !')
-
-                    self._inouttab.edit_cell(event['index'], 'Max', event['new']+'0')
-                    
-                elif re.search(r'^-? ?\d+\.\d+$', event['new']):
-                    if self._dataframeInputs['Default'][event['index']] and (self._dataframeInputs['Default'][event['index']] > event['new']):
-                        self._inouttab.edit_cell(event['index'], 'Max', event['old'])
-
-                        with self._out2:
-                            print('Maximum < Default !')
-
-                elif re.search(r'^-? ?\d+$', event['new']):
-                    if self._dataframeInputs['Default'][event['index']] and (self._dataframeInputs['Default'][event['index']] > event['new']):
-                        self._inouttab.edit_cell(event['index'], 'Max', event['old'])
-
-                        with self._out2:
-                            print('Maximum < Default !')
-
-                    else:
-                        self._inouttab.edit_cell(event['index'], 'Max', event['new']+'.0')
-
-                else:
-                    self._inouttab.edit_cell(event['index'], 'Max', event['old'])
-
-                    with self._out2:
-                        print(r'Bad DOUBLE format : use -?[0-9]+.[0-9]* .')
-                
-
-            else:
+            if self._dataframeInputs['Min'][event['index']] and (float(self._dataframeInputs['Max'][event['index']]) < float(self._dataframeInputs['Min'][event['index']])):
                 self._inouttab.edit_cell(event['index'], 'Max', event['old'])
 
                 with self._out2:
-                    print('This data type does not handle min nand max, or is not defined yet.')
+                    print('Error : Minimum > Maximum.')
+            
+            else:
+                if self._dataframeInputs['DataType'][event['index']] == 'INT':
 
+                    search = re.search(r'^-? ?\d+\.', event['new'])
+                    if search:
+                        if self._dataframeInputs['Default'][event['index']] and (self._dataframeInputs['Default'][event['index']] > event['new'][:search.end()-1]):
+                            self._inouttab.edit_cell(event['index'], 'Max', event['old'])
+
+                            with self._out2:
+                                print('Error : Maximum < Default.')
+
+                        else:
+                            self._inouttab.edit_cell(event['index'], 'Max', event['new'][:search.end()-1])
+
+
+                    elif re.search(r'^-? ?\d+$', event['new']):
+                        if self._dataframeInputs['Default'][event['index']] and (self._dataframeInputs['Default'][event['index']] > event['new']):
+                            self._inouttab.edit_cell(event['index'], 'Max', event['old'])
+
+                            with self._out2:
+                                print('Error : Maximum < Default.')
+
+                    else:
+
+                        self._inouttab.edit_cell(event['index'], 'Max', event['old'])
+
+                        with self._out2:
+                            print(r'Error : bad INT format -> use -?[0-9]+ .')
+
+                
+                elif self._dataframeInputs['DataType'][event['index']] == 'DOUBLE':
+
+                    if re.search(r'^-? ?\d+\.$', event['new']):
+                        if self._dataframeInputs['Default'][event['index']] and (self._dataframeInputs['Default'][event['index']] > event['new']+'0'):
+                            self._inouttab.edit_cell(event['index'], 'Max', event['old'])
+
+                            with self._out2:
+                                print('Error : Maximum < Default.')
+
+                        self._inouttab.edit_cell(event['index'], 'Max', event['new']+'0')
+                        
+                    elif re.search(r'^-? ?\d+\.\d+$', event['new']):
+                        if self._dataframeInputs['Default'][event['index']] and (self._dataframeInputs['Default'][event['index']] > event['new']):
+                            self._inouttab.edit_cell(event['index'], 'Max', event['old'])
+
+                            with self._out2:
+                                print('Error : Maximum < Default.')
+
+                    elif re.search(r'^-? ?\d+$', event['new']):
+                        if self._dataframeInputs['Default'][event['index']] and (self._dataframeInputs['Default'][event['index']] > event['new']):
+                            self._inouttab.edit_cell(event['index'], 'Max', event['old'])
+
+                            with self._out2:
+                                print('Error : Maximum < Default.')
+
+                        else:
+                            self._inouttab.edit_cell(event['index'], 'Max', event['new']+'.0')
+
+                    else:
+                        self._inouttab.edit_cell(event['index'], 'Max', event['old'])
+
+                        with self._out2:
+                            print(r'Error : bad DOUBLE format -> use -?[0-9]+.[0-9]* .')
+                    
+
+                else:
+                    self._inouttab.edit_cell(event['index'], 'Max', event['old'])
+
+                    with self._out2:
+                        print('Error : this data type does not handle min nand max, or is not defined yet.')
 
 
 
@@ -1045,6 +1244,10 @@ class createUnit():
 
 
     def _row_added(self, event, widget):
+
+        """
+        Handles a row addition in the qgrid widget
+        """
 
         self._inouttab.off('cell_edited', self._cell_edited)
 
@@ -1064,7 +1267,40 @@ class createUnit():
 
 
 
-    def display(self, dic):
+    def displayMenu(self, dic):
+
+        """
+        Displays the unit model creation menu of pyrcop2ml's UI.
+
+        This method is the only one available for the user in this class. Any other attribute or
+        method call may break the code.
+
+        Parameters :\n
+            - dic : dict(type:datas)\n
+                datas = {
+                        'Path': '',
+                        'Model type': 'unit',
+                        'Model name': '',
+                        'Authors': '',
+                        'Institution': '',
+                        'Reference': '',
+                        'Abstract': ''
+                        }
+        """
+
+        listkeys = ['Path','Model type','Model name','Authors','Institution','Reference','Abstract']
+
+        for i in dic.keys():
+
+            if i not in listkeys:
+                raise Exception("Could not display composition model creation menu : parameter dic from self.displayMenu(self, dic) must contain these keys ['Path','Model type','Model name','Authors','Institution','Reference','Abstract']")
+
+            elif i == 'Model type' and not dic[i] == 'unit':
+                raise Exception('Bad parameter error : model type is not unit whereas this is unit creation model menu.')
+
+            else:
+                listkeys.remove(i)
+
 
         self._datas = dic
 

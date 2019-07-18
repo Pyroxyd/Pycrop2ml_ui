@@ -8,7 +8,7 @@ import pandas
 from IPython.display import display
 
 from pycrop2ml_ui.menus.edition import editmenu
-from PyCrop2ML.src.pycropml import pparse
+from pycropml import pparse
 
 
 
@@ -66,9 +66,8 @@ class editUnit():
             'Name':[i.name for i in self._xmlfile.outputs],
             'Description': [i.description for i in self._xmlfile.outputs],
             'InputType': pandas.Categorical([i.inputtype for i in self._xmlfile.outputs], categories=['variable','parameter']),
-            'Category': pandas.Categorical([(i.variablecategory if hasattr(i,'variablecategory') else i.parametercategory) for i in self._xmlfile.outputs], categories=['constant','species','genotypic','soil','private','state','rate','auxiliary']),
+            'Category': pandas.Categorical([i.variablecategory for i in self._xmlfile.outputs], categories=['state','rate','auxiliary']),
             'DataType': pandas.Categorical([i.datatype for i in self._xmlfile.outputs], categories=['DOUBLE','DOUBLELIST','CHARLIST','INT','INTLIST','STRING','STRINGLIST','FLOAT','FLOATLIST','BOOLEAN','DATE','DATELIST']),
-            'Default': [i.default for i in self._xmlfile.outputs],
             'Min': [i.min for i in self._xmlfile.outputs],
             'Max': [i.max for i in self._xmlfile.outputs],
             'Unit': [i.unit for i in self._xmlfile.outputs],
@@ -88,9 +87,11 @@ class editUnit():
     def _parse(self):
 
         split = re.split(r'\\', self._datas['Path'])
+
         parse = ''
         for i in split[:-1]:
-            parse += i + '\\'
+            parse += i + r'\\'
+
         parsing = pparse.model_parser(parse)
         
         for j in parsing:
@@ -107,18 +108,13 @@ class editUnit():
             finally:
                 self._out.clear_output()
                 self._out2.clear_output()
-                del self
         
         self._buildEdit()
 
 
 
     def _updateParam(self):
-
-        self._dataframeIn = self._qgridIn.get_changed_df()
-        self._dataframeOut = self._qgridOut.get_changed_df()
-        self._dataframeAlgo = self._qgridAlgo.get_changed_df()
-
+       
         for i in range(0, len(self._dataframeIn)):
 
             if self._dataframeIn['InputType'][i] == 'parameter':
@@ -127,8 +123,6 @@ class editUnit():
 
 
         
-
-
     def _displayParamset(self):
 
         self._out.clear_output()
@@ -211,7 +205,14 @@ class editUnit():
 
         
         self._dataframeIn = self._qgridIn.get_changed_df()
+        self._dataframeIn.reset_index(inplace=True)
+
         self._dataframeOut = self._qgridOut.get_changed_df()
+        self._dataframeIn.reset_index(inplace=True)
+
+        self._dataframeAlgo = self._qgridAlgo.get_changed_df()
+        self._dataframeAlgo.reset_index(inplace=True)
+
 
         if any(['' in self._dataframeIn['Name'],'' in self._dataframeIn['Description'],'' in self._dataframeIn['InputType'],'' in self._dataframeIn['Category'],'' in self._dataframeIn['DataType'],'' in self._dataframeIn['Unit']]):
             
@@ -244,9 +245,6 @@ class editUnit():
 
         except:
             raise Exception('Could not load edition menu.')
-
-        finally:
-            del self
 
 
 

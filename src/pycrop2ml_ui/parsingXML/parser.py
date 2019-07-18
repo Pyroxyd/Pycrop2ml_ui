@@ -24,11 +24,10 @@ class fileXML():
             self.file = open(self.file, 'r')
         
         except IOError as ioerr:
-            print('Could not open file {}. {}'.format(self.file, ioerr))
-            return False
-
-        else:
-            return True
+            raise Exception('Could not open file {}. {}'.format(self.file, ioerr))
+        
+        finally:
+            del self
 
     
     def fileClose(self):

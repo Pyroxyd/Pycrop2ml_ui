@@ -8,10 +8,16 @@ from pycrop2ml_ui.menus.creation import createcomposition
 
 from pycrop2ml_ui.cpackage.CreationRepository import mkdirModel
 from pycrop2ml_ui.model import MainMenu
-from pycrop2ml_ui.browser.PathFetcher import FileBrowser
+from pycrop2ml_ui.browser.TkinterPath import getPath
 
 
 class createMenu():
+
+
+    """
+    Class providing a display of model creation menu for pycrop2ml's user interface.
+    """
+
 
     def __init__(self):
 
@@ -48,7 +54,12 @@ class createMenu():
 
 
 
+
     def _createFile(self):
+
+        """
+        Initializes the model's xml file.
+        """
 
         self._out2.clear_output()
         
@@ -58,7 +69,7 @@ class createMenu():
             raise Exception("File composition|unit.{}.xml already exists.".format(self._modelName.value))
         
         else:
-
+            
             if(self._datas['Model type'] == 'unit'):
 
                 try:
@@ -87,6 +98,10 @@ class createMenu():
 
     def _eventCreate(self, b):
 
+        """
+        Handles create button on_click event
+        """
+
         self._out2.clear_output()
 
         with self._out2:
@@ -97,15 +112,14 @@ class createMenu():
             
             except:
                 raise Exception('Could not load directory creation function.')
-            
-            finally:
-                self._out.clear_output()
-                self._out2.clear_output()
-                del self
 
 
 
     def _eventApply(self, b):
+
+        """
+        Handles apply button on_click event
+        """
 
         self._out2.clear_output()
 
@@ -116,10 +130,11 @@ class createMenu():
                             'Path': self._path.value,
                             'Model type': self._toggle.value,
                             'Model name': self._modelName.value,
-                            'Author': self._authors.value,
+                            'Authors': self._authors.value,
                             'Institution': self._institution.value,
                             'Reference': self._reference.value,
-                            'Abstract': self._abstract.value}
+                            'Abstract': self._abstract.value
+                            }
 
                 self._out.clear_output()
                     
@@ -127,35 +142,27 @@ class createMenu():
 
                     with self._out:
                         if self._datas['Model type'] == 'unit':
-
                             try:
                                 unit = createunit.createUnit()
-                                unit.display(self._datas)
+                                unit.displayMenu(self._datas)
 
                             except:
                                 os.remove("{}/unit.{}.xml".format(self._datas['Path'], self._datas['Model name']))
                                 self._out.clear_output()
-                                self._out2.clear_output()
+                                self._out2.clear_output()                        
                                 raise Exception('Could not load unit creation model.')
-                            
-                            finally:                             
-                                del self
 
                         else:
-
                             try:
                                 composition = createcomposition.createComposition()
-                                composition.display(self._datas)
+                                composition.displayMenu(self._datas)
 
                             except:
                                 os.remove("{}/composition.{}.xml".format(self._datas['Path'], self._datas['Model name']))
                                 self._out.clear_output()
                                 self._out2.clear_output()
                                 raise Exception('Could not load composition creation model.')
-
-                            finally:   
-                                del self
-
+                                
             else:
                 with self._out:
                     print("This package does not exist.")
@@ -187,51 +194,50 @@ class createMenu():
                   
     def _eventCancel(self, b):
 
+        """
+        Handles cancel button on_click event
+        """
+
         self._out.clear_output()
         self._out2.clear_output()
 
         with self._out:
             
             try:
-                tmp = MainMenu.displayMainMenu()
+                tmp = MainMenu.mainMenu()
                 tmp.displayMenu()
 
             except:
                 raise Exception('Could not load mainmenu.')
 
-            finally:
-                del self
-
 
 
     def _eventBrowse(self, b):
 
-        def eventTmp(b):
-
-            self._path.value = tmp.path
-            self._out2.clear_output()
-
+        """
+        Handles browse button on_click event
+        """
 
         self._out2.clear_output()
-        tmp = FileBrowser()
-        buttontmp = wg.Button(value=False,description='Select',disabled=False,button_style='success')
-
-        with self._out2:
-            display(tmp.widget())
-            display(buttontmp)
-
-        buttontmp.on_click(eventTmp)
+        self._path.value = getPath()            
             
-            
+
 
     def displayMenu(self):
 
+        """
+        Displays the model creation menu of pyrcop2ml's UI.
+
+        This method is the only one available for the user in this class. Any other attribute or
+        method call may break the code.
+        """
+
         display(self._out)
+        display(self._out2)
 
         with self._out:
             display(self._displayer)
-        display(self._out2)
-
+        
         self._apply.on_click(self._eventApply)
         self._cancel.on_click(self._eventCancel)
         self._create.on_click(self._eventCreate)

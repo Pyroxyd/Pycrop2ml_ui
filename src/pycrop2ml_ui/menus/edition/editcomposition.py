@@ -44,17 +44,19 @@ class editComposition():
         
         finally:
             file.close()
-            del self
 
-    
+
+  
     def _parse(self):
+
+        with self._out2:
+            print(self._datas['Path'])
         
         try:
             f = open(self._datas['Path'],"r")
 
         except IOError as ioerr:
-            with self._out2:
-                print('File {} could not be opened in read mode. {}'.format(self._datas['Path'], ioerr))
+            raise Exception('File {} could not be opened in read mode. {}'.format(self._datas['Path'], ioerr))
 
         else:
 
@@ -127,64 +129,42 @@ class editComposition():
 
 
 
-
     def _write(self):
 
+               
         try:
-            f = open(self._datas['Path'], "r")
+            fw = open(self._datas['Path'], "w")
 
         except IOError as ioerr:
-            raise Exception('File {} could not be opened in read mode. {}'.format(self._datas['Path'], ioerr))
+            raise Exception('File {} could not be opened in write mode. {}'.format(self._datas['Path'], ioerr))
 
         else:
-            with self._out2:
-                print("Modifying file composition.{}.xml ...".format(self._datas['Model name']))
 
+            split = re.split(r'\\', self._datas['Path'])
 
-            buffer = f.read()
+            fw.write('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE ModelComposition PUBLIC " " "https://raw.githubusercontent.com/AgriculturalModelExchangeInitiative/crop2ml/master/ModelComposition.dtd">')
+            fw.write('<ModelComposition name="{0}" id="{1}.{0}" version="001" timestep = "1">'.format(self._datas['Model name'], split[-4]))
+            fw.write('\n\t<Description>\n\t\t<Title>{}</Title>\n\t\t<Authors>{}</Authors>\n\t\t<Institution>{}</Institution>\n\t\t<Reference>{}</Reference>\n\t\t<Abstract>{}</Abstract>'.format(self._title.value, self._authors.value, self._institution.value, self._reference.value, self._abstract.value))
+            fw.write('\n\t</Description>\n\n\t<Composition>')
 
-            f.close()
+            for i in range(0, len(self._dataframe['Model type'])):
 
-            balisedebut = re.search(r'(>)\n+.*?<Description>', buffer)
-        
-            if balisedebut:
-                
-                try:
-                    fw = open(self._datas['Path'], "w")
-
-                except IOError as ioerr:
-                    raise Exception('File {} could not be opened in write mode. {}'.format(self._datas['Path'], ioerr))
-
+                if self._dataframe['Model type'][i] == 'Unit':
+                    fw.write('\n\t\t<Model name="{0}" id="{1}.{0}" filename="{2}" />'.format(re.search(r'unit\.(.*?)\.xml',self._dataframe['Model name'][i]).group(1), self._datas['Model name'], self._dataframe['Model name'][i]))
                 else:
+                    fw.write('\n\t\t<Model name="{0}" id="{0}" filename="{1}" />'.format(re.search(r'composition\.(.*?)\.xml',self._dataframe['Model name'][i]), self._dataframe['Model name'][i]))
 
-                    fw.write(format(buffer[:balisedebut.start()+1]))
+            fw.write("\n\n\t\t<Links>")
+            
+            for i in range(0, len(self._dataframelinks['Link type'])):
+                fw.write('\n\t\t\t<{} target="{}" source="{}" />'.format(self._dataframelinks['Link type'][i], self._dataframelinks['Target'][i], self._dataframelinks['Source'][i]))
+            
+            
+            fw.write('\n\n\t\t</Links>\n\t</Composition>\n</ModelComposition>')
+            fw.close()
 
-                    fw.write('\n\t<Description>\n\t\t<Title>{}</Title>\n\t\t<Authors>{}</Authors>\n\t\t<Institution>{}</Institution>\n\t\t<Reference>{}</Reference>\n\t\t<Abstract>{}</Abstract>'.format(self._title.value, self._authors.value, self._institution.value, self._reference.value, self._abstract.value))
-                    fw.write('\n\t</Description>\n\n\t<Composition>')
-
-                    for i in range(0, len(self._dataframe['Model type'])):
-
-                        if self._dataframe['Model type'][i] == 'Unit':
-                            fw.write('\n\t\t<Model name="{0}" id="{1}.{0}" filename="{2}" />'.format(re.search(r'unit\.(.*?)\.xml',self._dataframe['Model name'][i]).group(1), self._datas['Model name'], self._dataframe['Model name'][i]))
-                        else:
-                            fw.write('\n\t\t<Model name="{0}" id="{0}" filename="{1}" />'.format(re.search(r'composition\.(.*?)\.xml',self._dataframe['Model name'][i]), self._dataframe['Model name'][i]))
-
-                    fw.write("\n\n\t\t<Links>")
-                    
-                    for i in range(0, len(self._dataframelinks['Link type'])):
-                        fw.write('\n\t\t\t<{} target="{}" source="{}" />'.format(self._dataframelinks['Link type'][i], self._dataframelinks['Target'][i], self._dataframelinks['Source'][i]))
-                    
-                    
-                    fw.write('\n\n\t\t</Links>\n\t</Composition>\n</ModelComposition>')
-                    fw.close()
-
-                    with self._out2:
-                        print('File updated.')
-
-
-            else:
-                self._badSyntax(self._datas['Path'])
-                    
+            with self._out2:
+                print('File updated.')
 
 
 
@@ -196,7 +176,11 @@ class editComposition():
         if not any([not self._title.value, not self._authors.value, not self._institution.value, not self._reference.value, not self._abstract.value]):
 
             self._dataframe = self._datamodeltab.get_changed_df()
+            self._dataframe.reset_index(inplace=True)
+
             self._dataframelinks = self._datalinktab.get_changed_df()
+            self._dataframelinks.reset_index(inplace=True)
+
             self._write()
         
         else:
@@ -231,10 +215,6 @@ class editComposition():
 
         except:
             raise Exception('Could not load edition menu.')
-
-        finally:
-            del self
-
         
 
 
@@ -259,6 +239,7 @@ class editComposition():
                 'Model type': pandas.Categorical([''], categories=['','Unit','Composition']),
                 'Model name': ['']
                 },index=None)
+            self._datamodeltab = qgrid.show_grid(self._dataframe, show_toolbar=True)
 
 
         if self._listlink:
@@ -275,6 +256,7 @@ class editComposition():
                 'Target': [''],
                 'Source': ['']
                 },index=None)
+            self._datalinktab = qgrid.show_grid(self._dataframelinks, show_toolbar=True)
         
 
         self._tab = wg.Tab([self._informations, self._datamodeltab, self._datalinktab])
@@ -357,3 +339,4 @@ class editComposition():
         self._datalinktab.on('row_added', row_added)
         self._datamodeltab.on('row_added', row_added2)
         self._datamodeltab.on('cell_edited', cell_edited)
+        

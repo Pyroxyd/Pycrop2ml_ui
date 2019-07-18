@@ -4,7 +4,7 @@ import re
 
 from IPython.display import display
 
-from pycrop2ml_ui.browser.PathFetcher import FileBrowser
+from pycrop2ml_ui.browser.TkinterPath import getPath
 from pycrop2ml_ui.menus.edition import editunit, editcomposition
 from pycrop2ml_ui.model import MainMenu
 
@@ -36,7 +36,7 @@ class editMenu():
 
 
 
-    def _eventBrowse(self, b):
+    def _eventEdit(self, b):
 
         self._out2.clear_output()
         
@@ -73,18 +73,9 @@ class editMenu():
 
 
     def _eventBrowse(self, b):
-
-        def eventTmp(b):
-            self._modelPath.value = tmp.path
-            self._out2.clear_output()
-
+        
         self._out2.clear_output()
-        tmp = FileBrowser()
-        buttontmp = wg.Button(value=False,description='Select',disabled=False,button_style='success')
-
-        with self._out2:
-            display(wg.VBox([tmp.widget(), buttontmp]))
-        buttontmp.on_click(eventTmp)
+        self._modelPath.value = getPath()
 
 
 
@@ -96,14 +87,11 @@ class editMenu():
         with self._out:
 
             try:
-                tmp = MainMenu.displayMainMenu()
+                tmp = MainMenu.mainMenu()
                 tmp.displayMenu()
 
             except:
                 raise Exception('Could not load mainmenu.')
-
-            finally:
-                del self
             
 
     
@@ -129,7 +117,7 @@ class editMenu():
             display(self._displayer)
         display(self._out2)
 
-        self._edit.on_click(self._eventBrowse)
+        self._edit.on_click(self._eventEdit)
         self._browse.on_click(self._eventBrowse)
         self._cancel.on_click(self._eventCancel)
         self._modelPath.observe(_on_value_change, names='value')
