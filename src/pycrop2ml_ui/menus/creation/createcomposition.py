@@ -117,6 +117,7 @@ class createComposition():
 
         self._out2.clear_output()
         self._dataFrame = self._dataFrameqgrid.get_changed_df()
+        self._dataFrame.reset_index(inplace=True)
 
 
         def checkQgrid():
@@ -125,10 +126,8 @@ class createComposition():
             Checks wheter the tab of qgrid widgets is complete or not
             """
 
-            for i in range(0,len(self._dataFrame['Model name'])):
-                
-                if self._dataFrame['Model name'][i] == '':
-                    return False
+            if '' in [j for j in self._dataFrame['Model name']]:
+                return False
 
             return True
         
@@ -140,8 +139,8 @@ class createComposition():
             self._listLinkTarget = ['']
 
 
-            for it in range(0,len(self._dataFrame['Model name'])):
-                self._listModel.append(re.search(r'\.(.*?)\.xml',self._dataFrame['Model name'][it]).group(1))
+            for i in [j for j in self._dataFrame['Model name']]:
+                self._listModel.append(re.search(r'\.(.*?)\.xml',i).group(1))
             
             split = re.split(r'\\', self._datas['Path'])
 
@@ -151,16 +150,14 @@ class createComposition():
             
             parsing = pparse.model_parser(parse)
 
-            for i in range(0,len(parsing)):
+            for i in parsing:
+                if i.name in self._listModel: 
 
-                if parsing[i].name in self._listModel:         
-                    for j in range(0, len(parsing[i].inputs)):
+                    for j in i.inputs:
+                        self._listLinkTarget.append('{}.{}'.format(i.name, j.name))
 
-                        self._listLinkTarget.append('{}.{}'.format(parsing[i].name, parsing[i].inputs[j].name))
-
-                    for k in range(0, len(parsing[i].outputs)):
-
-                        self._listLinkSource.append('{}.{}'.format(parsing[i].name, parsing[i].outputs[k].name))
+                    for k in i.outputs:
+                        self._listLinkSource.append('{}.{}'.format(i.name, k.name))
 
             self._displayLink()
 
@@ -205,6 +202,7 @@ class createComposition():
 
         self._out2.clear_output()
         self._dataFrameLink = self._dataFrameLinkqgrid.get_changed_df()
+        self._dataFrameLink.reset_index(inplace=True)
 
 
         def checkLinks():
@@ -261,57 +259,57 @@ class createComposition():
         """
 
         self._out2.clear_output()
-        self._dataFrameLinkqgrid.off('cell_edited', self._cell_edited_link)
+        widget.off('cell_edited', self._cell_edited_link)
 
-        self._dataFrameLink = self._dataFrameLinkqgrid.get_changed_df()
+        self._dataFrameLink = widget.get_changed_df()
 
         if event['column'] == 'Link type':
             if event['new'] == 'InputLink':
-                self._dataFrameLinkqgrid.edit_cell(event['index'], 'Source', '')
+                widget.edit_cell(event['index'], 'Source', '')
             
             elif event['new'] == 'OutputLink':
-                self._dataFrameLinkqgrid.edit_cell(event['index'], 'Target', '')
+                widget.edit_cell(event['index'], 'Target', '')
 
 
         if event['column'] == 'Source' and not event['new'] == '':
             if self._dataFrameLink['Link type'][event['index']] == 'InputLink':
-                self._dataFrameLinkqgrid.edit_cell(event['index'], 'Source', '')
+                widget.edit_cell(event['index'], 'Source', '')
 
                 with self._out2:
                     print('Warning : Source is not required for an input link.')
             
             elif event['new'] == self._dataFrameLink['Target'][event['index']]:
-                self._dataFrameLinkqgrid.edit_cell(event['index'], 'Source', event['old'])
+                widget.edit_cell(event['index'], 'Source', event['old'])
             
                 with self._out2:
                     print('Warning : Source and Target cannot reach the same value.')
             
             elif event['new'].split('.')[0] == self._dataFrameLink['Target'][event['index']].split('.')[0]:
-                self._dataFrameLinkqgrid.edit_cell(event['index'], 'Source', event['old'])
+                widget.edit_cell(event['index'], 'Source', event['old'])
 
                 with self._out2:
                     print('Warning : Source and Target cannot come from the same model.')
         
         elif event['column'] == 'Target' and not event['new'] == '':
             if self._dataFrameLink['Link type'][event['index']] == 'OutputLink':
-                self._dataFrameLinkqgrid.edit_cell(event['index'], 'Target', '')
+                widget.edit_cell(event['index'], 'Target', '')
 
                 with self._out2:
                     print('Warning : Target is not required for an output link.')
             
             elif event['new'] == self._dataFrameLink['Source'][event['index']]:
-                self._dataFrameLinkqgrid.edit_cell(event['index'], 'Target', event['old'])
+                widget.edit_cell(event['index'], 'Target', event['old'])
             
                 with self._out2:
                     print('Warning : Source and Target cannot reach the same value.')
             
             elif event['new'].split('.')[0] == self._dataFrameLink['Source'][event['index']].split('.')[0]:
-                self._dataFrameLinkqgrid.edit_cell(event['index'], 'Target', event['old'])
+                widget.edit_cell(event['index'], 'Target', event['old'])
 
                 with self._out2:
                     print('Warning : Source and Target cannot come from the same model.')
 
-        self._dataFrameLinkqgrid.on('cell_edited', self._cell_edited_link)
+        widget.on('cell_edited', self._cell_edited_link)
 
 
 
@@ -321,22 +319,22 @@ class createComposition():
         Handles every cell edition event in model list qgrid widget
         """
 
-        self._dataFrameqgrid.off('cell_edited', self._cell_edited)
+        widget.off('cell_edited', self._cell_edited)
         self._out2.clear_output()
         
-        self._dataFrame = self._dataFrameqgrid.get_changed_df()
-        self._dataFrame.reset_index(inplace=True)
+        df = widget.get_changed_df()
 
-        for i in range(0, len(self._dataFrame['Model name'])):
+        names = [i for i in df['Model name']]
+        names.remove(event['new'])
 
-            if not i == event['index'] and self._dataFrame['Model name'][i] == event['new']:
-                self._dataFrameqgrid.edit_cell(event['index'], 'Model name', event['old'])
+        if event['new'] in names:
+            widget.edit_cell(event['index'], 'Model name', event['old'])
 
-                with self._out2:
-                    print('This model is already in the composition.')
+            with self._out2:
+                print('Error : this model is already in the composition.')
 
 
-        self._dataFrameqgrid.on('cell_edited', self._cell_edited)
+        widget.on('cell_edited', self._cell_edited)
 
 
 
@@ -346,11 +344,11 @@ class createComposition():
         Handles a row addition in the qgrid widget
         """
 
-        self._dataFrameqgrid.off('cell_edited', self._cell_edited)
+        widget.off('cell_edited', self._cell_edited)
 
-        self._dataFrameqgrid.edit_cell(event['index'], 'Model name', '')
+        widget.edit_cell(event['index'], 'Model name', '')
 
-        self._dataFrameqgrid.on('cell_edited', self._cell_edited)
+        widget.on('cell_edited', self._cell_edited)
 
 
 
@@ -360,13 +358,12 @@ class createComposition():
         Handles a row addition in the qgrid widget
         """
 
-        self._dataFrameLinkqgrid.off('cell_edited', self._cell_edited_link)
+        widget.off('cell_edited', self._cell_edited_link)
 
-        self._dataFrameLinkqgrid.edit_cell(event['index'], 'Link type', '')
-        self._dataFrameLinkqgrid.edit_cell(event['index'], 'Target', '')
-        self._dataFrameLinkqgrid.edit_cell(event['index'], 'Source', '')
+        for column in ['Link type','Target','Source']:
+            widget.edit_cell(event['index'], column, '')
 
-        self._dataFrameLinkqgrid.on('cell_edited', self._cell_edited_link)
+        widget.on('cell_edited', self._cell_edited_link)
 
 
 
@@ -400,7 +397,7 @@ class createComposition():
                 raise Exception("Could not display composition model creation menu : parameter dic from self.displayMenu(self, dic) must contain these keys ['Path','Model type','Model name','Authors','Institution','Reference','Abstract']")
             
             elif i == 'Model type' and not dic[i] == 'composition':
-                raise Exception('Bad parameter error : model type is not composition whereas this is composition creation model menu.')
+                raise Exception("Bad value error : Model type key's value must be composition.")
 
             else:
                 listekeys.remove(i)
