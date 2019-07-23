@@ -15,7 +15,7 @@ class createComposition():
 
 
     """
-    Class providing a display of composition model creation menu for pycrop2ml's user interface.
+    Class providing the display of composition model creation menu for pycrop2ml's user interface.
     """
 
 

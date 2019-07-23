@@ -163,9 +163,6 @@ class editComposition():
             fw.write('\n\n\t\t</Links>\n\t</Composition>\n</ModelComposition>')
             fw.close()
 
-            with self._out2:
-                print('File updated.')
-
 
 
     def _eventApply(self, b):

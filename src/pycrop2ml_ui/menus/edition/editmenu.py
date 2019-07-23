@@ -12,6 +12,10 @@ from pycrop2ml_ui.model import MainMenu
 
 class editMenu():
 
+    """
+    Class providing the display of the model edition menu for pycrop2ml's user interface.
+    """
+
     def __init__(self):
            
         #outputs
@@ -37,6 +41,11 @@ class editMenu():
 
 
     def _eventEdit(self, b):
+
+
+        """
+        Handles edit button on_click event
+        """
 
         self._out2.clear_output()
         
@@ -73,6 +82,10 @@ class editMenu():
 
 
     def _eventBrowse(self, b):
+
+        """
+        Handles browse button on_click event
+        """
         
         self._out2.clear_output()
         self._modelPath.value = getPath()
@@ -80,6 +93,10 @@ class editMenu():
 
 
     def _eventCancel(self, b):
+
+        """
+        Handles cancel button on_click event
+        """
 
         self._out.clear_output()
         self._out2.clear_output()
@@ -91,14 +108,27 @@ class editMenu():
                 tmp.displayMenu()
 
             except:
-                raise Exception('Could not load mainmenu.')
+                raise Exception('Could not load mainMenu.')
             
 
     
 
     def displayMenu(self):
 
+        """
+        Displays the model edition menu of pyrcop2ml's UI.
+
+        This method is the only one available for the user in this class. Any other attribute or
+        method call may break the code.
+        """
+
         def _on_value_change(change):
+
+            """
+            Handles changes from the attribute _modelPath.
+
+            Find every model in xml format in the selected path.
+            """
 
             self._paths.clear()
             tmp = []

@@ -57,7 +57,7 @@ class testSet():
 class createUnit():
 
     """
-    Class providing a display of unit model creation menu for pycrop2ml's user interface.
+    Class providing the display of unit model creation menu for pycrop2ml's user interface.
     """
 
 
@@ -984,6 +984,7 @@ class createUnit():
             widget.edit_cell(event['index'], 'Min', '')
             widget.edit_cell(event['index'], 'Max', '')
             widget.edit_cell(event['index'], 'Len', '')
+            widget.edit_cell(event['index'], 'Default', '')
 
             if not df['Type'][event['index']] == 'output':
 
@@ -1015,7 +1016,10 @@ class createUnit():
         #UPDATE DEFAULT
         elif event['column'] == 'Default':
 
-            if df['Type'][event['index']] == 'output':
+            if event['new'].replace(' ','') == '':
+                widget.edit_cell(event['index'], 'Default', '')
+            
+            elif df['Type'][event['index']] == 'output':
                 widget.edit_cell(event['index'], 'Default', '')
 
             else:      
@@ -1143,7 +1147,10 @@ class createUnit():
         #UPDATE MIN
         elif event['column'] == 'Min':
 
-            if df['Max'][event['index']] and (float(df['Max'][event['index']]) < float(event['new'])):
+            if event['new'].replace(' ','') == '':
+                widget.edit_cell(event['index'], 'Min', '')
+            
+            elif df['Max'][event['index']] and (float(df['Max'][event['index']]) < float(event['new'])):
                 widget.edit_cell(event['index'], 'Min', event['old'])
 
                 with self._out2:
@@ -1175,7 +1182,8 @@ class createUnit():
                             with self._out2:
                                 print('Error : Minimum > Default.')
 
-                        widget.edit_cell(event['index'], 'Min', event['new']+'0')
+                        else:
+                            widget.edit_cell(event['index'], 'Min', event['new']+'0')
                         
                     elif re.search(r'^-? ?\d+\.\d+$', event['new']):
                         if df['Default'][event['index']] and (float(df['Default'][event['index']]) < float(event['new'])):
@@ -1201,7 +1209,10 @@ class createUnit():
         #UPDATE MAX
         elif event['column'] == 'Max':
 
-            if df['Min'][event['index']] and (float(event['new']) < float(df['Min'][event['index']])):
+            if event['new'].replace(' ','') == '':
+                widget.edit_cell(event['index'], 'Max', '')
+            
+            elif df['Min'][event['index']] and (float(event['new']) < float(df['Min'][event['index']])):
                 widget.edit_cell(event['index'], 'Max', event['old'])
 
                 with self._out2:
@@ -1233,7 +1244,8 @@ class createUnit():
                             with self._out2:
                                 print('Error : Maximum < Default.')
 
-                        widget.edit_cell(event['index'], 'Max', event['new']+'0')
+                        else:
+                            widget.edit_cell(event['index'], 'Max', event['new']+'0')
                         
                     elif re.search(r'^-? ?\d+\.\d+$', event['new']):
                         if df['Default'][event['index']] and (float(df['Default'][event['index']]) > float(event['new'])):
@@ -1259,7 +1271,7 @@ class createUnit():
         #UPDATE LEN
         elif event['column'] == 'Len':
 
-            if not df['DataType'][event['index']] in ['STRINGARRAY','DATARRAY','INTARRAY','DOUBLEARRAY']:
+            if not df['DataType'][event['index']] in ['STRINGARRAY','DATEARRAY','INTARRAY','DOUBLEARRAY']:
                 widget.edit_cell(event['index'], 'Len', '')
 
                 with self._out2:
@@ -1269,7 +1281,7 @@ class createUnit():
                 widget.edit_cell(event['index'], 'Len', event['old'])
 
                 with self._out2:
-                    print('Error : you must assign a DataType before gibing a lenght.')
+                    print('Error : you must assign a DataType before giving a lenght.')
             
             else:
                 if not re.search(r'^ *-? ?\d+$', event['new']):
@@ -1285,7 +1297,7 @@ class createUnit():
     def _row_added(self, event, widget):
 
         """
-        Handles a row addition in the input & output qgrid widget
+        Handles a row addition in the input & output list qgrid widget
         """
 
         widget.off('cell_edited', self._cell_edited)
@@ -1323,7 +1335,7 @@ class createUnit():
         for i in dic.keys():
 
             if i not in listkeys:
-                raise Exception("Could not display composition model creation menu : parameter dic from self.displayMenu(self, dic) must contain these keys ['Path','Model type','Model name','Authors','Institution','Reference','Abstract']")
+                raise Exception("Could not display unit model creation menu : parameter dic from self.displayMenu(self, dic) must contain these keys ['Path','Model type','Model name','Authors','Institution','Reference','Abstract']")
 
             elif i == 'Model type' and not dic[i] == 'unit':
                 raise Exception("Bad value error : Model type key's value must be unit.")
