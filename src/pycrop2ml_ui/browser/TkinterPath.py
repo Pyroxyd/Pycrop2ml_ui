@@ -8,7 +8,7 @@ def getPath():
     root.directory = filedialog.askdirectory()
 
     try:
-        return root.directory.replace('/', '\\')
+        return root.directory.replace('/', '\\')+'\\crop2ml'
     
     except:
         raise Exception('Critical error while fetching the path.')

@@ -1,4 +1,5 @@
 import re
+from copy import deepcopy
 import ipywidgets as wg
 
 import qgrid
@@ -7,8 +8,8 @@ import pandas
 from IPython.display import display
 
 from pycrop2ml_ui.menus.edition import editmenu
-from pycrop2ml_ui.menus.edition import editunit_paramset
-from pycrop2ml_ui.menus.edition import editunit_testset
+from pycrop2ml_ui.menus.setsmanagement import manageparamset
+from pycrop2ml_ui.menus.setsmanagement import managetestset
 
 from pycropml import pparse
 
@@ -50,39 +51,69 @@ class editUnit():
         Creates inputs and outputs dataframes with datas collected from the xml file parsing
         """
 
-        self._title.value = self._xmlfile.description.Title
+        self._title.value = self._xmlfile.description.Title[:-6]
         self._authors.value = self._xmlfile.description.Authors
         self._institution.value = self._xmlfile.description.Institution
         self._reference.value = self._xmlfile.description.Reference
         self._abstract.value = self._xmlfile.description.Abstract
 
-        self._dataframeIn = pandas.DataFrame(data={
-            'Name': [i.name for i in self._xmlfile.inputs],
-            'Description': [i.description for i in self._xmlfile.inputs],
-            'InputType': pandas.Categorical([i.inputtype for i in self._xmlfile.inputs], categories=['','variable','parameter']),
-            'Category': pandas.Categorical([(i.variablecategory if hasattr(i,'variablecategory') else i.parametercategory) for i in self._xmlfile.inputs], categories=['','constant','species','genotypic','soil','private','state','rate','auxiliary']),
-            'DataType': pandas.Categorical([i.datatype for i in self._xmlfile.inputs], categories=['','DOUBLE','DOUBLELIST','DOUBLEARRAY','INT','INTLIST','INTARRAY','STRING','STRINGLIST','STRINGARRAY','BOOLEAN','DATE','DATELIST','DATEARRAY']),
-            'Len': [(i.len if hasattr(i, 'len') else '') for i in self._xmlfile.inputs],
-            'Default': [i.default for i in self._xmlfile.inputs],
-            'Min': [(i.min if i.min is not None else '') for i in self._xmlfile.inputs],
-            'Max': [(i.max if i.max is not None else '') for i in self._xmlfile.inputs],
-            'Unit': [i.unit for i in self._xmlfile.inputs],
-            'Uri': [(i.uri if i.uri is not None else '') for i in self._xmlfile.inputs]
-            })
+        if self._xmlfile.inputs:
+            self._dataframeIn = pandas.DataFrame(data={
+                'Name': [i.name for i in self._xmlfile.inputs],
+                'Description': [i.description for i in self._xmlfile.inputs],
+                'InputType': pandas.Categorical([i.inputtype for i in self._xmlfile.inputs], categories=['','variable','parameter']),
+                'Category': pandas.Categorical([(i.variablecategory if hasattr(i,'variablecategory') else i.parametercategory) for i in self._xmlfile.inputs], categories=['','constant','species','genotypic','soil','private','state','rate','auxiliary']),
+                'DataType': pandas.Categorical([i.datatype for i in self._xmlfile.inputs], categories=['','DOUBLE','DOUBLELIST','DOUBLEARRAY','INT','INTLIST','INTARRAY','STRING','STRINGLIST','STRINGARRAY','BOOLEAN','DATE','DATELIST','DATEARRAY']),
+                'Len': [(i.len if hasattr(i, 'len') else '') for i in self._xmlfile.inputs],
+                'Default': [i.default for i in self._xmlfile.inputs],
+                'Min': [(i.min if i.min is not None else '') for i in self._xmlfile.inputs],
+                'Max': [(i.max if i.max is not None else '') for i in self._xmlfile.inputs],
+                'Unit': [i.unit for i in self._xmlfile.inputs],
+                'Uri': [(i.uri if i.uri is not None else '') for i in self._xmlfile.inputs]
+                })
+        
+        else:
+            self._dataframeIn = pandas.DataFrame(data={
+                'Name': [''],
+                'Description': [''],
+                'InputType': pandas.Categorical([''], categories=['','variable','parameter']),
+                'Category': pandas.Categorical([''], categories=['','constant','species','genotypic','soil','private','state','rate','auxiliary']),
+                'DataType': pandas.Categorical([''], categories=['','DOUBLE','DOUBLELIST','DOUBLEARRAY','INT','INTLIST','INTARRAY','STRING','STRINGLIST','STRINGARRAY','BOOLEAN','DATE','DATELIST','DATEARRAY']),
+                'Len': [''],
+                'Default': [''],
+                'Min': [''],
+                'Max': [''],
+                'Unit': [''],
+                'Uri': ['']
+                })
 
         self._qgridIn = qgrid.show_grid(self._dataframeIn, show_toolbar=True)
         
-        self._dataframeOut = pandas.DataFrame(data={
-            'Name':[i.name for i in self._xmlfile.outputs],
-            'Description': [i.description for i in self._xmlfile.outputs],
-            'Category': pandas.Categorical([(i.variablecategory if hasattr(i, 'variablecategory') else '') for i in self._xmlfile.outputs], categories=['','state','rate','auxiliary']),
-            'DataType': pandas.Categorical([i.datatype for i in self._xmlfile.outputs], categories=['','DOUBLE','DOUBLELIST','DOUBLEARRAY','INT','INTLIST','INTARRAY','STRING','STRINGLIST','STRINGARRAY','BOOLEAN','DATE','DATELIST','DATEARRAY']),
-            'Len': [(i.len if hasattr(i, 'len') else '') for i in self._xmlfile.outputs],
-            'Min': [(i.min if i.min is not None else '') for i in self._xmlfile.outputs],
-            'Max': [(i.max if i.max is not None else '') for i in self._xmlfile.outputs],
-            'Unit': [i.unit for i in self._xmlfile.outputs],
-            'Uri': [(i.uri if i.uri is not None else '') for i in self._xmlfile.outputs]
-            })
+        if self._xmlfile.outputs:
+            self._dataframeOut = pandas.DataFrame(data={
+                'Name':[i.name for i in self._xmlfile.outputs],
+                'Description': [i.description for i in self._xmlfile.outputs],
+                'Category': pandas.Categorical([(i.variablecategory if hasattr(i, 'variablecategory') else '') for i in self._xmlfile.outputs], categories=['','state','rate','auxiliary']),
+                'DataType': pandas.Categorical([i.datatype for i in self._xmlfile.outputs], categories=['','DOUBLE','DOUBLELIST','DOUBLEARRAY','INT','INTLIST','INTARRAY','STRING','STRINGLIST','STRINGARRAY','BOOLEAN','DATE','DATELIST','DATEARRAY']),
+                'Len': [(i.len if hasattr(i, 'len') else '') for i in self._xmlfile.outputs],
+                'Min': [(i.min if i.min is not None else '') for i in self._xmlfile.outputs],
+                'Max': [(i.max if i.max is not None else '') for i in self._xmlfile.outputs],
+                'Unit': [i.unit for i in self._xmlfile.outputs],
+                'Uri': [(i.uri if i.uri is not None else '') for i in self._xmlfile.outputs]
+                })
+        
+        else:
+            self._dataframeOut = pandas.DataFrame(data={
+                'Name':[''],
+                'Description': [''],
+                'Category': pandas.Categorical([''], categories=['','state','rate','auxiliary']),
+                'DataType': pandas.Categorical([''], categories=['','DOUBLE','DOUBLELIST','DOUBLEARRAY','INT','INTLIST','INTARRAY','STRING','STRINGLIST','STRINGARRAY','BOOLEAN','DATE','DATELIST','DATEARRAY']),
+                'Len': [''],
+                'Min': [''],
+                'Max': [''],
+                'Unit': [''],
+                'Uri': ['']
+                })
 
         self._qgridOut = qgrid.show_grid(self._dataframeOut, show_toolbar=True)
 
@@ -96,12 +127,12 @@ class editUnit():
         if self._xmlfile.function:
             self._dataframeFunction = pandas.DataFrame(data={
                 'Function name': [i.name for i in self._xmlfile.function],
-                'File name': [i.filename for i in self._xmlfile.function]
+                'Filename': [i.filename for i in self._xmlfile.function]
             })
         else:
             self._dataframeFunction = pandas.DataFrame(data={
                 'Function name': [''],
-                'File name': ['']
+                'Filename': ['']
             })
 
         self._qgridFunction = qgrid.show_grid(self._dataframeFunction, show_toolbar=True)
@@ -145,50 +176,96 @@ class editUnit():
 
         """
         Fetches inputs changes and updates the parameters' list.
-
-        Calls paramset edition menu if there is at least one parameter in the model, testset edition menu else.
         """
 
-        self._out.clear_output()
-        self._out2.clear_output()
-
-        self._paramdict = dict()
-        self._paramsetdict = dict() #{paramset_name:[{param:value}, description]}
+        paramdict = dict()
+        paramsetdict = dict() #{paramset_name:[{param:value}, description]}
 
 
         for i in range(0, len(self._dataframeIn['Name'])):
 
             if self._dataframeIn['InputType'][i] == 'parameter':    
-                self._paramdict[self._dataframeIn['Name'][i]] = ''
+                paramdict[self._dataframeIn['Name'][i]] = ''   
+
+        if self._xmlfile.parametersets:
+            for paramset in self._xmlfile.parametersets.items():
+                paramsetdict[paramset[0]] = [deepcopy(paramdict), self._xmlfile.parametersets[paramset[0]].description]
+
+                for param,value in self._xmlfile.parametersets[paramset[0]].params.items():
+                    if param in paramdict:
+                        paramsetdict[paramset[0]][0][param] = value
+
+        return paramdict, paramsetdict
+
+
+
+    def _updateVar(self):
         
-        
-        if not self._paramdict:
+        """
+        Fetches inputs and outputs changes and updates the variables' list.
+        """
+
+        vardict = {'inputs':dict(),'outputs':dict()} #{inputs:{name:value},outputs:{name:value}}
+        testsets = dict() #{ testsetname: [ {testname: {inputs: {name:value}, outputs:{name:value}}}, description, parameterset ] }
+
+
+        for i in range(0,len(self._df['Inputs']['Name'])):
+            if self._df['Inputs']['InputType'][i] == 'variable':
+                vardict['inputs'][self._df['Inputs']['Name'][i]] = ''
+
+        for i in range(0,len(self._df['Outputs']['Name'])):
+            vardict['outputs'][self._df['Outputs']['Name'][i]] = ['','']
+
+        for i in self._xmlfile.testsets:
+            testsets[i.name] = [dict(), i.description, i.parameterset if i.parameterset in self._paramsetdict else '']
+            
+            for j in i.test:
+                for k,v in j.items():
+                    testsets[i.name][0][k] = deepcopy(vardict)
+
+                    for x,y in v['inputs'].items():
+                        if x in testsets[i.name][0][k]['inputs']:
+                            testsets[i.name][0][k]['inputs'][x] = y
+
+                    for x,y in v['outputs'].items():
+                        if x in testsets[i.name][0][k]['outputs']:
+                            testsets[i.name][0][k]['outputs'][x] = y
+
+        return vardict, testsets
+
+
+
+    def _updateSets(self):
+
+        """
+        Updates paramters and variables to handle sets edition
+        """
+
+        self._out.clear_output()
+        self._out2.clear_output()
+
+        self._df = {'Algorithms':self._dataframeAlgo,'Functions':self._dataframeFunction,'Inputs':self._dataframeIn,'Outputs':self._dataframeOut}
+
+        self._paramdict, self._paramsetdict = self._updateParam()
+        self._vardict, self._testsetdict = self._updateVar()
+
+        if self._paramdict:
             with self._out:
                 try:
-                    menu = editunit_testset.editUnitTestset(self._xmlfile, self._datas, self._paramdict, self._paramsetdict)
+                    menu = manageparamset.manageParamset(self._datas, self._paramdict, self._paramsetdict, self._df, self._vardict, self._testsetdict, iscreate=False)
                     menu.displayMenu()
                 
                 except:
-                    raise Exception('Could not load testset unit model edition menu.')
-
+                    raise Exception('Could not load parametersets managing menu')
+            
         else:
-            if self._xmlfile.parametersets:
-
-                for paramset in self._xmlfile.parametersets.items():
-                    self._paramsetdict[paramset[0]] = [self._paramdict.copy(), self._xmlfile.parametersets[paramset[0]].description]
-
-                    for param,value in self._xmlfile.parametersets[paramset[0]].params.items():
-                        if param in self._paramdict:
-                            self._paramsetdict[paramset[0]][0][param] = value
-
-
             with self._out:
                 try:
-                    menu = editunit_paramset.editUnitParamset(self._xmlfile, self._datas, self._paramdict, self._paramsetdict)
+                    menu = managetestset.manageTestset(self._datas, self._vardict, self._testsetdict, self._paramsetdict, self._df, iscreate=False)
                     menu.displayMenu()
-                    
+                
                 except:
-                    raise Exception('Could not load paramset unit model edition menu.')
+                    raise Exception('Could not load testsets managing menu.')
 
 
 
@@ -230,7 +307,7 @@ class editUnit():
 
             for i in range(0, len(self._dataframeIn['Name'])):
 
-                if any([self._dataframeIn['Category'][i]=='',
+                if any([not self._dataframeIn['Category'][i],
                         self._dataframeIn['Name'][i]=='',
                         self._dataframeIn['Description'][i]=='',
                         self._dataframeIn['DataType'][i]=='',
@@ -254,6 +331,7 @@ class editUnit():
 
                 if any([self._dataframeOut['Name'][i]=='',
                         self._dataframeOut['Description'][i]=='',
+                        not self._dataframeOut['Category'][i],
                         self._dataframeOut['DataType'][i]=='',
                         self._dataframeOut['Unit'][i]=='',
                         (self._dataframeOut['DataType'][i] in ['STRINGARRAY','DATEARRAY','INTARRAY','DOUBLEARRAY'] and self._dataframeOut['Len'][i] == '')]):
@@ -272,7 +350,7 @@ class editUnit():
 
         elif not checkOutputs():           
             with self._out2:
-                print('Missing argument(s) in the output list, these columns are required :\n\t- Name\n\t- Description\n\t- DataType\n\t- Unit')
+                print('Missing argument(s) in the output list, these columns are required :\n\t- Name\n\t- Description\n\t- Category\n\t- DataType\n\t- Unit')
         
         elif '' in [i for i in self._dataframeAlgo['Algorithm']]:
             with self._out2:
@@ -288,7 +366,7 @@ class editUnit():
             self._datas['Reference'] = self._reference.value
             self._datas['Abstract'] = self._abstract.value
 
-            self._updateParam()
+            self._updateSets()
 
 
     
@@ -441,7 +519,7 @@ class editUnit():
                 
                 elif df['DataType'][event['index']] == 'INT':
 
-                    if re.search(r'^-? ?\d+$', event['new']):
+                    if re.search(r'^-?\d+$', event['new']):
                         if any([df['Min'][event['index']] and (int(df['Min'][event['index']]) > int(event['new'])),
                                 df['Max'][event['index']] and (int(df['Max'][event['index']]) < int(event['new']))
                                 ]):
@@ -460,7 +538,7 @@ class editUnit():
                 
                 elif df['DataType'][event['index']] == 'DOUBLE':
 
-                    if re.search(r'^-? ?\d+\.$', event['new']):
+                    if re.search(r'^-?\d+\.$', event['new']):
                         if any([df['Min'][event['index']] and (float(df['Min'][event['index']]) > float(event['new'])),
                                 df['Max'][event['index']] and (float(df['Max'][event['index']]) < float(event['new']))
                                 ]):
@@ -472,7 +550,7 @@ class editUnit():
                         else:
                             widget.edit_cell(event['index'], 'Default', event['new']+'0')
                         
-                    elif re.search(r'^-? ?\d+\.\d+$', event['new']):
+                    elif re.search(r'^-?\d+\.\d+$', event['new']):
                         if any([df['Min'][event['index']] and (float(df['Min'][event['index']]) > float(event['new'])),
                                 df['Max'][event['index']] and (float(df['Max'][event['index']]) < float(event['new']))
                                 ]):
@@ -490,7 +568,7 @@ class editUnit():
 
                 elif df['DataType'][event['index']] in ['DOUBLELIST','DOUBLEARRAY']:
 
-                    if re.search(r'^(\[(?:-? ?\d+\.\d*)?(?:,-? ?\d+\.\d*)*\])$', event['new'].replace(' ','')):
+                    if re.search(r'^(\[(?:-?\d+\.\d*)?(?:,-?\d+\.\d*)*\])$', event['new'].replace(' ','')):
                         widget.edit_cell(event['index'], 'Default', event['new'].replace(' ',''))
 
                     else:
@@ -501,7 +579,7 @@ class editUnit():
 
 
                 elif df['DataType'][event['index']] in ['INTLIST','INTARRAY']:
-                    if re.search(r'^(\[(?:-? ?\d+)(?:,-? ?\d+)*\])$', event['new'].replace(' ','')):
+                    if re.search(r'^(\[(?:-?\d+)(?:,-?\d+)*\])$', event['new'].replace(' ','')):
                         widget.edit_cell(event['index'], 'Default', event['new'].replace(' ',''))
                     
                     else:
@@ -534,21 +612,21 @@ class editUnit():
             if event['new'].replace(' ','') == '':
                 widget.edit_cell(event['index'], 'Min', '')
                 
-            elif df['Max'][event['index']] and (float(df['Max'][event['index']]) < float(event['new'])):
-                widget.edit_cell(event['index'], 'Min', event['old'])
-
-                with self._out2:
-                    print('Error : Minimum > Maximum.')
-
             else:
                 if df['DataType'][event['index']] == 'INT':
 
-                    if re.search(r'^-? ?\d+$', event['new']):
+                    if re.search(r'^-?\d+$', event['new']):
                         if df['Default'][event['index']] and (int(df['Default'][event['index']]) < int(event['new'])):
                             widget.edit_cell(event['index'], 'Min', event['old'])
 
                             with self._out2:
                                 print('Error : Minimum > Default.')
+                        
+                        elif df['Max'][event['index']] and (float(df['Max'][event['index']]) < float(event['new'])):
+                            widget.edit_cell(event['index'], 'Min', event['old'])
+
+                            with self._out2:
+                                print('Error : Minimum > Maximum.')
 
                     else:
                         widget.edit_cell(event['index'], 'Min', event['old'])
@@ -559,21 +637,34 @@ class editUnit():
                 
                 elif df['DataType'][event['index']] == 'DOUBLE':
 
-                    if re.search(r'^-? ?\d+\.$', event['new']):
+                    if re.search(r'^-?\d+\.$', event['new']):
                         if df['Default'][event['index']] and (float(df['Default'][event['index']]) < float(event['new']+'0')):
                             widget.edit_cell(event['index'], 'Min', event['old'])
 
                             with self._out2:
                                 print('Error : Minimum > Default.')
-
-                        widget.edit_cell(event['index'], 'Min', event['new']+'0')
                         
-                    elif re.search(r'^-? ?\d+\.\d+$', event['new']):
+                        elif df['Max'][event['index']] and (float(df['Max'][event['index']]) < float(event['new'])):
+                            widget.edit_cell(event['index'], 'Min', event['old'])
+
+                            with self._out2:
+                                print('Error : Minimum > Maximum.')
+
+                        else:
+                            widget.edit_cell(event['index'], 'Min', event['new']+'0')
+                        
+                    elif re.search(r'^-?\d+\.\d+$', event['new']):
                         if df['Default'][event['index']] and (float(df['Default'][event['index']]) < float(event['new'])):
                             widget.edit_cell(event['index'], 'Min', event['old'])
 
                             with self._out2:
                                 print('Error : Minimum > Default.')
+
+                        elif df['Max'][event['index']] and (float(df['Max'][event['index']]) < float(event['new'])):
+                            widget.edit_cell(event['index'], 'Min', event['old'])
+
+                            with self._out2:
+                                print('Error : Minimum > Maximum.')
 
                     else:
                         widget.edit_cell(event['index'], 'Min', event['old'])
@@ -594,22 +685,22 @@ class editUnit():
 
             if event['new'].replace(' ','') == '':
                 widget.edit_cell(event['index'], 'Max', '')
-                
-            elif df['Min'][event['index']] and (float(event['new']) < float(df['Min'][event['index']])):
-                widget.edit_cell(event['index'], 'Max', event['old'])
-
-                with self._out2:
-                    print('Error : Minimum > Maximum.')
-            
+                       
             else:
                 if df['DataType'][event['index']] == 'INT':
 
-                    if re.search(r'^-? ?\d+$', event['new']):
+                    if re.search(r'^-?\d+$', event['new']):
                         if df['Default'][event['index']] and (int(df['Default'][event['index']]) > int(event['new'])):
                             widget.edit_cell(event['index'], 'Max', event['old'])
 
                             with self._out2:
                                 print('Error : Maximum < Default.')
+                        
+                        elif df['Min'][event['index']] and (float(event['new']) < float(df['Min'][event['index']])):
+                            widget.edit_cell(event['index'], 'Max', event['old'])
+
+                            with self._out2:
+                                print('Error : Minimum > Maximum.')
 
                     else:
                         widget.edit_cell(event['index'], 'Max', event['old'])
@@ -620,21 +711,33 @@ class editUnit():
                 
                 elif df['DataType'][event['index']] == 'DOUBLE':
 
-                    if re.search(r'^-? ?\d+\.$', event['new']):
+                    if re.search(r'^-?\d+\.$', event['new']):
                         if df['Default'][event['index']] and (float(df['Default'][event['index']]) > float(event['new'])):
                             widget.edit_cell(event['index'], 'Max', event['old'])
 
                             with self._out2:
                                 print('Error : Maximum < Default.')
+                        
+                        elif df['Min'][event['index']] and (float(event['new']) < float(df['Min'][event['index']])):
+                            widget.edit_cell(event['index'], 'Max', event['old'])
+
+                            with self._out2:
+                                print('Error : Minimum > Maximum.')
 
                         widget.edit_cell(event['index'], 'Max', event['new']+'0')
                         
-                    elif re.search(r'^-? ?\d+\.\d+$', event['new']):
+                    elif re.search(r'^-?\d+\.\d+$', event['new']):
                         if df['Default'][event['index']] and (float(df['Default'][event['index']]) > float(event['new'])):
                             widget.edit_cell(event['index'], 'Max', event['old'])
 
                             with self._out2:
                                 print('Error : Maximum < Default.')
+
+                        elif df['Min'][event['index']] and (float(event['new']) < float(df['Min'][event['index']])):
+                            widget.edit_cell(event['index'], 'Max', event['old'])
+
+                            with self._out2:
+                                print('Error : Minimum > Maximum.')
 
                     else:
                         widget.edit_cell(event['index'], 'Max', event['old'])
@@ -663,14 +766,14 @@ class editUnit():
                 widget.edit_cell(event['index'], 'Len', event['old'])
 
                 with self._out2:
-                    print('Error : you must assign a DataType before gibing a lenght.')
+                    print('Error : you must assign a DataType before giving a lenght.')
             
             else:
-                if not re.search(r'^ *-? ?\d+$', event['new']):
+                if not re.search(r'^\d+$', event['new']):
                     widget.edit_cell(event['index'], 'Len', event['old'])
 
                     with self._out2:
-                        print(r'Error : bad INT format -> use -?[0-9]+ .')
+                        print(r'Error : bad LEN format -> use [0-9]+ .')
 
         widget.on('cell_edited', self._cell_edited_In)
 
@@ -714,30 +817,41 @@ class editUnit():
 
             if event['new'].replace(' ','') == '':
                 widget.edit_cell(event['index'], 'Min', '')
-                
-            elif df['Max'][event['index']] and (float(df['Max'][event['index']]) < float(event['new'])):
-                widget.edit_cell(event['index'], 'Min', event['old'])
-
-                with self._out2:
-                    print('Error : Minimum > Maximum.')
 
             else:
                 if df['DataType'][event['index']] == 'INT':
 
-                    if not re.search(r'^-? ?\d+$', event['new']):
+                    if not re.search(r'^-?\d+$', event['new']):
                         widget.edit_cell(event['index'], 'Min', event['old'])
 
                         with self._out2:
                             print(r'Error : bad INT format -> use -?[0-9]+ .')
+                    
+                    elif df['Max'][event['index']] and (float(df['Max'][event['index']]) < float(event['new'])):
+                        widget.edit_cell(event['index'], 'Min', event['old'])
+
+                        with self._out2:
+                            print('Error : Minimum > Maximum.')
 
                 
                 elif df['DataType'][event['index']] == 'DOUBLE':
 
-                    if re.search(r'^-? ?\d+\.$', event['new']):
-                        widget.edit_cell(event['index'], 'Min', event['new']+'0')
+                    if re.search(r'^-?\d+\.$', event['new']):
+                        if df['Max'][event['index']] and (float(df['Max'][event['index']]) < float(event['new'])):
+                            widget.edit_cell(event['index'], 'Min', event['old'])
+
+                            with self._out2:
+                                print('Error : Minimum > Maximum.')
+
+                        else:
+                            widget.edit_cell(event['index'], 'Min', event['new']+'0')
                         
-                    elif re.search(r'^-? ?\d+\.\d+$', event['new']):
-                        pass
+                    elif re.search(r'^-?\d+\.\d+$', event['new']):
+                        if df['Max'][event['index']] and (float(df['Max'][event['index']]) < float(event['new'])):
+                            widget.edit_cell(event['index'], 'Min', event['old'])
+
+                            with self._out2:
+                                print('Error : Minimum > Maximum.')
 
                     else:
                         widget.edit_cell(event['index'], 'Min', event['old'])
@@ -758,30 +872,41 @@ class editUnit():
 
             if event['new'].replace(' ','') == '':
                 widget.edit_cell(event['index'], 'Max', '')
-                
-            elif df['Min'][event['index']] and (float(event['new']) < float(df['Min'][event['index']])):
-                widget.edit_cell(event['index'], 'Max', event['old'])
 
-                with self._out2:
-                    print('Error : Minimum > Maximum.')
-            
             else:
                 if df['DataType'][event['index']] == 'INT':
 
-                    if not re.search(r'^-? ?\d+$', event['new']):
+                    if not re.search(r'^-?\d+$', event['new']):
                         widget.edit_cell(event['index'], 'Max', event['old'])
 
                         with self._out2:
                             print(r'Error : bad INT format -> use -?[0-9]+ .')
+                    
+                    elif df['Min'][event['index']] and (float(event['new']) < float(df['Min'][event['index']])):
+                        widget.edit_cell(event['index'], 'Max', event['old'])
+
+                        with self._out2:
+                            print('Error : Minimum > Maximum.')
 
                 
                 elif df['DataType'][event['index']] == 'DOUBLE':
 
-                    if re.search(r'^-? ?\d+\.$', event['new']):
-                        widget.edit_cell(event['index'], 'Max', event['new']+'0')
+                    if re.search(r'^-?\d+\.$', event['new']):
+                        if df['Min'][event['index']] and (float(event['new']) < float(df['Min'][event['index']])):
+                            widget.edit_cell(event['index'], 'Max', event['old'])
+
+                            with self._out2:
+                                print('Error : Minimum > Maximum.')
                         
-                    elif re.search(r'^-? ?\d+\.\d+$', event['new']):
-                        pass
+                        else:
+                            widget.edit_cell(event['index'], 'Max', event['new']+'0')
+                        
+                    elif re.search(r'^-?\d+\.\d+$', event['new']):
+                        if df['Min'][event['index']] and (float(event['new']) < float(df['Min'][event['index']])):
+                            widget.edit_cell(event['index'], 'Max', event['old'])
+
+                            with self._out2:
+                                print('Error : Minimum > Maximum.')
 
                     else:
                         widget.edit_cell(event['index'], 'Max', event['old'])
@@ -813,11 +938,11 @@ class editUnit():
                     print('Error : you must assign a DataType before giving a lenght.')
             
             else:
-                if not re.search(r'^ *-? ?\d+$', event['new']):
+                if not re.search(r'^\d+$', event['new']):
                     widget.edit_cell(event['index'], 'Len', event['old'])
 
                     with self._out2:
-                        print(r'Error : bad INT format -> use -?[0-9]+ .')
+                        print(r'Error : bad LEN format -> use [0-9]+ .')
 
         widget.on('cell_edited', self._cell_edited_Out)
 
@@ -836,14 +961,14 @@ class editUnit():
             widget.edit_cell(event['index'], 'Function name', event['old'])
 
             with self._out2:
-                print('Warnning : enter a file name.')
+                print('Warnning : enter a Filename.')
 
-        elif event['column'] == 'File name':
+        elif event['column'] == 'Filename':
             if event['new'].split('.')[-1].lower() == 'pyx':
                 widget.edit_cell(event['index'], 'Function name', event['new'].split('.')[0].split('/')[-1])
 
             else:
-                widget.edit_cell(event['index'], 'Function name', event['old'])
+                widget.edit_cell(event['index'], 'Filename', event['old'])
 
                 with self._out2:
                     print('File must be .pyx format.')
@@ -906,7 +1031,7 @@ class editUnit():
         widget.off('cell_edited', self._cell_edited_Function)
 
         widget.edit_cell(event['index'], 'Function name', '')
-        widget.edit_cell(event['index'], 'File name', '')
+        widget.edit_cell(event['index'], 'Filename', '')
 
         widget.on('cell_edited', self._cell_edited_Function)
 

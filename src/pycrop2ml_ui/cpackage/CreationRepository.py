@@ -29,6 +29,8 @@ class mkdirModel:
         self._out2 = wg.Output()
 
 
+
+
     def _eventCreate(self, b):
 
         self._out2.clear_output()
@@ -68,17 +70,20 @@ class mkdirModel:
                     print("\t- Description")
 
 
+
     def _eventCancel(self, b):
 
         self._out.clear_output()
         self._out2.clear_output()
         return
 
-    
+
+
     def _eventBrowse(self, b):
 
         self._out2.clear_output()
         self._inputPath.value = getPath()
+
 
 
     def display(self):

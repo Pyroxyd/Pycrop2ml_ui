@@ -4,6 +4,7 @@ import ipywidgets as wg
 from pycrop2ml_ui.menus.creation import createmenu
 from pycrop2ml_ui.menus.edition import editmenu
 from pycrop2ml_ui.menus.display import displaymenu
+from pycrop2ml_ui.cpackage.CreationRepository import mkdirModel
 
 
 
@@ -40,15 +41,37 @@ class mainMenu:
 
 
         self._layout = wg.Layout(width='300px', height='60px')
+        self._mkdir = wg.Button(value=False,description='Repository creation',disabled=False,layout=self._layout)
         self._create = wg.Button(value=False,description='Model creation',disabled=False,layout=self._layout)
         self._edit = wg.Button(value=False,description='Model edition',disabled=False,layout=self._layout)
         self._display = wg.Button(value=False,description='Model display',disabled=True,layout=self._layout)
         self._about = wg.Button(value=False,description='About',disabled=False,layout=self._layout)
 
-        self._displayer = wg.VBox([wg.HTML(value='<font size="5"><b>Model manager for Pycrop2ml</b></font>'), self._create, self._edit, self._display, self._about], layout=wg.Layout(align_items='center'))
+        self._displayer = wg.VBox([wg.HTML(value='<font size="5"><b>Model manager for Pycrop2ml</b></font>'), self._mkdir, self._create, self._edit, self._display, self._about], layout=wg.Layout(align_items='center'))
 
         self._out = wg.Output()
         self._out2 = wg.Output()
+
+
+
+
+
+    def _eventMkdir(self, b):
+
+        """
+        Displays repository creation menu
+        """
+
+        self._out.clear_output()
+        self._out2.clear_output()
+
+        with self._out2: 
+            try:
+                tmp = mkdirModel()
+                tmp.display()
+            
+            except:
+                raise Exception('Could not load directory creation function.')
 
 
 
@@ -162,6 +185,7 @@ class mainMenu:
         with self._out:
             display(self._displayer)
         
+        self._mkdir.on_click(self._eventMkdir)
         self._create.on_click(self._eventCreate)
         self._edit.on_click(self._eventEdit)
         self._display.on_click(self._eventDisplay)

@@ -63,8 +63,8 @@ class createMenu():
 
         self._out2.clear_output()
         
-        if(any([(os.path.exists("{}/unit.{}.xml".format(self._datas["Path"],self._modelName.value)) and self._datas['Model type']=='unit'),
-                (os.path.exists("{}/composition.{}.xml".format(self._datas["Path"],self._modelName.value)) and self._datas['Model type']=='composition')])):
+        if(any([(os.path.exists("{}\\unit.{}.xml".format(self._datas["Path"],self._modelName.value)) and self._datas['Model type']=='unit'),
+                (os.path.exists("{}\\composition.{}.xml".format(self._datas["Path"],self._modelName.value)) and self._datas['Model type']=='composition')])):
             
             raise Exception("File composition|unit.{}.xml already exists.".format(self._modelName.value))
         

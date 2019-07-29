@@ -1,4 +1,6 @@
 import re
+import os
+from copy import deepcopy
 import ipywidgets as wg
 
 import qgrid
@@ -6,25 +8,29 @@ import pandas
 
 from IPython.display import display
 
-from pycrop2ml_ui.menus.edition import editunit_testset
+from pycrop2ml_ui.menus.setsmanagement import managetestset
 
 
-class editUnitParamset():
+class manageParamset():
 
 
-    def __init__(self, xml, datas, paramdict, paramsetdict):
+    def __init__(self, datas, paramdict, paramsetdict, df, vardict, testsetdict, iscreate=True):
 
         
         self._out = wg.Output()
         self._out2 = wg.Output()
         self._out3 = wg.Output()
 
-        self._xmlfile = xml
         self._datas = datas
-        self._paramdict = paramdict
-        self._paramsetdict = paramsetdict
-        self._paramsetdictDataframe = dict()
+        self._paramdict = paramdict #{param:value}
+        self._paramsetdict = paramsetdict #{paramset_name:[{param:value}, description]}
+        self._paramsetdictDataframe = dict()  #{paramset_name:[dataframe, description]}
+        self._vardict = vardict
+        self._testsetdict = testsetdict
+        self._isCreate = iscreate
         self._setlist = ['']
+
+        self._df = df
 
 
         self._paramselecter = wg.Dropdown(options=[''],value='',description='ParameterSet:',disabled=False)
@@ -73,14 +79,14 @@ class editUnitParamset():
                 self._setlist.append(paramsetName.value)
                 self._paramselecter.options = self._setlist
 
-                self._paramsetdict[paramsetName.value] = [self._paramdict.copy(), description.value]
+                self._paramsetdict[paramsetName.value] = [deepcopy(self._paramdict), description.value]
 
                 self._paramsetdictDataframe[paramsetName.value] = [pandas.DataFrame(data={
                     'Name': [i[0] for i in self._paramsetdict[paramsetName.value][0].items()],
-                    'DataType': [self._xmlfile.inputs[k].datatype for k in range(0,len(self._xmlfile.inputs)) for i in self._paramsetdict[paramsetName.value][0].items() if self._xmlfile.inputs[k].name == i[0]],
+                    'DataType': [self._df['Inputs']['DataType'][k] for k in range(0,len(self._df['Inputs']['Name'])) for i in self._paramsetdict[paramsetName.value][0].items() if self._df['Inputs']['Name'][k] == i[0]],
                     'Value': [j[1] for j in self._paramsetdict[paramsetName.value][0].items()],
-                    'Min': [(self._xmlfile.inputs[k].min if self._xmlfile.inputs[k].min is not None else '') for k in range(0,len(self._xmlfile.inputs)) for i in self._paramsetdict[paramsetName.value][0].items() if self._xmlfile.inputs[k].name == i[0]],
-                    'Max': [(self._xmlfile.inputs[k].max if self._xmlfile.inputs[k].max is not None else '') for k in range(0,len(self._xmlfile.inputs)) for i in self._paramsetdict[paramsetName.value][0].items() if self._xmlfile.inputs[k].name == i[0]]
+                    'Min': [self._df['Inputs']['Min'][k] for k in range(0,len(self._df['Inputs']['Name'])) for i in self._paramsetdict[paramsetName.value][0].items() if self._df['Inputs']['Name'][k] == i[0]],
+                    'Max': [self._df['Inputs']['Max'][k] for k in range(0,len(self._df['Inputs']['Name'])) for i in self._paramsetdict[paramsetName.value][0].items() if self._df['Inputs']['Name'][k] == i[0]]
                 }), self._paramsetdict[paramsetName.value][1]]
             
             else:
@@ -126,28 +132,9 @@ class editUnitParamset():
 
             self._paramselecter.disabled = False
             self._create.disabled = False
+            self._apply.disabled = False
 
             self._paramselecter.observe(self._on_value_change, names='value')
-
-
-
-    def _eventApply(self, b):
-        
-        """
-        Handles apply button on_click event
-        """
-        
-        self._out.clear_output()
-        self._out2.clear_output()
-        self._out3.clear_output()
-        
-        with self._out:
-            try:
-                menu = editunit_testset.editUnitTestset(self._xmlfile, self._datas, self._paramdict, self._paramsetdict)
-                menu.displayMenu()
-
-            except:
-                raise Exception('Could not load testset unit model edition menu.')
 
 
 
@@ -187,7 +174,7 @@ class editUnitParamset():
                 
                 elif df['DataType'][event['index']] == 'INT':
 
-                    if re.search(r'^-? ?\d+$', event['new']):
+                    if re.search(r'^-?\d+$', event['new']):
                         if any([df['Min'][event['index']] and (int(df['Min'][event['index']]) > int(event['new'])),
                                 df['Max'][event['index']] and (int(df['Max'][event['index']]) < int(event['new']))
                                 ]):
@@ -204,7 +191,7 @@ class editUnitParamset():
                 
                 elif df['DataType'][event['index']] == 'DOUBLE':
 
-                    if re.search(r'^-? ?\d+\.$', event['new']):
+                    if re.search(r'^-?\d+\.$', event['new']):
                         if any([df['Min'][event['index']] and (float(df['Min'][event['index']]) > float(event['new'])),
                                 df['Max'][event['index']] and (float(df['Max'][event['index']]) < float(event['new']))
                                 ]):
@@ -216,7 +203,7 @@ class editUnitParamset():
                         else:
                             widget.edit_cell(event['index'], 'Value', event['new']+'0')
                         
-                    elif re.search(r'^-? ?\d+\.\d+$', event['new']):
+                    elif re.search(r'^-?\d+\.\d+$', event['new']):
                         if any([df['Min'][event['index']] and (float(df['Min'][event['index']]) > float(event['new'])),
                                 df['Max'][event['index']] and (float(df['Max'][event['index']]) < float(event['new']))
                                 ]):
@@ -294,6 +281,46 @@ class editUnitParamset():
 
 
 
+    def _eventApply(self, b):
+        
+        """
+        Handles apply button on_click event
+        """
+
+        self._out3.clear_output()        
+
+        tmplist = []
+        
+        for i,j in self._paramsetdictDataframe.items():
+            for k in [x for x in j[0]['Value']]:
+                if any([not k, not j[1]]) and i not in tmplist:
+                    tmplist.append(i)
+
+        if not tmplist:
+
+            self._out.clear_output()
+            self._out2.clear_output()
+            self._out3.clear_output()
+
+            for i,j in self._paramsetdictDataframe.items():
+                self._paramsetdict[i][1] = j[1]
+                for k in range(0,len(j[0]['Value'])):
+                    self._paramsetdict[i][0][j[0]['Name'][k]] = j[0]['Value'][k]
+
+            with self._out:
+                try:
+                    menu = managetestset.manageTestset(self._datas, self._vardict, self._testsetdict, self._paramsetdict, self._df, self._isCreate)
+                    menu.displayMenu()
+
+                except:
+                    raise Exception('Could not load testset unit model edition menu.')
+        
+        else:
+            with self._out3:
+                print('Missing value(s) in parametersets : {}.'.format(tmplist))
+
+
+                
     def _eventCancel(self, b):
 
         """
@@ -303,6 +330,9 @@ class editUnitParamset():
         self._out.clear_output()
         self._out2.clear_output()
         self._out3.clear_output()
+
+        if self._isCreate:
+            os.remove("{}/unit.{}.xml".format(self._datas["Path"], self._datas['Model name']))
 
 
 
@@ -315,27 +345,31 @@ class editUnitParamset():
         method call may break the code.
         """
 
+        if not self._isCreate:
+            for paramset,value in self._paramsetdict.items():
 
-        for paramset,value in self._paramsetdict.items():
+                self._paramsetdictDataframe[paramset] = [pandas.DataFrame(data={
+                    'Name': [i[0] for i in value[0].items()],
+                    'DataType': [self._df['Inputs']['DataType'][k] for k in range(0,len(self._df['Inputs']['Name'])) for i in value[0].items() if self._df['Inputs']['Name'][k] == i[0]],
+                    'Value': [j[1] for j in value[0].items()],
+                    'Min':[self._df['Inputs']['Min'][k] for k in range(0,len(self._df['Inputs']['Name'])) for i in value[0].items() if self._df['Inputs']['Name'][k] == i[0]],
+                    'Max':[self._df['Inputs']['Max'][k] for k in range(0,len(self._df['Inputs']['Name'])) for i in value[0].items() if self._df['Inputs']['Name'][k] == i[0]]
+                }), value[1]]
 
-            self._paramsetdictDataframe[paramset] = [pandas.DataFrame(data={
-                'Name': [i[0] for i in value[0].items()],
-                'DataType': [self._xmlfile.inputs[k].datatype for k in range(0,len(self._xmlfile.inputs)) for i in value[0].items() if self._xmlfile.inputs[k].name == i[0]],
-                'Value': [j[1] for j in value[0].items()],
-                'Min':[(self._xmlfile.inputs[k].min if self._xmlfile.inputs[k].min is not None else '') for k in range(0,len(self._xmlfile.inputs)) for i in value[0].items() if self._xmlfile.inputs[k].name == i[0]],
-                'Max':[(self._xmlfile.inputs[k].max if self._xmlfile.inputs[k].max is not None else '') for k in range(0,len(self._xmlfile.inputs)) for i in value[0].items() if self._xmlfile.inputs[k].name == i[0]]
-            }), value[1]]
-
-            self._setlist.append(paramset)
+                self._setlist.append(paramset)
 
         self._paramselecter.options = self._setlist
 
-        display(self._out)
+        display(self._out)      
         display(self._out3)
 
         with self._out:
-            display(wg.VBox([wg.HBox([self._paramselecter, self._create, self._delete]), self._out2, wg.HBox([self._apply, self._cancel])]))
-        
+            if self._isCreate:
+                display(wg.VBox([wg.HTML(value='<b><font size="5">Model creation : {}.{}.xml<br>-> ParametersSet</font></b>'.format(self._datas['Model type'], self._datas['Model name'])), wg.HBox([self._paramselecter, self._create, self._delete]), self._out2, wg.HBox([self._apply, self._cancel])]))
+            else:
+                display(wg.VBox([wg.HTML(value='<b><font size="5">Model edition : {}.{}.xml<br>-> ParametersSet</font></b>'.format(self._datas['Model type'], self._datas['Model name'])), wg.HBox([self._paramselecter, self._create, self._delete]), self._out2, wg.HBox([self._apply, self._cancel])]))
+
+
         self._apply.on_click(self._eventApply)
         self._create.on_click(self._eventCreate)
         self._delete.on_click(self._eventDelete)
