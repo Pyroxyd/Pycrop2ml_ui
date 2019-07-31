@@ -7,11 +7,9 @@ import pandas
 
 from IPython.display import display
 
-from pycrop2ml_ui.cpackage.CreationRepository import mkdirModel
 from pycrop2ml_ui.menus.setsmanagement import manageparamset
 from pycrop2ml_ui.menus.setsmanagement import managetestset
 
-from pycropml.pparse import model_parser
 from pycropml.transpiler.generators import docGenerator
 
 
@@ -30,7 +28,7 @@ class createUnit():
         #buttons
         self._apply = wg.Button(value=False,description='Apply',disabled=False,button_style='success')
         self._apply2 = wg.Button(value=False,description='Apply',disabled=False,button_style='success')
-        self._cancel = wg.Button(value=False,description='Cancel',disabled=False,button_style='danger')
+        self._exit = wg.Button(value=False,description='Cancel',disabled=False,button_style='danger')
 
         #outputs
         self._out = wg.Output()
@@ -133,11 +131,12 @@ class createUnit():
                     self._out2.clear_output()
 
                     with self._out:
-                        menu = manageparamset.manageParamset(self._datas, paramdict, dict(), {'Inputs': self._dataframeInputs, 'Functions': self._functionqgrid.get_changed_df()}, vardict, dict(), iscreate=True)
+                        menu = manageparamset.manageParamset(self._datas, paramdict, dict(), {'Inputs': self._dataframeInputs, 'Functions': [i for i in self._functionqgrid.get_changed_df()['Filename'] if i != ''], 'Algorithms': [i for i in self._algoqgrid.get_changed_df()['Filename'] if i != '']}, vardict, dict(), iscreate=True)
                         menu.displayMenu()
 
                 except:
-                    raise Exception('Could not load parametersets managing menu')
+                    with self._out:
+                        raise Exception('Could not load parametersets managing menu')
             
             elif vardict:      
                 try:
@@ -145,14 +144,16 @@ class createUnit():
                     self._out2.clear_output()
 
                     with self._out:
-                        menu = managetestset.manageTestset(self._datas, vardict, dict(), dict(), {'Inputs': self._dataframeInputs, 'Functions': self._functionqgrid.get_changed_df()}, iscreate=True)
+                        menu = managetestset.manageTestset(self._datas, vardict, dict(), dict(), {'Inputs': self._dataframeInputs, 'Functions': [i for i in self._functionqgrid.get_changed_df()['Filename'] if i != ''], 'Algorithms': [i for i in self._algoqgrid.get_changed_df()['Filename'] if i != '']}, iscreate=True)
                         menu.displayMenu()
 
                 except:
-                    raise Exception('Could not load testsets managing menu')
+                    with self._out:
+                        raise Exception('Could not load testsets managing menu')
             
             else:
-                raise Exception('No input nor output !')
+                with self._out:
+                    raise Exception('No input nor output !')
 
         else:
             with self._out2:
@@ -163,7 +164,7 @@ class createUnit():
             
 
 
-    def _eventCancel(self, b):
+    def _eventExit(self, b):
 
         """
         Handles cancel button on_click event
@@ -656,6 +657,44 @@ class createUnit():
 
 
 
+    def _cell_edited_algo(self, event, widget):
+
+        """
+        Handles a cell edition in the algorithm list qgrid widget
+        """
+
+        self._out2.clear_output()
+
+        widget.off('cell_edited', self._cell_edited_algo)
+
+        if event['new']:
+            df = widget.get_changed_df()
+            tmplist = [i for i in df['Filename']]
+            tmplist.remove(event['new'])
+            if event['new'] in tmplist:
+                widget.edit_cell(event['index'], 'Filename', event['old'])
+
+                with self._out2:
+                    print('This filename is already in the algorithm list.')
+
+        widget.on('cell_edited', self._cell_edited_algo)
+
+
+
+    def _row_added_algo(self, event, widget):
+
+        """
+        Handles a row addition in the function list qgrid widget
+        """
+
+        widget.off('cell_edited', self._cell_edited_algo)
+
+        widget.edit_cell(event['index'], 'Filename', '')
+
+        widget.on('cell_edited', self._cell_edited_algo)
+
+
+
     def displayMenu(self, dic):
 
         """
@@ -676,37 +715,45 @@ class createUnit():
                         'Abstract': ''
                         }
         """
+        display(self._out)
 
         listkeys = ['Path','Model type','Model name','Authors','Institution','Reference','Abstract']
 
         for i in dic.keys():
 
             if i not in listkeys:
-                raise Exception("Could not display unit model creation menu : parameter dic from self.displayMenu(self, dic) must contain these keys ['Path','Model type','Model name','Authors','Institution','Reference','Abstract']")
+                with self._out:
+                    raise Exception("Could not display unit model creation menu : parameter dic from self.displayMenu(self, dic) must contain these keys ['Path','Model type','Model name','Authors','Institution','Reference','Abstract']")
 
-            elif i == 'Model type' and not dic[i] == 'unit':
-                raise Exception("Bad value error : Model type key's value must be unit.")
+            elif i == 'Model type' and dic[i] != 'unit':
+                with self._out:
+                    raise Exception("Bad value error : Model type key's value must be unit.")
 
             else:
                 listkeys.remove(i)
 
-
+        
         self._datas = dic
-        self._functionqgrid = qgrid.show_grid(pandas.DataFrame(data={'Filename':['']}))
-        self._tab = wg.Tab([self._inouttab, self._functionqgrid])
+        tmpcategories = ['']+[i for i in os.listdir(self._datas['Path']+os.path.sep+'Algo'+os.path.sep+'pyx') if i.split('.')[-1] == 'pyx']
+        self._functionqgrid = qgrid.show_grid(pandas.DataFrame(data={'Filename':['']}), show_toolbar=True)
+        self._algoqgrid = qgrid.show_grid(pandas.DataFrame(data={'Filename': pandas.Categorical([''], categories=tmpcategories)}), show_toolbar=True)
+        self._tab = wg.Tab([self._inouttab, self._algoqgrid, self._functionqgrid])
         self._tab.set_title(0, 'Inputs & Outputs')
-        self._tab.set_title(1, 'Functions')
+        self._tab.set_title(1, 'Algorithms')
+        self._tab.set_title(2, 'Functions')
 
-        display(self._out)
+        
         display(self._out2)
 
         with self._out:
-            display(wg.VBox([wg.HTML(value='<b>Model creation : unit.{}.xml<br>-> Inputs and Outputs</b>'.format(self._datas['Model name'])), self._tab, wg.HBox([self._apply, self._cancel])]))
+            display(wg.VBox([wg.HTML(value='<b>Model creation : unit.{}.xml<br>-> Inputs and Outputs</b>'.format(self._datas['Model name'])), self._tab, wg.HBox([self._apply, self._exit])]))
         
 
         self._inouttab.on('cell_edited', self._cell_edited)
         self._inouttab.on('row_added', self._row_added)
+        self._algoqgrid.on('cell_edited', self._cell_edited_algo)
+        self._algoqgrid.on('row_added', self._row_added_algo)
         self._functionqgrid.on('cell_edited', self._cell_edited_func)
         self._functionqgrid.on('row_added', self._row_added_func)
         self._apply.on_click(self._eventApply)
-        self._cancel.on_click(self._eventCancel)
+        self._exit.on_click(self._eventExit)

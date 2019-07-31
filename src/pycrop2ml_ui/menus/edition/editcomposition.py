@@ -215,7 +215,7 @@ class editComposition():
         
 
 
-    def display(self, dic):
+    def displayMenu(self, dic):
 
         display(self._out)
         display(self._out2)

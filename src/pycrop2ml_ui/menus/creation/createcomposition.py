@@ -26,7 +26,7 @@ class createComposition():
 
         self._apply = wg.Button(value=False,description='Apply',disabled=False,button_style='success')
         self._apply2 = wg.Button(value=False,description='Apply',disabled=False,button_style='success')
-        self._cancel = wg.Button(value=False,description='Cancel',disabled=False,button_style='danger')
+        self._exit = wg.Button(value=False,description='Exit',disabled=False,button_style='danger')
 
         self._datas = dict()
 
@@ -185,10 +185,10 @@ class createComposition():
         self._out2.clear_output()
 
         with self._out:
-            display(wg.VBox([wg.HTML(value='<font size="5"><b> Model creation : composition.{}.xml<br>-> Links</b><font>'.format(self._datas['Model name'])), self._dataFrameLinkqgrid, wg.HBox([self._apply2, self._cancel])]))
+            display(wg.VBox([wg.HTML(value='<font size="5"><b> Model creation : composition.{}.xml<br>-> Links</b><font>'.format(self._datas['Model name'])), self._dataFrameLinkqgrid, wg.HBox([self._apply2, self._exit])]))
 
         self._apply2.on_click(self._eventApply2)
-        self._cancel.on_click(self._eventCancel)
+        self._exit.on_click(self._eventExit)
         self._dataFrameLinkqgrid.on('cell_edited', self._cell_edited_link)
         self._dataFrameLinkqgrid.on('row_added', self._row_added_link)
 
@@ -237,7 +237,7 @@ class createComposition():
 
 
 
-    def _eventCancel(self, b):
+    def _eventExit(self, b):
 
         """
         Handles cancel button on_click event
@@ -411,10 +411,10 @@ class createComposition():
         self._dataFrameqgrid = qgrid.show_grid(self._dataFrame, show_toolbar=True)
 
         with self._out:
-            display(wg.VBox([wg.HTML(value='<font size="5"><b> Model creation : composition.{}.xml<br>-> Model composition</b></font>'.format(self._datas['Model name'])), self._dataFrameqgrid, wg.HBox([self._apply, self._cancel])]))
+            display(wg.VBox([wg.HTML(value='<font size="5"><b> Model creation : composition.{}.xml<br>-> Model composition</b></font>'.format(self._datas['Model name'])), self._dataFrameqgrid, wg.HBox([self._apply, self._exit])]))
 
         self._apply.on_click(self._eventApply)
-        self._cancel.on_click(self._eventCancel)
+        self._exit.on_click(self._eventExit)
 
         self._dataFrameqgrid.on('cell_edited', self._cell_edited)
         self._dataFrameqgrid.on('row_added', self._row_added)

@@ -8,7 +8,7 @@ from pycrop2ml_ui.browser.TkinterPath import getPath
 
 
 
-class mkdirModel:
+class createPackage:
 
     def __init__(self):
 
@@ -86,7 +86,7 @@ class mkdirModel:
 
 
 
-    def display(self):
+    def displayMenu(self):
 
         self._out.clear_output()
         self._out2.clear_output()

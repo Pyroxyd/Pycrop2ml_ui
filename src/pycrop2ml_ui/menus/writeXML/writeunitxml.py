@@ -1,4 +1,5 @@
 import re
+import os
 
 from pycropml.pparse import model_parser
 from pycropml.transpiler.generators import docGenerator
@@ -50,11 +51,11 @@ class writeunitXML():
     def _createInit(self):
         
         """
-        Creates the init file with the model description inside of it
+        Creates an empty init file with the model description inside of it
         """
 
         try:
-            init = open("{}\\algo\\pyx\\init.{}.pyx".format(self._datas['Path'], self._datas['Model name']), 'w')
+            init = open("{}\\algo\\pyx\\init.{}.pyx".format(self._datas['Path'], self._datas['Model name']), 'w', encoding='utf8')
 
         except IOError as ioerr:
             raise Exception("Algorithm file init.{}.pyx could not be created. {}".format(self._datas['Model name'], ioerr))
@@ -73,11 +74,11 @@ class writeunitXML():
     def _createAlgo(self):
 
         """
-        Creates the algorithm file with the model description inside of it
+        Creates an empty algorithm file with the model description inside of it
         """
 
         try:
-            algo = open("{}\\algo\\pyx\\{}.pyx".format(self._datas['Path'], self._datas['Model name']), 'w')
+            algo = open("{}\\algo\\pyx\\{}.pyx".format(self._datas['Path'], self._datas['Model name']), 'w', encoding='utf8')
 
         except IOError as ioerr:
             raise Exception("Algorithm file {}.pyx could not be created. {}".format(self._datas['Model name'], ioerr))
@@ -106,10 +107,14 @@ class writeunitXML():
             raise Exception('File unit.{}.xml could not be opened. {}'.format(self._datas['Model name'], ioerr))
 
         else:
+            split = []
+            path = self._datas['Path']
+            for i in range(4):
+                split.append(os.path.split(path)[-1])
+                path = os.path.split(path)[0]
 
-            split = re.split(r'\\', self._datas['Path'])
             f.write('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE Model PUBLIC " " "https://raw.githubusercontent.com/AgriculturalModelExchangeInitiative/crop2ml/master/ModelUnit.dtd">\n')
-            f.write('<ModelUnit modelid="{0}.{1}.{2}" name="{2}" timestep="1" version="1.0">'.format(split[-4],split[-2],self._datas['Model name']))
+            f.write('<ModelUnit modelid="{0}.{1}.{2}" name="{2}" timestep="1" version="1.0">'.format(split[3],split[1],self._datas['Model name']))
             f.write('\n\t<Description>\n\t\t<Title>{} Model</Title>'.format(self._datas['Model name'])+
                 '\n\t\t<Authors>{}</Authors>'.format(self._datas['Authors'])+
                 '\n\t\t<Institution>{}</Institution>'.format(self._datas['Institution'])+
@@ -159,17 +164,18 @@ class writeunitXML():
 
             f.write('\n\t</Outputs>')
 
-            #HERE : FUNCTION MANAGEMENT TO DO
-            """if self._df['Functions']: 
-                for f in range(0,len(self._df['Functions']['Filename'])):    
-                    f.write('\n\n\t<Function name="{}" language="Cyml" filename="{}" type="" description="" />'.format(self._df['Functions']['Function name'][f], self._df['Functions']['Filename'][f]))
-"""
-            if self._iscreate:
-                f.write('\n\n\t<Algorithm language="Cyml" platform="" filename="algo/pyx/{}.pyx" />'.format(self._datas['Model name']))
+            if self._df['Functions']:
+                for i in self._df['Functions']:
+                    f.write('\n\n\t<Function name="{}" language="Cyml" filename="{}" type="" description="" />'.format(i.split('.')[0].split('/')[-1], i))
+            
+            createalgo = False
+            if self._df['Algorithms']:
+                for i in self._df['Algorithms']:
+                    f.write('\n\n\t<Algorithm language="Cyml" platform="" filename="{}" />'.format(i))
             else:
-                #HERE : ALGO MANAGEMENT TO DO
-                pass
-
+                createalgo = True
+                f.write('\n\n\t<Algorithm language="Cyml" platform="" filename="algo/pyx/{}.pyx" />'.format(self._datas['Model name']))
+            
             f.write('\n\n\t<Initialization name="init.{0}" language="Cyml" filename="algo/pyx/init.{0}.pyx" description="" />'.format(self._datas['Model name']))
 
             f.write('\n\n\t<Parametersets>')
@@ -182,7 +188,7 @@ class writeunitXML():
                     
                 f.write('\n\t\t</Parameterset>')
             f.write('\n\t</Parametersets>')
-            f.flush()
+
             f.write('\n\n\t<Testsets>')
             for testsetname, args in self._testsetdict.items():
                 f.write('\n\t\t<Testset name="{}" parameterset="{}" description="{}" >'.format(testsetname, args[2], args[1]))
@@ -202,9 +208,10 @@ class writeunitXML():
             f.write("\n\n</ModelUnit>")
             f.close()
 
-            if self._iscreate:
+            if 'init.{}.pyx'.format(self._datas['Model name']) not in os.listdir(self._datas['Path']+os.path.sep+'Algo'+os.path.sep+'pyx'):
+                self._createInit()
+            if createalgo:
                 self._createAlgo()
-                self._createInit()       
 
 
 

@@ -1,12 +1,13 @@
 import ipywidgets as wg
 import os
+import sys
 
 from IPython.display import display
 
 from pycrop2ml_ui.menus.creation import createunit
 from pycrop2ml_ui.menus.creation import createcomposition
 
-from pycrop2ml_ui.cpackage.CreationRepository import mkdirModel
+from pycrop2ml_ui.cpackage.createpackage import createPackage
 from pycrop2ml_ui.model import MainMenu
 from pycrop2ml_ui.browser.TkinterPath import getPath
 
@@ -63,20 +64,23 @@ class createMenu():
 
         self._out2.clear_output()
         
-        if(any([(os.path.exists("{}\\unit.{}.xml".format(self._datas["Path"],self._modelName.value)) and self._datas['Model type']=='unit'),
-                (os.path.exists("{}\\composition.{}.xml".format(self._datas["Path"],self._modelName.value)) and self._datas['Model type']=='composition')])):
+        if(any([(os.path.exists("{}{}unit.{}.xml".format(self._datas["Path"], os.path.sep, self._modelName.value)) and self._datas['Model type']=='unit'),
+                (os.path.exists("{}{}composition.{}.xml".format(self._datas["Path"], os.path.sep, self._modelName.value)) and self._datas['Model type']=='composition')])):
             
-            raise Exception("File composition|unit.{}.xml already exists.".format(self._modelName.value))
+            self._out.clear_output()
+            with self._out:
+                raise Exception("File composition|unit.{}.xml already exists.".format(self._modelName.value))
         
-        else:
-            
+        else:          
             if(self._datas['Model type'] == 'unit'):
 
                 try:
-                    tmpFile = open("{}/unit.{}.xml".format(self._datas["Path"], self._datas['Model name']), 'w')
+                    tmpFile = open("{}{}unit.{}.xml".format(self._datas["Path"], os.path.sep, self._datas['Model name']), 'w', encoding='utf8')
                 
                 except IOError as ioerr:         
-                    raise Exception('File {} could not be opened. {}'.format(self._datas['Path'], ioerr))
+                    self._out.clear_output()
+                    with self._out:
+                        raise Exception('File {} could not be opened. {}'.format(self._datas['Path'], ioerr))
                 
                 else:
                     tmpFile.close()
@@ -85,10 +89,12 @@ class createMenu():
             else:
 
                 try:
-                    tmpFile = open("{}/composition.{}.xml".format(self._datas["Path"], self._datas['Model name']), 'w')
+                    tmpFile = open("{}{}composition.{}.xml".format(self._datas["Path"], os.path.sep, self._datas['Model name']), 'w')
 
                 except IOError as ioerr:
-                    raise Exception('File {} could not be opened. {}'.format(self._datas['Path'], ioerr))
+                    self._out.clear_output()
+                    with self._out:
+                        raise Exception('File {} could not be opened. {}'.format(self._datas['Path'], ioerr))
 
                 else:
                     tmpFile.close()
@@ -104,14 +110,15 @@ class createMenu():
 
         self._out2.clear_output()
 
-        with self._out2:
-            
+        with self._out2:        
             try:
-                tmp = mkdirModel()
-                tmp.display()
+                tmp = createPackage()
+                tmp.displayMenu()
             
             except:
-                raise Exception('Could not load directory creation function.')
+                self._out.clear_output()
+                with self._out:
+                    raise Exception('Could not load directory creation function.')
 
 
 
@@ -124,48 +131,42 @@ class createMenu():
         self._out2.clear_output()
 
         if(self._modelName.value and self._authors.value and self._institution.value and self._abstract.value and self._path.value and self._reference.value):
-            if(os.path.exists(self._path.value)):
 
-                self._datas = {
-                            'Path': self._path.value,
-                            'Model type': self._toggle.value,
-                            'Model name': self._modelName.value,
-                            'Authors': self._authors.value,
-                            'Institution': self._institution.value,
-                            'Reference': self._reference.value,
-                            'Abstract': self._abstract.value
-                            }
+            self._datas = {
+                        'Path': self._path.value+os.path.sep+'crop2ml',
+                        'Model type': self._toggle.value,
+                        'Model name': self._modelName.value,
+                        'Authors': self._authors.value,
+                        'Institution': self._institution.value,
+                        'Reference': self._reference.value,
+                        'Abstract': self._abstract.value
+                        }
 
-                self._out.clear_output()
-                    
-                if self._createFile():
-
-                    with self._out:
-                        if self._datas['Model type'] == 'unit':
-                            try:
-                                unit = createunit.createUnit()
-                                unit.displayMenu(self._datas)
-
-                            except:
-                                os.remove("{}/unit.{}.xml".format(self._datas['Path'], self._datas['Model name']))
-                                self._out.clear_output()
-                                self._out2.clear_output()                        
-                                raise Exception('Could not load unit creation model.')
-
-                        else:
-                            try:
-                                composition = createcomposition.createComposition()
-                                composition.displayMenu(self._datas)
-
-                            except:
-                                os.remove("{}/composition.{}.xml".format(self._datas['Path'], self._datas['Model name']))
-                                self._out.clear_output()
-                                self._out2.clear_output()
-                                raise Exception('Could not load composition creation model.')
-                                
-            else:
+            self._out.clear_output()
+                
+            if self._createFile():
                 with self._out:
-                    print("This package does not exist.")
+                    if self._datas['Model type'] == 'unit':
+                        try:   
+                            unit = createunit.createUnit()
+                            unit.displayMenu(self._datas)
+
+                        except:
+                            os.remove("{}{}unit.{}.xml".format(self._datas['Path'], os.path.sep, self._datas['Model name']))
+                            self._out.clear_output()
+                            self._out2.clear_output()                        
+                            raise Exception('Could not load unit creation model.')
+
+                    else:
+                        try:
+                            composition = createcomposition.createComposition()
+                            composition.displayMenu(self._datas)
+
+                        except:
+                            os.remove("{}{}composition.{}.xml".format(self._datas['Path'], os.path.sep, self._datas['Model name']))
+                            self._out.clear_output()
+                            self._out2.clear_output()
+                            raise Exception('Could not load composition creation model.')
 
 
         else:
@@ -219,7 +220,12 @@ class createMenu():
         """
 
         self._out2.clear_output()
-        self._path.value = getPath()            
+        self._path.value = getPath() 
+
+        if not 'crop2ml' in os.listdir(self._path.value):
+            self._path.value = ''
+            with self._out2:
+                print('This repository is not a model package.')           
             
 
 

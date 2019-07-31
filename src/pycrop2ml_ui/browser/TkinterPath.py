@@ -1,5 +1,6 @@
 from tkinter import filedialog, Tk
-
+import os
+import sys
 
 def getPath():
     
@@ -8,10 +9,10 @@ def getPath():
     root.directory = filedialog.askdirectory()
 
     try:
-        return root.directory.replace('/', '\\')+'\\crop2ml'
+        return root.directory.replace('/', os.path.sep)
     
     except:
-        raise Exception('Critical error while fetching the path.')
+        sys.stderr.write('Critical error while fetching the path.')
 
     finally:
         root.destroy()

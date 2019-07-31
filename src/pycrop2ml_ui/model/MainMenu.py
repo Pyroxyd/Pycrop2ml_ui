@@ -3,12 +3,12 @@ import ipywidgets as wg
 
 from pycrop2ml_ui.menus.creation import createmenu
 from pycrop2ml_ui.menus.edition import editmenu
-from pycrop2ml_ui.menus.display import displaymenu
-from pycrop2ml_ui.cpackage.CreationRepository import mkdirModel
+from pycrop2ml_ui.cpackage.createpackage import createPackage
+from pycrop2ml_ui.menus.transformation import transformationmenu
 
 
 
-class mainMenu:
+class mainMenu():
 
 
     """
@@ -30,7 +30,7 @@ class mainMenu:
     three buttons clickable leading to each branch. This is the only method
     usable in this class and does not require any argument.
 
-    To create a mainMenu, use :\n
+    To use a mainMenu, use :\n
     mainmenu = mainMenu() #creates an instance of mainMenu\n
     mainmenu.displayMenu()       #calls displayMenu() method
     """
@@ -44,15 +44,13 @@ class mainMenu:
         self._mkdir = wg.Button(value=False,description='Repository creation',disabled=False,layout=self._layout)
         self._create = wg.Button(value=False,description='Model creation',disabled=False,layout=self._layout)
         self._edit = wg.Button(value=False,description='Model edition',disabled=False,layout=self._layout)
-        self._display = wg.Button(value=False,description='Model display',disabled=True,layout=self._layout)
+        self._transformation = wg.Button(value=False,description='Package transformation',disabled=False,layout=self._layout)
         self._about = wg.Button(value=False,description='About',disabled=False,layout=self._layout)
 
-        self._displayer = wg.VBox([wg.HTML(value='<font size="5"><b>Model manager for Pycrop2ml</b></font>'), self._mkdir, self._create, self._edit, self._display, self._about], layout=wg.Layout(align_items='center'))
+        self._displayer = wg.VBox([wg.HTML(value='<font size="5"><b>Model manager for Pycrop2ml</b></font>'), self._mkdir, self._create, self._edit, self._transformation, self._about], layout=wg.Layout(align_items='center'))
 
         self._out = wg.Output()
         self._out2 = wg.Output()
-
-
 
 
 
@@ -67,8 +65,8 @@ class mainMenu:
 
         with self._out2: 
             try:
-                tmp = mkdirModel()
-                tmp.display()
+                tmp = createPackage()
+                tmp.displayMenu()
             
             except:
                 raise Exception('Could not load directory creation function.')
@@ -85,11 +83,9 @@ class mainMenu:
         self._out2.clear_output()
 
         with self._out:
-
             try:
                 createWg = createmenu.createMenu()
-                createWg.displayMenu()
-            
+                createWg.displayMenu()          
             except:
                 raise Exception('Could not load creation menu.')
             
@@ -105,33 +101,29 @@ class mainMenu:
         self._out2.clear_output()
 
         with self._out:
-
             try:
                 editWg = editmenu.editMenu()
-                editWg.displayMenu()
-            
+                editWg.displayMenu()          
             except:
                 raise Exception('Could not load edition menu.')
 
 
 
-    def _eventDisplay(self, b):
-
+    def _eventTransformation(self, b):
+        
         """
-        Displays model display menu
+        Displays package transformation menu
         """
 
         self._out.clear_output()
         self._out2.clear_output()
 
         with self._out:
-
             try:
-                displayWg = displaymenu.displayMenu()
-                displayWg.displayMenu()
-            
+                editWg = transformationmenu.transformationMenu()
+                editWg.displayMenu()     
             except:
-                raise Exception('Could not load display menu.')
+                raise Exception('Could not load transformation menu.')
 
 
 
@@ -188,7 +180,7 @@ class mainMenu:
         self._mkdir.on_click(self._eventMkdir)
         self._create.on_click(self._eventCreate)
         self._edit.on_click(self._eventEdit)
-        self._display.on_click(self._eventDisplay)
+        self._transformation.on_click(self._eventTransformation)
         self._about.on_click(self._eventAbout)
         
 

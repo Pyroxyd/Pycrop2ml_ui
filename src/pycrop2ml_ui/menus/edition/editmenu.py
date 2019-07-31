@@ -59,7 +59,7 @@ class editMenu():
                 
                 with self._out:                  
                     unit = editunit.editUnit()
-                    unit.display({'Path': self._modelPath.value, 'Model type': typemodel.group(1), 'Model name': typemodel.group(2)})
+                    unit.displayMenu({'Path': self._modelPath.value+os.path.sep+'crop2ml', 'Model type': typemodel.group(1), 'Model name': typemodel.group(2)})
 
             
             elif typemodel.group(1) == 'composition':
@@ -68,7 +68,7 @@ class editMenu():
 
                 with self._out:                   
                     composition = editcomposition.editComposition()
-                    composition.display({'Path': self._modelPath.value, 'Model type': typemodel.group(1), 'Model name': typemodel.group(2)})
+                    composition.displayMenu({'Path': self._modelPath.value+os.path.sep+'crop2ml', 'Model type': typemodel.group(1), 'Model name': typemodel.group(2)})
             
             else:
                 
@@ -80,7 +80,6 @@ class editMenu():
 
 
 
-
     def _eventBrowse(self, b):
 
         """
@@ -89,6 +88,11 @@ class editMenu():
         
         self._out2.clear_output()
         self._modelPath.value = getPath()
+
+        if not 'crop2ml' in os.listdir(self._modelPath.value):
+            self._modelPath.value = ''
+            with self._out2:
+                print('This repository is not a model package.')
 
 
 
@@ -112,7 +116,6 @@ class editMenu():
             
 
     
-
     def displayMenu(self):
 
         """
@@ -132,10 +135,10 @@ class editMenu():
 
             self._paths.clear()
             tmp = []
-            for f in os.listdir(self._modelPath.value):
+            for f in os.listdir(self._modelPath.value+os.path.sep+'crop2ml'):
                 ext = os.path.splitext(f)[-1].lower()
                 if ext == '.xml':
-                    self._paths[f] = os.path.join(self._modelPath.value,f)
+                    self._paths[f] = self._modelPath.value+os.path.sep+'crop2ml'+os.path.sep+f
                     tmp.append(f)
             
             self._selecter.options = tmp    

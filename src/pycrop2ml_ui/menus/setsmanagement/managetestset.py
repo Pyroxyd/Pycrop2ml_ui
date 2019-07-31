@@ -9,7 +9,7 @@ import pandas
 
 from IPython.display import display
 
-from pycrop2ml_ui.writeXML.writeunitxml import writeunitXML
+from pycrop2ml_ui.menus.writeXML.writeunitxml import writeunitXML
 
 
 class manageTestset():
@@ -30,7 +30,7 @@ class manageTestset():
         self._deleteTest = wg.Button(value=False, description='Delete', disabled=True, button_style='danger')
 
         self._apply = wg.Button(value=False, description='Apply', disabled=False, button_style='success')
-        self._cancel = wg.Button(value=False, description='Cancel', disabled=False, button_style='danger')
+        self._exit = wg.Button(value=False, description='Cancel', disabled=False, button_style='danger')
 
         self._applyGrid = wg.Button(value=False, description='Apply', disabled=False, button_style='success')
         
@@ -101,18 +101,18 @@ class manageTestset():
 
         df = widget.get_changed_df()
 
-        if not event['column'] in ['Value','Precision']:
+        if event['column'] not in ['Value','Precision']:
             widget.edit_cell(event['index'], event['column'], event['old'])
 
 
         elif event['column'] == 'Precision':
-            if not df['InputType'][event['index']] == 'output':
+            if df['InputType'][event['index']] != 'output':
                 widget.edit_cell(event['index'], 'Precision', event['old'])
 
                 with self._out3:
                     print('Error : this inputtype does not handle a precision.')
 
-            elif not df['DataType'][event['index']] in ['DOUBLE','DOUBLELIST','DOUBLEARRAY']:
+            elif df['DataType'][event['index']] not in ['DOUBLE','DOUBLELIST','DOUBLEARRAY']:
                 widget.edit_cell(event['index'], 'Precision', event['old'])
 
                 with self._out3:
@@ -168,7 +168,7 @@ class manageTestset():
                         with self._out3:
                             print(r'Error : bad INT format -> use -?[0-9]+ .')
                 
-                elif df['DataType'][event['index']] == 'DOUBLE' and df['Precision'][event['index']]:
+                elif df['DataType'][event['index']] == 'DOUBLE' and df['Precision'][event['index']] and df['InputType'][event['index']] == 'output':
 
                     if re.search(r'^-?\d+\.$', event['new']):
                         if any([df['Min'][event['index']] and (float(df['Min'][event['index']]) > float(event['new'])),
@@ -204,11 +204,38 @@ class manageTestset():
                         with self._out3:
                             print(r'Error : bad DOUBLE format -> use -?[0-9]+.[0-9]* .')
                 
-                elif df['DataType'][event['index']] == 'DOUBLE' and not df['Precision'][event['index']]:
-                    widget.edit_cell(event['index', 'Value', event['old']])
+                elif df['DataType'][event['index']] == 'DOUBLE' and not df['Precision'][event['index']] and df['InputType'][event['index']] == 'output':
+                    widget.edit_cell(event['index'], 'Value', event['old'])
 
                     with self._out3:
                         print('Warning : DOUBLE type needs a precision first.')
+                
+                elif df['DataType'][event['index']] == 'DOUBLE':
+                    if re.search(r'^-?\d+\.$', event['new']):
+                        if any([df['Min'][event['index']] and (float(df['Min'][event['index']]) > float(event['new'])),
+                                df['Max'][event['index']] and (float(df['Max'][event['index']]) < float(event['new']))
+                                ]):
+                            widget.edit_cell(event['index'], 'Value', event['old'])
+
+                            with self._out3:
+                                print('Error : Value must be in between Min and Max.')
+                        else:
+                            widget.edit_cell(event['index'], 'Value', event['new']+'0')
+                        
+                    elif re.search(r'^-?\d+\.\d+$', event['new']):
+                        if any([df['Min'][event['index']] and (float(df['Min'][event['index']]) > float(event['new'])),
+                                df['Max'][event['index']] and (float(df['Max'][event['index']]) < float(event['new']))
+                                ]):
+                            widget.edit_cell(event['index'], 'Value', event['old'])
+
+                            with self._out3:
+                                print('Error : Value must be in between Min and Max.')
+
+                    else:
+                        widget.edit_cell(event['index'], 'Value', event['old'])
+
+                        with self._out3:
+                            print(r'Error : bad DOUBLE format -> use -?[0-9]+.[0-9]* .')
 
         widget.on('cell_edited', self._cell_edited)
 
@@ -224,6 +251,7 @@ class manageTestset():
             self._testSelecter.disabled = False
 
         else:
+            self._testSelecter.value = ''
             self._testSelecter.options = self._testlist['']
             self._createTest.disabled = True
             self._deleteTest.disabled = True
@@ -326,9 +354,6 @@ class manageTestset():
                 self._createTestset.disabled = False
                 self._deleteTestset.disabled = False
                 self._testsetSelecter.disabled = False
-                self._createTest.disabled = False
-                self._deleteTest.disabled = False
-                self._testSelecter.disabled = False
                 self._apply.disabled = False
 
                 self._testsetSelecter.observe(self._on_value_change_testset, names='value')
@@ -404,56 +429,77 @@ class manageTestset():
         apply = wg.Button(value=False, description='Apply', disabled=False, button_style='success')
         cancel = wg.Button(value=False, description='Cancel', disabled=False, button_style='warning')
 
-        self._createTestset.disabled = True
-        self._deleteTestset.disabled = True
-        self._testsetSelecter.disabled = True
-        self._createTest.disabled = True
-        self._deleteTest.disabled = True
-        self._testSelecter.disabled = True
-        self._apply.disabled = True
+        if self._testsetSelecter.value:
+            self._createTestset.disabled = True
+            self._deleteTestset.disabled = True
+            self._testsetSelecter.disabled = True
+            self._createTest.disabled = True
+            self._deleteTest.disabled = True
+            self._testSelecter.disabled = True
+            self._apply.disabled = True
 
-        with self._out2:
-            display(wg.VBox([testname, wg.HBox([apply, cancel])]))
-    
+            with self._out2:
+                display(wg.VBox([testname, wg.HBox([apply, cancel])]))
+        
 
-        def eventApply(b):
+            def eventApply(b):
 
-            self._out3.clear_output()
+                self._out3.clear_output()
 
-            if testname.value:
-                self._testSelecter.unobserve(self._on_value_change_test, names='value')
+                if testname.value:
+                    self._testSelecter.unobserve(self._on_value_change_test, names='value')
 
-                self._testSelecter.value = ''
-                self._testlist[self._testsetSelecter.value].append(testname.value)
-                self._testSelecter.options = self._testlist[self._testsetSelecter.value]
+                    self._testSelecter.value = ''
+                    self._testlist[self._testsetSelecter.value].append(testname.value)
+                    self._testSelecter.options = self._testlist[self._testsetSelecter.value]
 
-                self._testsetdict[self._testsetSelecter.value][0][testname.value] = deepcopy(self._vardict)
+                    self._testsetdict[self._testsetSelecter.value][0][testname.value] = deepcopy(self._vardict)
 
-                if not self._iscreate:
-                    self._testsetsDataframe[self._testsetSelecter.value][0][testname.value] = pandas.DataFrame(data={
-                        'Name': [i[0] for i in self._testsetdict[self._testsetSelecter.value][0][testname.value]['inputs'].items()] + [i[0] for i in self._testsetdict[self._testsetSelecter.value][0][testname.value]['outputs'].items()],
-                        'InputType': pandas.Categorical(['input' for _ in self._testsetdict[self._testsetSelecter.value][0][testname.value]['inputs'].items()]+['output' for _ in self._testsetdict[self._testsetSelecter.value][0][testname.value]['outputs'].items()], categories=['input', 'output']),
-                        'DataType': [self._df['Inputs']['DataType'][k] for k in range(0,len(self._df['Inputs']['Name'])) for i in self._testsetdict[self._testsetSelecter.value][0][testname.value]['inputs'].items() if self._df['Inputs']['Name'][k] == i[0]] + 
-                                    [self._df['Outputs']['DataType'][k] for k in range(0,len(self._df['Outputs']['Name'])) for i in self._testsetdict[self._testsetSelecter.value][0][testname.value]['outputs'].items() if self._df['Outputs']['Name'][k] == i[0]],
-                        'Value': ['' for _ in self._testsetdict[self._testsetSelecter.value][0][testname.value]['inputs'].items()] + ['' for _ in self._testsetdict[self._testsetSelecter.value][0][testname.value]['outputs'].items()],
-                        'Precision': ['' for _ in self._testsetdict[self._testsetSelecter.value][0][testname.value]['inputs'].items()] + ['' for _ in self._testsetdict[self._testsetSelecter.value][0][testname.value]['outputs'].items()],
-                        'Min': [self._df['Inputs']['Min'][k] for k in range(0,len(self._df['Inputs']['Name'])) for i in self._testsetdict[self._testsetSelecter.value][0][testname.value]['inputs'].items() if self._df['Inputs']['Name'][k] == i[0]] +
-                                [self._df['Outputs']['Min'][k] for k in range(0,len(self._df['Outputs']['Name'])) for i in self._testsetdict[self._testsetSelecter.value][0][testname.value]['outputs'].items() if self._df['Outputs']['Name'][k] == i[0]],
-                        'Max': [self._df['Inputs']['Max'][k] for k in range(0,len(self._df['Inputs']['Name'])) for i in self._testsetdict[self._testsetSelecter.value][0][testname.value]['inputs'].items() if self._df['Inputs']['Name'][k] == i[0]] + 
-                                [self._df['Outputs']['Max'][k] for k in range(0,len(self._df['Outputs']['Name'])) for i in self._testsetdict[self._testsetSelecter.value][0][testname.value]['outputs'].items() if self._df['Outputs']['Name'][k] == i[0]]
-                    })
-                
+                    if not self._iscreate:
+                        self._testsetsDataframe[self._testsetSelecter.value][0][testname.value] = pandas.DataFrame(data={
+                            'Name': [i[0] for i in self._testsetdict[self._testsetSelecter.value][0][testname.value]['inputs'].items()] + [i[0] for i in self._testsetdict[self._testsetSelecter.value][0][testname.value]['outputs'].items()],
+                            'InputType': pandas.Categorical(['input' for _ in self._testsetdict[self._testsetSelecter.value][0][testname.value]['inputs'].items()]+['output' for _ in self._testsetdict[self._testsetSelecter.value][0][testname.value]['outputs'].items()], categories=['input', 'output']),
+                            'DataType': [self._df['Inputs']['DataType'][k] for k in range(0,len(self._df['Inputs']['Name'])) for i in self._testsetdict[self._testsetSelecter.value][0][testname.value]['inputs'].items() if self._df['Inputs']['Name'][k] == i[0]] + 
+                                        [self._df['Outputs']['DataType'][k] for k in range(0,len(self._df['Outputs']['Name'])) for i in self._testsetdict[self._testsetSelecter.value][0][testname.value]['outputs'].items() if self._df['Outputs']['Name'][k] == i[0]],
+                            'Value': ['' for _ in self._testsetdict[self._testsetSelecter.value][0][testname.value]['inputs'].items()] + ['' for _ in self._testsetdict[self._testsetSelecter.value][0][testname.value]['outputs'].items()],
+                            'Precision': ['' for _ in self._testsetdict[self._testsetSelecter.value][0][testname.value]['inputs'].items()] + ['' for _ in self._testsetdict[self._testsetSelecter.value][0][testname.value]['outputs'].items()],
+                            'Min': [self._df['Inputs']['Min'][k] for k in range(0,len(self._df['Inputs']['Name'])) for i in self._testsetdict[self._testsetSelecter.value][0][testname.value]['inputs'].items() if self._df['Inputs']['Name'][k] == i[0]] +
+                                    [self._df['Outputs']['Min'][k] for k in range(0,len(self._df['Outputs']['Name'])) for i in self._testsetdict[self._testsetSelecter.value][0][testname.value]['outputs'].items() if self._df['Outputs']['Name'][k] == i[0]],
+                            'Max': [self._df['Inputs']['Max'][k] for k in range(0,len(self._df['Inputs']['Name'])) for i in self._testsetdict[self._testsetSelecter.value][0][testname.value]['inputs'].items() if self._df['Inputs']['Name'][k] == i[0]] + 
+                                    [self._df['Outputs']['Max'][k] for k in range(0,len(self._df['Outputs']['Name'])) for i in self._testsetdict[self._testsetSelecter.value][0][testname.value]['outputs'].items() if self._df['Outputs']['Name'][k] == i[0]]
+                        })
+                    
+                    else:
+                        self._testsetsDataframe[self._testsetSelecter.value][0][testname.value] = pandas.DataFrame(data={
+                            'Name': [i[0] for i in self._testsetdict[self._testsetSelecter.value][0][testname.value]['inputs'].items()] + [i[0] for i in self._testsetdict[self._testsetSelecter.value][0][testname.value]['outputs'].items()],
+                            'InputType': pandas.Categorical(['input' for _ in self._testsetdict[self._testsetSelecter.value][0][testname.value]['inputs'].items()]+['output' for _ in self._testsetdict[self._testsetSelecter.value][0][testname.value]['outputs'].items()], categories=['input', 'output']),
+                            'DataType': [self._df['Inputs']['DataType'][k] for k in range(0,len(self._df['Inputs']['DataType'])) for i in {**self._testsetdict[self._testsetSelecter.value][0][testname.value]['inputs'], **self._testsetdict[self._testsetSelecter.value][0][testname.value]['outputs']}.items() if self._df['Inputs']['Name'][k] == i[0]],
+                            'Value': ['' for _ in self._testsetdict[self._testsetSelecter.value][0][testname.value]['inputs'].items()] + ['' for _ in self._testsetdict[self._testsetSelecter.value][0][testname.value]['outputs'].items()],
+                            'Precision': ['' for _ in self._testsetdict[self._testsetSelecter.value][0][testname.value]['inputs'].items()] + ['' for _ in self._testsetdict[self._testsetSelecter.value][0][testname.value]['outputs'].items()],
+                            'Min': [self._df['Inputs']['Min'][k] for k in range(0,len(self._df['Inputs']['Min'])) for i in {**self._testsetdict[self._testsetSelecter.value][0][testname.value]['inputs'], **self._testsetdict[self._testsetSelecter.value][0][testname.value]['outputs']}.items() if self._df['Inputs']['Name'][k] == i[0]],
+                            'Max': [self._df['Inputs']['Max'][k] for k in range(0,len(self._df['Inputs']['Max'])) for i in {**self._testsetdict[self._testsetSelecter.value][0][testname.value]['inputs'], **self._testsetdict[self._testsetSelecter.value][0][testname.value]['outputs']}.items() if self._df['Inputs']['Name'][k] == i[0]]
+                        })
+                    
+                    self._createTestset.disabled = False
+                    self._deleteTestset.disabled = False
+                    self._testsetSelecter.disabled = False
+                    self._createTest.disabled = False
+                    self._deleteTest.disabled = False
+                    self._testSelecter.disabled = False
+                    self._apply.disabled = False
+
+                    self._testSelecter.observe(self._on_value_change_test, names='value')
+
+                    self._out2.clear_output()
+
                 else:
-                    self._testsetsDataframe[self._testsetSelecter.value][0][testname.value] = pandas.DataFrame(data={
-                        'Name': [i[0] for i in self._testsetdict[self._testsetSelecter.value][0][testname.value]['inputs'].items()] + [i[0] for i in self._testsetdict[self._testsetSelecter.value][0][testname.value]['outputs'].items()],
-                        'InputType': pandas.Categorical(['input' for _ in self._testsetdict[self._testsetSelecter.value][0][testname.value]['inputs'].items()]+['output' for _ in self._testsetdict[self._testsetSelecter.value][0][testname.value]['outputs'].items()], categories=['input', 'output']),
-                        'DataType': [self._df['Inputs']['DataType'][k] for k in range(0,len(self._df['Inputs']['Name'])) for i in self._testsetdict[self._testsetSelecter.value][0][testname.value]['inputs'].items() if self._df['Inputs']['Name'][k] == i[0]],
-                        'Value': ['' for _ in self._testsetdict[self._testsetSelecter.value][0][testname.value]['inputs'].items()] + ['' for _ in self._testsetdict[self._testsetSelecter.value][0][testname.value]['outputs'].items()],
-                        'Precision': ['' for _ in self._testsetdict[self._testsetSelecter.value][0][testname.value]['inputs'].items()] + ['' for _ in self._testsetdict[self._testsetSelecter.value][0][testname.value]['outputs'].items()],
-                        'Min': [self._df['Inputs']['Min'][k] for k in range(0,len(self._df['Inputs']['Name'])) for i in self._testsetdict[self._testsetSelecter.value][0][testname.value]['inputs'].items() if self._df['Inputs']['Name'][k] == i[0]],
-                        'Max': [self._df['Inputs']['Max'][k] for k in range(0,len(self._df['Inputs']['Name'])) for i in self._testsetdict[self._testsetSelecter.value][0][testname.value]['inputs'].items() if self._df['Inputs']['Name'][k] == i[0]]
-                    })
+                    with self._out3:
+                        print('Missing name.')
+        
+
+            def eventCancel(b):
                 
+                self._out2.clear_output()
                 self._createTestset.disabled = False
                 self._deleteTestset.disabled = False
                 self._testsetSelecter.disabled = False
@@ -461,29 +507,9 @@ class manageTestset():
                 self._deleteTest.disabled = False
                 self._testSelecter.disabled = False
                 self._apply.disabled = False
-
-                self._testSelecter.observe(self._on_value_change_test, names='value')
-
-                self._out2.clear_output()
-
-            else:
-                with self._out3:
-                    print('Missing name.')
-        
-
-        def eventCancel(b):
             
-            self._out2.clear_output()
-            self._createTestset.disabled = False
-            self._deleteTestset.disabled = False
-            self._testsetSelecter.disabled = False
-            self._createTest.disabled = False
-            self._deleteTest.disabled = False
-            self._testSelecter.disabled = False
-            self._apply.disabled = False
-        
-        apply.on_click(eventApply)
-        cancel.on_click(eventCancel)
+            apply.on_click(eventApply)
+            cancel.on_click(eventCancel)
 
     
 
@@ -554,7 +580,7 @@ class manageTestset():
 
 
 
-    def _eventCancel(self, b):
+    def _eventExit(self, b):
 
         """
         Handles cancel button on_click event
@@ -579,9 +605,9 @@ class manageTestset():
 
         with self._out:
             if self._iscreate:
-                display(wg.VBox([wg.HTML(value='<b><font size="5">Model creation : {}.{}.xml<br>-> TestSets</font></b>'.format(self._datas['Model type'], self._datas['Model name'])), wg.HBox([self._testsetSelecter, self._createTestset, self._deleteTestset]), wg.HBox([self._testSelecter, self._createTest, self._deleteTest]), self._out2, wg.HBox([self._apply, self._cancel])]))
+                display(wg.VBox([wg.HTML(value='<b><font size="5">Model creation : {}.{}.xml<br>-> TestSets</font></b>'.format(self._datas['Model type'], self._datas['Model name'])), wg.HBox([self._testsetSelecter, self._createTestset, self._deleteTestset]), wg.HBox([self._testSelecter, self._createTest, self._deleteTest]), self._out2, wg.HBox([self._apply, self._exit])]))
             else:
-                display(wg.VBox([wg.HTML(value='<b><font size="5">Model edition : {}.{}.xml<br>-> TestSets</font></b>'.format(self._datas['Model type'], self._datas['Model name'])), wg.HBox([self._testsetSelecter, self._createTestset, self._deleteTestset]), wg.HBox([self._testSelecter, self._createTest, self._deleteTest]), self._out2, wg.HBox([self._apply, self._cancel])]))
+                display(wg.VBox([wg.HTML(value='<b><font size="5">Model edition : {}.{}.xml<br>-> TestSets</font></b>'.format(self._datas['Model type'], self._datas['Model name'])), wg.HBox([self._testsetSelecter, self._createTestset, self._deleteTestset]), wg.HBox([self._testSelecter, self._createTest, self._deleteTest]), self._out2, wg.HBox([self._apply, self._exit])]))
 
         self._testsetSelecter.observe(self._on_value_change_testset, names='value')
         self._createTestset.on_click(self._eventCreateTestset)
@@ -592,4 +618,4 @@ class manageTestset():
         self._deleteTest.on_click(self._eventDeleteTest)
 
         self._apply.on_click(self._eventApply)
-        self._cancel.on_click(self._eventCancel)
+        self._exit.on_click(self._eventExit)

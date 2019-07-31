@@ -39,7 +39,7 @@ class manageParamset():
 
 
         self._apply = wg.Button(value=False, description='Apply', disabled=False, button_style='success')
-        self._cancel = wg.Button(value=False, description='Cancel', disabled=False, button_style='danger')
+        self._exit = wg.Button(value=False, description='Cancel', disabled=False, button_style='danger')
         self._create = wg.Button(value=False, description='Create', disabled=False, button_style='primary')
         self._delete = wg.Button(value=False, description='Delete', disabled=False, button_style='danger')
         self._applyparam = wg.Button(value=False, description='Apply', disabled=False, button_style='success')
@@ -321,7 +321,7 @@ class manageParamset():
 
 
                 
-    def _eventCancel(self, b):
+    def _eventExit(self, b):
 
         """
         Handles cancel button on_click event
@@ -365,13 +365,13 @@ class manageParamset():
 
         with self._out:
             if self._isCreate:
-                display(wg.VBox([wg.HTML(value='<b><font size="5">Model creation : {}.{}.xml<br>-> ParametersSet</font></b>'.format(self._datas['Model type'], self._datas['Model name'])), wg.HBox([self._paramselecter, self._create, self._delete]), self._out2, wg.HBox([self._apply, self._cancel])]))
+                display(wg.VBox([wg.HTML(value='<b><font size="5">Model creation : {}.{}.xml<br>-> ParametersSet</font></b>'.format(self._datas['Model type'], self._datas['Model name'])), wg.HBox([self._paramselecter, self._create, self._delete]), self._out2, wg.HBox([self._apply, self._exit])]))
             else:
-                display(wg.VBox([wg.HTML(value='<b><font size="5">Model edition : {}.{}.xml<br>-> ParametersSet</font></b>'.format(self._datas['Model type'], self._datas['Model name'])), wg.HBox([self._paramselecter, self._create, self._delete]), self._out2, wg.HBox([self._apply, self._cancel])]))
+                display(wg.VBox([wg.HTML(value='<b><font size="5">Model edition : {}.{}.xml<br>-> ParametersSet</font></b>'.format(self._datas['Model type'], self._datas['Model name'])), wg.HBox([self._paramselecter, self._create, self._delete]), self._out2, wg.HBox([self._apply, self._exit])]))
 
 
         self._apply.on_click(self._eventApply)
         self._create.on_click(self._eventCreate)
         self._delete.on_click(self._eventDelete)
-        self._cancel.on_click(self._eventCancel)
+        self._exit.on_click(self._eventExit)
         self._paramselecter.observe(self._on_value_change, names='value')

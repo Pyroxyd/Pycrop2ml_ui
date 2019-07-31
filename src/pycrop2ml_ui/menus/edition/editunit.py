@@ -31,7 +31,7 @@ class editUnit():
         self._datas = dict()
 
         self._apply = wg.Button(value=False, description='Apply', disabled=False, button_style='success')
-        self._cancel = wg.Button(value=False, description='Cancel', disabled=False, button_style='danger')
+        self._cancel = wg.Button(value=False, description='Cancel', disabled=False, button_style='warning')
 
         self._title = wg.Textarea(value='',description='Title:',disabled=False)
         self._authors = wg.Textarea(value='',description='Authors:',disabled=False)
@@ -117,21 +117,24 @@ class editUnit():
 
         self._qgridOut = qgrid.show_grid(self._dataframeOut, show_toolbar=True)
 
-        self._dataframeAlgo = pandas.DataFrame(data={
-            'Algorithm': [i.filename for i in self._xmlfile.algorithms]
-        })
+        if self._xmlfile.algorithms:
+            self._dataframeAlgo = pandas.DataFrame(data={
+                'Filename': [i.filename for i in self._xmlfile.algorithms]
+            })
+        else:
+            self._dataframeAlgo = pandas.DataFrame(data={
+                'Filename': ['']
+            })
 
         self._qgridAlgo = qgrid.show_grid(self._dataframeAlgo, show_toolbar=True)
 
         
         if self._xmlfile.function:
             self._dataframeFunction = pandas.DataFrame(data={
-                'Function name': [i.name for i in self._xmlfile.function],
                 'Filename': [i.filename for i in self._xmlfile.function]
             })
         else:
             self._dataframeFunction = pandas.DataFrame(data={
-                'Function name': [''],
                 'Filename': ['']
             })
 
@@ -161,12 +164,12 @@ class editUnit():
 
         if self._xmlfile is None:
 
-            try:
+            self._out.clear_output()
+            self._out2.clear_output()
+            with self._out:
                 raise Exception('Critical error while parsing the file.')
 
-            finally:
-                self._out.clear_output()
-                self._out2.clear_output()
+                
         
         self._buildEdit()
 
@@ -244,7 +247,7 @@ class editUnit():
         self._out.clear_output()
         self._out2.clear_output()
 
-        self._df = {'Algorithms':self._dataframeAlgo,'Functions':self._dataframeFunction,'Inputs':self._dataframeIn,'Outputs':self._dataframeOut}
+        self._df = {'Algorithms': [i for i in self._dataframeAlgo['Filename'] if i != ''],'Functions': [i for i in self._dataframeFunction['Filename'] if i != ''],'Inputs':self._dataframeIn,'Outputs':self._dataframeOut}
 
         self._paramdict, self._paramsetdict = self._updateParam()
         self._vardict, self._testsetdict = self._updateVar()
@@ -276,9 +279,6 @@ class editUnit():
         """
 
         self._out2.clear_output()
-
-        self._dataframeAlgo = self._qgridAlgo.get_changed_df()
-        self._dataframeAlgo.reset_index(inplace=True)
 
 
         def checkHeader():
@@ -351,14 +351,10 @@ class editUnit():
         elif not checkOutputs():           
             with self._out2:
                 print('Missing argument(s) in the output list, these columns are required :\n\t- Name\n\t- Description\n\t- Category\n\t- DataType\n\t- Unit')
-        
-        elif '' in [i for i in self._dataframeAlgo['Algorithm']]:
-            with self._out2:
-                print('Missing argument(s) in the algorithm list.')            
 
         else:
             self._dataframeFunction = self._qgridFunction.get_changed_df()
-            self._dataframeFunction.reset_index(inplace=True)
+            self._dataframeAlgo = self._qgridAlgo.get_changed_df()
 
             self._datas['Model name'] = self._title.value
             self._datas['Authors'] = self._authors.value
@@ -379,12 +375,12 @@ class editUnit():
         self._out.clear_output()
         self._out2.clear_output()
 
-        try:
-            tmp = editmenu.editMenu()
-            tmp.displayMenu()
-
-        except:
-            raise Exception('Could not load edition menu.')
+        with self._out:
+            try:
+                tmp = editmenu.editMenu()
+                tmp.displayMenu()
+            except:
+                raise Exception('Could not load edition menu.')
 
 
 
@@ -948,32 +944,32 @@ class editUnit():
 
 
     
-    def _cell_edited_Function(self, event, widget):
+    def _cell_edited_algofunc(self, event, widget):
 
         """
-        Handles every event occuring when a cell is edited in the function list qgrid widget
+        Handles a cell edition in the function or algorithm list qgrid widget
         """
 
         self._out2.clear_output()
-        widget.off('cell_edited', self._cell_edited_Function)
 
-        if event['column'] == 'Function name':
-            widget.edit_cell(event['index'], 'Function name', event['old'])
+        widget.off('cell_edited', self._cell_edited_algofunc)
 
-            with self._out2:
-                print('Warnning : enter a Filename.')
-
-        elif event['column'] == 'Filename':
-            if event['new'].split('.')[-1].lower() == 'pyx':
-                widget.edit_cell(event['index'], 'Function name', event['new'].split('.')[0].split('/')[-1])
-
-            else:
+        if event['new']:
+            if not event['new'].split('.')[-1].lower() == 'pyx':
                 widget.edit_cell(event['index'], 'Filename', event['old'])
 
                 with self._out2:
                     print('File must be .pyx format.')
+            else:
+                df = widget.get_changed_df()
+                tmplist = [i for i in df['Filename']].remove(event['new'])
+                if event['new'] in tmplist:
+                    widget.edit_cell(event['index'], 'Filename', event['old'])
 
-        widget.on('cell_edited', self._cell_edited_Function)
+                    with self._out2:
+                        print('This filename is already in the list.')
+
+        widget.on('cell_edited', self._cell_edited_algofunc)
 
 
 
@@ -1010,34 +1006,20 @@ class editUnit():
     
 
 
-    def _row_added_Algo(self, event, widget):
+    def _row_added_algofunc(self, event, widget):
 
         
         """
-        Handles a row addition in the algorithm list qgrid widget
+        Handles a row addition in the function or algorithm qgrid widget
         """
 
-        widget.edit_cell(event['index'], 'Algorithm', '')
-
-    
-
-    def _row_added_Function(self, event, widget):
-
-        
-        """
-        Handles a row addition in the function list qgrid widget
-        """
-
-        widget.off('cell_edited', self._cell_edited_Function)
-
-        widget.edit_cell(event['index'], 'Function name', '')
+        widget.off('cell_edited', self._cell_edited_algofunc)
         widget.edit_cell(event['index'], 'Filename', '')
-
-        widget.on('cell_edited', self._cell_edited_Function)
-
+        widget.on('cell_edited', self._cell_edited_algofunc)
 
 
-    def display(self, dic):
+
+    def displayMenu(self, dic):
 
         """
         Displays the unit model creation menu for pyrcop2ml's UI.
@@ -1084,7 +1066,7 @@ class editUnit():
         tab.set_title(4, 'Functions')
 
         with self._out:
-            display(wg.VBox([wg.HTML(value='<b><font size="5">Model edition : {}.{}.xml<br>-> Inputs, Outputs, Algorithms</font></b>'.format(self._datas['Model type'], self._datas['Model name'])), tab, wg.HBox([self._apply, self._cancel])]))
+            display(wg.VBox([wg.HTML(value='<b><font size="5">Model edition : {}.{}.xml<br>-> Header and Data</font></b>'.format(self._datas['Model type'], self._datas['Model name'])), tab, wg.HBox([self._apply, self._cancel])]))
 
 
         self._qgridIn.on('cell_edited', self._cell_edited_In)
@@ -1093,10 +1075,11 @@ class editUnit():
         self._qgridOut.on('cell_edited', self._cell_edited_Out)
         self._qgridOut.on('row_added', self._row_added_Out)
 
-        self._qgridAlgo.on('row_added', self._row_added_Algo)
+        self._qgridAlgo.on('cell_edited', self._cell_edited_algofunc)
+        self._qgridAlgo.on('row_added', self._row_added_algofunc)
 
-        self._qgridFunction.on('cell_edited', self._cell_edited_Function)
-        self._qgridFunction.on('row_added', self._row_added_Function)
+        self._qgridFunction.on('cell_edited', self._cell_edited_algofunc)
+        self._qgridFunction.on('row_added', self._row_added_algofunc)
 
         self._apply.on_click(self._eventApply)
         self._cancel.on_click(self._eventCancel)
