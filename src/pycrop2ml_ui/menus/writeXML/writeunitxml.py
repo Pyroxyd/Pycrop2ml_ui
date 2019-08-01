@@ -211,7 +211,7 @@ class writeunitXML():
                     f.write('\n\t<Algorithm language="Cyml" platform="" filename="{}" />'.format(i))
             else:
                 createalgo = True
-                f.write('\n\t<Algorithm language="Cyml" platform="" filename="algo/pyx/{}.pyx" />'.format(self._datas['Model name']))
+                f.write('\n\n\t<Algorithm language="Cyml" platform="" filename="algo/pyx/{}.pyx" />'.format(self._datas['Model name']))
             
             f.write('\n\n\t<Initialization name="init.{0}" language="Cyml" filename="algo/pyx/init.{0}.pyx" description="" />'.format(self._datas['Model name']))
 
