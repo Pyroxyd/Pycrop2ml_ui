@@ -14,6 +14,46 @@ from pycrop2ml_ui.menus.writeXML.writeunitxml import writeunitXML
 
 class manageTestset():
 
+    """
+    Class providing the display of the testset edition menu for pycrop2ml's user interface.
+
+    Parameters : \n
+        - datas : {
+                    'Path': '',
+                    'Model type': 'unit',
+                    'Model name': '',
+                    'Authors': '',
+                    'Institution': '',
+                    'Reference': '',
+                    'Abstract': ''
+                   }
+
+        - vardict : {'inputs': {name : value},
+                     'outputs' : {name : value}
+                    }
+
+        - testsetdict : {name : [
+                                {testname : type(vardict)},
+                                parameterset,
+                                description
+                                ]
+                        }
+
+        - paramsetdict : {paramset_name : [
+                                          {param : value},
+                                          description
+                                          ]
+                         }
+
+        - df : {
+                'Inputs' : pandas.DataFrame,
+                'Algorithms' : [],
+                'Functions' : [],
+                'Outputs' : pandas.DataFrame -> only if iscreate is False
+               }
+
+        - iscreate : bool
+    """
 
     def __init__(self, datas, vardict, testsetdict, paramsetdict, df, iscreate=True):
 
@@ -62,6 +102,10 @@ class manageTestset():
 
 
     def _initSet(self):
+
+        """
+        Initializes a dataframe for each testset in edition mode, else pass
+        """
 
         if not self._iscreate:
             for k,v in self._testsetdict.items():
@@ -243,6 +287,10 @@ class manageTestset():
 
     def _on_value_change_testset(self, change):
 
+        """
+        Handles every testset selecter change
+        """
+
         if change['new']:
 
             self._testSelecter.options = self._testlist[change['new']]
@@ -260,6 +308,10 @@ class manageTestset():
     
 
     def _on_value_change_test(self, change):
+
+        """
+        Handles every test selecter change
+        """
         
         self._out3.clear_output()
         
@@ -546,6 +598,10 @@ class manageTestset():
 
     def _eventApply(self, b):
 
+        """
+        Handles apply button on_click event
+        """
+
 
         self._out3.clear_output()
 
@@ -583,7 +639,7 @@ class manageTestset():
     def _eventExit(self, b):
 
         """
-        Handles cancel button on_click event
+        Handles exit button on_click event
         """
         
         self._out.clear_output()
@@ -597,6 +653,12 @@ class manageTestset():
             
     def displayMenu(self):
 
+        """
+        Displays the testset edition menu for Pycrop2ml's UI.
+
+        This method is the only one available for the user in this class. Any other attribute or
+        method call may break the code.
+        """
 
         self._initSet()
 

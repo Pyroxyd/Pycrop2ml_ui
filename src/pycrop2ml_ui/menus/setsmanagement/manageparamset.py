@@ -13,6 +13,49 @@ from pycrop2ml_ui.menus.setsmanagement import managetestset
 
 class manageParamset():
 
+    """
+    Class providing the display of the parameterset edition menu for pycrop2ml's user interface.
+
+    Parameters : \n
+        - datas : {
+                    'Path': '',
+                    'Model type': 'unit',
+                    'Model name': '',
+                    'Authors': '',
+                    'Institution': '',
+                    'Reference': '',
+                    'Abstract': ''
+                   }
+        
+        - paramdict : {param_name : value}
+
+        - paramsetdict : {paramset_name : [
+                                          {param_name : value},
+                                          description
+                                          ]
+                         }
+
+        - df : {
+                'Inputs' : pandas.DataFrame,
+                'Algorithms' : [],
+                'Functions' : [],
+                'Outputs' : pandas.DataFrame -> only if iscreate is False
+               }
+
+        - vardict : {
+                     'inputs': {name : value},
+                     'outputs' : {name : value}
+                    }
+
+        - testsetdict : {name : [
+                                {testname : type(vardict)},
+                                parameterset,
+                                description
+                                ]
+                        }
+
+        - iscreate : bool
+    """
 
     def __init__(self, datas, paramdict, paramsetdict, df, vardict, testsetdict, iscreate=True):
 
@@ -324,7 +367,7 @@ class manageParamset():
     def _eventExit(self, b):
 
         """
-        Handles cancel button on_click event
+        Handles exit button on_click event
         """
         
         self._out.clear_output()

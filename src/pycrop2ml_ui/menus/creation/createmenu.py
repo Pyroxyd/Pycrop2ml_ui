@@ -148,8 +148,8 @@ class createMenu():
                 with self._out:
                     if self._datas['Model type'] == 'unit':
                         try:   
-                            unit = createunit.createUnit()
-                            unit.displayMenu(self._datas)
+                            unit = createunit.createUnit(self._datas)
+                            unit.displayMenu()
 
                         except:
                             os.remove("{}{}unit.{}.xml".format(self._datas['Path'], os.path.sep, self._datas['Model name']))
@@ -159,8 +159,8 @@ class createMenu():
 
                     else:
                         try:
-                            composition = createcomposition.createComposition()
-                            composition.displayMenu(self._datas)
+                            composition = createcomposition.createComposition(self._datas)
+                            composition.displayMenu()
 
                         except:
                             os.remove("{}{}composition.{}.xml".format(self._datas['Path'], os.path.sep, self._datas['Model name']))
@@ -232,7 +232,7 @@ class createMenu():
     def displayMenu(self):
 
         """
-        Displays the model creation menu of pyrcop2ml's UI.
+        Displays the model creation menu of pycrop2ml's UI.
 
         This method is the only one available for the user in this class. Any other attribute or
         method call may break the code.

@@ -19,16 +19,22 @@ class editUnit():
 
     """
     Class providing the display of the unit model edition menu for pycrop2ml's user interface.
+
+    Parameters :\n
+            - data : {
+                        'Path': '',
+                        'Model type': 'unit',
+                        'Model name': ''
+                     }
     """
 
-
-    def __init__(self):
+    def __init__(self, data):
 
         #outputs
         self._out = wg.Output()
         self._out2 = wg.Output()
 
-        self._datas = dict()
+        self._datas = data
 
         self._apply = wg.Button(value=False, description='Apply', disabled=False, button_style='success')
         self._cancel = wg.Button(value=False, description='Cancel', disabled=False, button_style='warning')
@@ -955,14 +961,15 @@ class editUnit():
         widget.off('cell_edited', self._cell_edited_algofunc)
 
         if event['new']:
-            if not event['new'].split('.')[-1].lower() == 'pyx':
+            if event['new'].split('.')[-1].lower() != 'pyx':
                 widget.edit_cell(event['index'], 'Filename', event['old'])
 
                 with self._out2:
                     print('File must be .pyx format.')
             else:
                 df = widget.get_changed_df()
-                tmplist = [i for i in df['Filename']].remove(event['new'])
+                tmplist = [i for i in df['Filename']]
+                tmplist.remove(event['new'])
                 if event['new'] in tmplist:
                     widget.edit_cell(event['index'], 'Filename', event['old'])
 
@@ -1019,42 +1026,34 @@ class editUnit():
 
 
 
-    def displayMenu(self, dic):
+    def displayMenu(self):
 
         """
         Displays the unit model creation menu for pyrcop2ml's UI.
 
         This method is the only one available for the user in this class. Any other attribute or
         method call may break the code.
-
-        Parameters :\n
-            - dic : dict(type:datas)\n
-                datas = {
-                        'Path': '',
-                        'Model type': 'unit',
-                        'Model name': ''
-                        }
         """
+
+        display(self._out)
 
         listkeys = ['Path','Model type','Model name']
 
-        for i in dic.keys():
+        for i in self._datas.keys():
 
-            if i not in listkeys:
-                raise Exception("Could not display unit model edition menu : parameter dic from self.displayMenu(self, dic) must contain these keys ['Path','Model type','Model name']")
+            with self._out:
+                if i not in listkeys:
+                    raise Exception("Could not display unit model edition menu : parameter data from editUnit(data) must contain these keys ['Path','Model type','Model name']")
 
-            elif i == 'Model type' and not dic[i] == 'unit':
-                raise Exception("Bad value error : Model type key's value must be unit.")
+                elif i == 'Model type' and self._datas[i] != 'unit':
+                    raise Exception("Bad value error : Model type key's value must be unit.")
 
-            else:
-                listkeys.remove(i)
-
-
-        self._datas = dic
+                else:
+                    listkeys.remove(i)
 
         self._parse()
 
-        display(self._out)
+        
         display(self._out2)
 
         tab = wg.Tab()

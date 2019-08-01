@@ -16,10 +16,21 @@ class createComposition():
 
     """
     Class providing the display of composition model creation menu for pycrop2ml's user interface.
+
+    Parameters :\n
+            - data : {
+                        'Path': '',
+                        'Model type': 'composition',
+                        'Model name': '',
+                        'Authors': '',
+                        'Institution': '',
+                        'Reference': '',
+                        'Abstract': ''
+                     }
     """
 
 
-    def __init__(self):
+    def __init__(self, data):
 
         self._out = wg.Output()
         self._out2 = wg.Output()
@@ -28,7 +39,7 @@ class createComposition():
         self._apply2 = wg.Button(value=False,description='Apply',disabled=False,button_style='success')
         self._exit = wg.Button(value=False,description='Exit',disabled=False,button_style='danger')
 
-        self._datas = dict()
+        self._datas = data
 
 
 
@@ -71,16 +82,22 @@ class createComposition():
         self._dataFrameLink.reset_index(inplace=True)
 
         try:
-            f = open("{}/composition.{}.xml".format(self._datas['Path'], self._datas['Model name']), 'w')
+            f = open("{}{}composition.{}.xml".format(self._datas['Path'], os.path.sep, self._datas['Model name']), 'w', encoding='utf8')
 
         except IOError as ioerr:
-            raise Exception('File composition.{}.xml could not be opened. {}'.format(self._datas['Model name'], ioerr))
+            with self._out:
+                raise Exception('File composition.{}.xml could not be opened. {}'.format(self._datas['Model name'], ioerr))
 
         else:
 
-            split = re.split(r'\\', self._datas['Path'])
+            split = []
+            path = self._datas['Path']
+            for i in range(4):
+                split.append(os.path.split(path)[-1])
+                path = os.path.split(path)[0]
+                
             f.write('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE ModelComposition PUBLIC " " "https://raw.githubusercontent.com/AgriculturalModelExchangeInitiative/crop2ml/master/ModelComposition.dtd">\n')
-            f.write('<ModelComposition modelid="{}.{}" name="{}" timestep="1" version="1.0">'.format(split[-4], self._datas['Model name'],self._datas['Model name']))
+            f.write('<ModelComposition modelid="{}.{}" name="{}" timestep="1" version="1.0">'.format(split[-3], self._datas['Model name'],self._datas['Model name']))
             f.write('\n\t<Description>\n\t\t<Title>{}</Title>\n\t\t<Authors>{}</Authors>\n\t\t<Institution>{}</Institution>\n\t\t<Reference>{}</Reference>\n\t\t<Abstract>{}</Abstract>\n\t</Description>'.format(self._datas['Model name'], self._datas['Authors'], self._datas['Institution'], self._datas['Reference'], self._datas['Abstract']))
 
             f.write('\n\t<Composition>')
@@ -240,7 +257,7 @@ class createComposition():
     def _eventExit(self, b):
 
         """
-        Handles cancel button on_click event
+        Handles exit button on_click event
         """
 
         self._out.clear_output()
@@ -367,7 +384,7 @@ class createComposition():
 
 
 
-    def displayMenu(self, dic):
+    def displayMenu(self):
 
 
         """
@@ -375,38 +392,27 @@ class createComposition():
 
         This method is the only one available for the user in this class. Any other attribute or
         method call may break the code.
-
-        Parameters :\n
-            - dic : dict(type:datas)\n
-                datas = {
-                        'Path': '',
-                        'Model type': 'composition',
-                        'Model name': '',
-                        'Authors': '',
-                        'Institution': '',
-                        'Reference': '',
-                        'Abstract': ''
-                        }
         """
 
         listekeys = ['Path','Model type','Model name','Authors','Institution','Reference','Abstract']
 
-        for i in dic.keys():
-
-            if i not in listekeys:
-                raise Exception("Could not display composition model creation menu : parameter dic from self.displayMenu(self, dic) must contain these keys ['Path','Model type','Model name','Authors','Institution','Reference','Abstract']")
-            
-            elif i == 'Model type' and not dic[i] == 'composition':
-                raise Exception("Bad value error : Model type key's value must be composition.")
-
-            else:
-                listekeys.remove(i)
-
-
         display(self._out)
+
+        for i in self._datas.keys():
+
+            with self._out:
+                if i not in listekeys:
+                    raise Exception("Could not display composition model creation menu : parameter data from createComposition(data) must contain these keys ['Path','Model type','Model name','Authors','Institution','Reference','Abstract']")
+                
+                elif i == 'Model type' and not self._datas[i] == 'composition':
+                    raise Exception("Bad value error : Model type key's value must be composition.")
+
+                else:
+                    listekeys.remove(i)
+
+
         display(self._out2)
         
-        self._datas = dic
         self._listdir()
         self._dataFrameqgrid = qgrid.show_grid(self._dataFrame, show_toolbar=True)
 

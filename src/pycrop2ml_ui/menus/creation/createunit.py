@@ -19,10 +19,21 @@ class createUnit():
 
     """
     Class providing the display of unit model creation menu for pycrop2ml's user interface.
+
+    Parameters :\n
+            - data : {
+                        'Path': '',
+                        'Model type': 'unit',
+                        'Model name': '',
+                        'Authors': '',
+                        'Institution': '',
+                        'Reference': '',
+                        'Abstract': ''
+                     }
     """
 
 
-    def __init__(self):
+    def __init__(self, data):
 
 
         #buttons
@@ -53,7 +64,7 @@ class createUnit():
 
         self._inouttab = qgrid.show_grid(self._dataframeInputs, show_toolbar=True)
 
-        self._datas = dict()
+        self._datas = data
 
 
 
@@ -167,7 +178,7 @@ class createUnit():
     def _eventExit(self, b):
 
         """
-        Handles cancel button on_click event
+        Handles exit button on_click event
         """
 
         self._out.clear_output()
@@ -695,45 +706,33 @@ class createUnit():
 
 
 
-    def displayMenu(self, dic):
+    def displayMenu(self):
 
         """
         Displays the unit model creation menu of pyrcop2ml's UI.
 
         This method is the only one available for the user in this class. Any other attribute or
         method call may break the code.
-
-        Parameters :\n
-            - dic : dict(type:datas)\n
-                datas = {
-                        'Path': '',
-                        'Model type': 'unit',
-                        'Model name': '',
-                        'Authors': '',
-                        'Institution': '',
-                        'Reference': '',
-                        'Abstract': ''
-                        }
         """
+
+
         display(self._out)
 
         listkeys = ['Path','Model type','Model name','Authors','Institution','Reference','Abstract']
 
-        for i in dic.keys():
+        for i in self._datas.keys():
 
-            if i not in listkeys:
-                with self._out:
-                    raise Exception("Could not display unit model creation menu : parameter dic from self.displayMenu(self, dic) must contain these keys ['Path','Model type','Model name','Authors','Institution','Reference','Abstract']")
+            with self._out:
+                if i not in listkeys:
+                    raise Exception("Could not display unit model creation menu : parameter data from createUnit(data) must contain these keys ['Path','Model type','Model name','Authors','Institution','Reference','Abstract']")
 
-            elif i == 'Model type' and dic[i] != 'unit':
-                with self._out:
+                elif i == 'Model type' and self._datas[i] != 'unit':
                     raise Exception("Bad value error : Model type key's value must be unit.")
 
-            else:
-                listkeys.remove(i)
+                else:
+                    listkeys.remove(i)
 
-        
-        self._datas = dic
+
         tmpcategories = ['']+[i for i in os.listdir(self._datas['Path']+os.path.sep+'Algo'+os.path.sep+'pyx') if i.split('.')[-1] == 'pyx']
         self._functionqgrid = qgrid.show_grid(pandas.DataFrame(data={'Filename':['']}), show_toolbar=True)
         self._algoqgrid = qgrid.show_grid(pandas.DataFrame(data={'Filename': pandas.Categorical([''], categories=tmpcategories)}), show_toolbar=True)

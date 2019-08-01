@@ -58,8 +58,8 @@ class editMenu():
                 self._out.clear_output()
                 
                 with self._out:                  
-                    unit = editunit.editUnit()
-                    unit.displayMenu({'Path': self._modelPath.value+os.path.sep+'crop2ml', 'Model type': typemodel.group(1), 'Model name': typemodel.group(2)})
+                    unit = editunit.editUnit({'Path': self._modelPath.value+os.path.sep+'crop2ml', 'Model type': typemodel.group(1), 'Model name': typemodel.group(2)})
+                    unit.displayMenu()
 
             
             elif typemodel.group(1) == 'composition':
@@ -67,8 +67,8 @@ class editMenu():
                 self._out.clear_output()
 
                 with self._out:                   
-                    composition = editcomposition.editComposition()
-                    composition.displayMenu({'Path': self._modelPath.value+os.path.sep+'crop2ml', 'Model type': typemodel.group(1), 'Model name': typemodel.group(2)})
+                    composition = editcomposition.editComposition({'Path': self._modelPath.value+os.path.sep+'crop2ml', 'Model type': typemodel.group(1), 'Model name': typemodel.group(2)})
+                    composition.displayMenu()
             
             else:
                 
@@ -115,17 +115,8 @@ class editMenu():
                 raise Exception('Could not load mainMenu.')
             
 
-    
-    def displayMenu(self):
 
-        """
-        Displays the model edition menu of pyrcop2ml's UI.
-
-        This method is the only one available for the user in this class. Any other attribute or
-        method call may break the code.
-        """
-
-        def _on_value_change(change):
+    def _on_value_change(self, change):
 
             """
             Handles changes from the attribute _modelPath.
@@ -145,12 +136,23 @@ class editMenu():
             self._selecter.disabled = False
 
 
+
+    def displayMenu(self):
+
+        """
+        Displays the model edition menu of pyrcop2ml's UI.
+
+        This method is the only one available for the user in this class. Any other attribute or
+        method call may break the code.
+        """
+
         display(self._out)
-        with self._out:
-            display(self._displayer)
         display(self._out2)
 
+        with self._out:
+            display(self._displayer)
+        
         self._edit.on_click(self._eventEdit)
         self._browse.on_click(self._eventBrowse)
         self._cancel.on_click(self._eventCancel)
-        self._modelPath.observe(_on_value_change, names='value')
+        self._modelPath.observe(self._on_value_change, names='value')

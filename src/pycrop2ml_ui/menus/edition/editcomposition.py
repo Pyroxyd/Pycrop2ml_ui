@@ -13,7 +13,18 @@ from pycrop2ml_ui.menus.edition import editmenu
 
 class editComposition():
 
-    def __init__(self):
+    """
+    Class providing the display of the composition model edition menu for pycrop2ml's user interface.
+
+    Parameters :\n
+            - data : {
+                        'Path': '',
+                        'Model type': 'composition',
+                        'Model name': '',
+                     }
+    """
+
+    def __init__(self, data):
 
         #outputs
         self._out = wg.Output()
@@ -31,7 +42,7 @@ class editComposition():
         self._informations = wg.VBox([self._title, self._authors, self._institution, self._reference, self._abstract])
 
         #datas
-        self._datas = dict()
+        self._datas = data
         self._listmodel = []
         self._listlink = [[],[],[]]
 
@@ -39,8 +50,18 @@ class editComposition():
 
     def _badSyntax(self, file):
 
+        """
+        Called for a bad syntax error in the parsed xml file, raises an exception.
+
+        Parameters : \n
+            - file : TextIOWrapper
+        """
+
         try:
-            raise Exception('File {} has a bad syntax critical error.'.format(file))
+            with self._out:
+                self._out.clear_output()
+                self._out2.clear_output()
+                raise Exception('File {} has a bad syntax critical error.'.format(file))
         
         finally:
             file.close()
@@ -49,14 +70,16 @@ class editComposition():
   
     def _parse(self):
 
-        with self._out2:
-            print(self._datas['Path'])
+        """
+        Parses the xml file to gather the data set
+        """
         
         try:
-            f = open(self._datas['Path'],"r")
+            f = open('{}{}{}.{}.xml'.format(self._datas['Path'], os.path.sep, self._datas['Model type'], self._datas['Model name']),"r")
 
         except IOError as ioerr:
-            raise Exception('File {} could not be opened in read mode. {}'.format(self._datas['Path'], ioerr))
+            with self._out:
+                raise Exception('File {} could not be opened in read mode. {}'.format(self._datas['Path'], ioerr))
 
         else:
 
@@ -131,19 +154,28 @@ class editComposition():
 
     def _write(self):
 
+        """
+        Writes the xml file with the new data set
+        """
+
                
         try:
-            fw = open(self._datas['Path'], "w")
+            fw = open('{}{}{}.{}.xml'.format(self._datas['Path'], os.path.sep, self._datas['Model type'], self._datas['Model name']), "w", encoding='utf8')
 
         except IOError as ioerr:
-            raise Exception('File {} could not be opened in write mode. {}'.format(self._datas['Path'], ioerr))
+            with self._out:
+                raise Exception('File {} could not be opened in write mode. {}'.format(self._datas['Path'], ioerr))
 
         else:
 
-            split = re.split(r'\\', self._datas['Path'])
+            split = []
+            path = self._datas['Path']
+            for i in range(4):
+                split.append(os.path.split(path)[-1])
+                path = os.path.split(path)[0]
 
             fw.write('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE ModelComposition PUBLIC " " "https://raw.githubusercontent.com/AgriculturalModelExchangeInitiative/crop2ml/master/ModelComposition.dtd">')
-            fw.write('<ModelComposition name="{0}" id="{1}.{0}" version="001" timestep = "1">'.format(self._datas['Model name'], split[-4]))
+            fw.write('<ModelComposition name="{0}" id="{1}.{0}" version="001" timestep = "1">'.format(self._datas['Model name'], split[-3]))
             fw.write('\n\t<Description>\n\t\t<Title>{}</Title>\n\t\t<Authors>{}</Authors>\n\t\t<Institution>{}</Institution>\n\t\t<Reference>{}</Reference>\n\t\t<Abstract>{}</Abstract>'.format(self._title.value, self._authors.value, self._institution.value, self._reference.value, self._abstract.value))
             fw.write('\n\t</Description>\n\n\t<Composition>')
 
@@ -166,6 +198,10 @@ class editComposition():
 
 
     def _eventApply(self, b):
+
+        """
+        Handles apply button on_click event
+        """
 
         self._out.clear_output()
         self._out2.clear_output()
@@ -203,6 +239,10 @@ class editComposition():
 
     def _eventCancel(self, b):
 
+        """
+        Handles cancel button on_click event
+        """
+
         self._out.clear_output()
         self._out2.clear_output()
 
@@ -215,12 +255,112 @@ class editComposition():
         
 
 
-    def displayMenu(self, dic):
+    def _row_added_link(self, event, widget):
+
+        """
+        Handles row addition for links tab
+        """
+
+        widget.edit_cell(event['index'], 'Link type', '')
+        widget.edit_cell(event['index'], 'Target', '')
+        widget.edit_cell(event['index'], 'Source', '')
+
+
+
+    def _row_added_model(self, event, widget):
+
+        """
+        Handles row addition for model list tab
+        """
+
+        widget.off('cell_edited', self._cell_edited)
+
+        widget.edit_cell(event['index'], 'Model name', '')
+        widget.edit_cell(event['index'], 'Model type', '')
+
+        widget.on('cell_edited', self._cell_edited)
+
+
+
+    def _cell_edited(self, event, widget):
+
+        """
+        Handles cell edition for model list tab
+        """
+
+        self._out2.clear_output()
+        self._datamodeltab.off('cell_edited', self._cell_edited)
+
+        self._dataframe = self._datamodeltab.get_changed_df()
+
+        if event['column'] == 'Model type':
+            
+            if event['new'] == 'Unit':
+                if event['old'] == '':
+                    self._datamodeltab.edit_cell(event['index'], 'Model name', r'unit.{modelname}.xml')
+                if event['old'] == 'Composition':
+                    self._datamodeltab.edit_cell(event['index'], 'Model name', 'unit.{}.xml'.format(re.search(r'composition\.(.*?)\.xml', self._dataframe['Model name'][event['index']]).group(1)))
+            
+            elif event['new'] == 'Composition':
+                if event['old'] == '':
+                    self._datamodeltab.edit_cell(event['index'], 'Model name', r'composition.{modelname}.xml')
+                if event['old'] == 'Unit':
+                    self._datamodeltab.edit_cell(event['index'], 'Model name', 'composition.{}.xml'.format(re.search(r'unit\.(.*?)\.xml', self._dataframe['Model name'][event['index']]).group(1)))
+            
+            else:
+                self._datamodeltab.edit_cell(event['index'], 'Model name', '')
+
+
+        elif event['column'] == 'Model name':
+            
+            if self._dataframe['Model type'][event['index']] == '':
+                self._datamodeltab.edit_cell(event['index'], 'Model name', '')
+                with self._out2:
+                    print('You must assign a model type before giving a name.')
+
+            elif self._dataframe['Model type'][event['index']] == 'Unit':
+                if not re.search(r'(unit\..*?\.xml)', self._dataframe['Model name'][event['index']]):
+                    self._datamodeltab.edit_cell(event['index'], 'Model name', r'unit.{modelname}.xml')
+                    with self._out2:
+                        print(r'Bad format, use unit.{modelname}.xml or switch the model type to enter a composition name.')
+            
+            elif self._dataframe['Model type'][event['index']] == 'Composition':
+                if not re.search(r'(composition\..*?\.xml)', self._dataframe['Model name'][event['index']]):
+                    self._datamodeltab.edit_cell(event['index'], 'Model name', r'composition.{modelname}.xml')
+                    with self._out2:
+                        print(r'Bad format, use composition.{modelname}.xml or switch the model type to enter a unit name.')
+            
+        self._datamodeltab.on('cell_edited', self._cell_edited)
+
+
+
+    def displayMenu(self):
+
+        """
+        Displays the composition model edition menu of pyrcop2ml's UI.
+
+        This method is the only one available for the user in this class. Any other attribute or
+        method call may break the code.
+        """
 
         display(self._out)
+
+        listkeys = ['Path','Model type','Model name']
+
+        for i in self._datas.keys():
+
+            with self._out:
+                if i not in listkeys:
+                    raise Exception("Could not display composition model edition menu : parameter data from editComposition(data) must contain these keys ['Path','Model type','Model name']")
+
+                elif i == 'Model type' and self._datas[i] != 'composition':
+                    raise Exception("Bad value error : Model type key's value must be composition.")
+
+                else:
+                    listkeys.remove(i)
+
         display(self._out2)
 
-        self._datas = dic
         self._parse()
 
 
@@ -257,7 +397,7 @@ class editComposition():
         
 
         self._tab = wg.Tab([self._informations, self._datamodeltab, self._datalinktab])
-        self._tab.set_title(0, 'Informations')
+        self._tab.set_title(0, 'Header')
         self._tab.set_title(1, 'Models')
         self._tab.set_title(2, 'Links')
 
@@ -269,71 +409,7 @@ class editComposition():
         self._apply.on_click(self._eventApply)
         self._cancel.on_click(self._eventCancel)
 
-
-        def row_added(event, widget):
-
-            self._datalinktab.edit_cell(event['index'], 'Link type', '')
-            self._datalinktab.edit_cell(event['index'], 'Target', '')
-            self._datalinktab.edit_cell(event['index'], 'Source', '')
-
-
-        def row_added2(event, widget):
-
-            self._datamodeltab.off('cell_edited', cell_edited)
-
-            self._datamodeltab.edit_cell(event['index'], 'Model name', '')
-            self._datamodeltab.edit_cell(event['index'], 'Model type', '')
-
-            self._datamodeltab.on('cell_edited', cell_edited)
-
-
-        def cell_edited(event, widget):
-
-            self._out2.clear_output()
-            self._datamodeltab.off('cell_edited', cell_edited)
-
-            self._dataframe = self._datamodeltab.get_changed_df()
-
-            if event['column'] == 'Model type':
-                
-                if event['new'] == 'Unit':
-                    if event['old'] == '':
-                        self._datamodeltab.edit_cell(event['index'], 'Model name', r'unit.{modelname}.xml')
-                    if event['old'] == 'Composition':
-                        self._datamodeltab.edit_cell(event['index'], 'Model name', 'unit.{}.xml'.format(re.search(r'composition\.(.*?)\.xml', self._dataframe['Model name'][event['index']]).group(1)))
-                
-                elif event['new'] == 'Composition':
-                    if event['old'] == '':
-                        self._datamodeltab.edit_cell(event['index'], 'Model name', r'composition.{modelname}.xml')
-                    if event['old'] == 'Unit':
-                        self._datamodeltab.edit_cell(event['index'], 'Model name', 'composition.{}.xml'.format(re.search(r'unit\.(.*?)\.xml', self._dataframe['Model name'][event['index']]).group(1)))
-                
-                else:
-                    self._datamodeltab.edit_cell(event['index'], 'Model name', '')
-
-
-            elif event['column'] == 'Model name':
-                
-                if self._dataframe['Model type'][event['index']] == '':
-                    self._datamodeltab.edit_cell(event['index'], 'Model name', '')
-                    with self._out2:
-                        print('You must assign a model type before giving a name.')
-
-                elif self._dataframe['Model type'][event['index']] == 'Unit':
-                    if not re.search(r'(unit\..*?\.xml)', self._dataframe['Model name'][event['index']]):
-                        self._datamodeltab.edit_cell(event['index'], 'Model name', r'unit.{modelname}.xml')
-                        with self._out2:
-                            print(r'Bad format, use unit.{modelname}.xml or switch the model type to enter a composition name.')
-                
-                elif self._dataframe['Model type'][event['index']] == 'Composition':
-                    if not re.search(r'(composition\..*?\.xml)', self._dataframe['Model name'][event['index']]):
-                        self._datamodeltab.edit_cell(event['index'], 'Model name', r'composition.{modelname}.xml')
-                        with self._out2:
-                            print(r'Bad format, use composition.{modelname}.xml or switch the model type to enter a unit name.')
-                
-            self._datamodeltab.on('cell_edited', cell_edited)
-
-        self._datalinktab.on('row_added', row_added)
-        self._datamodeltab.on('row_added', row_added2)
-        self._datamodeltab.on('cell_edited', cell_edited)
+        self._datalinktab.on('row_added', self._row_added_link)
+        self._datamodeltab.on('row_added', self._row_added_model)
+        self._datamodeltab.on('cell_edited', self._cell_edited)
         

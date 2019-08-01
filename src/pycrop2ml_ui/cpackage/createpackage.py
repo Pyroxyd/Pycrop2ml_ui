@@ -10,6 +10,10 @@ from pycrop2ml_ui.browser.TkinterPath import getPath
 
 class createPackage:
 
+    """
+    Class poviding an interface to create a model repository for pycrop2ml's user interface.
+    """
+
     def __init__(self):
 
         self._projectName = wg.Textarea(value='AgriculturalModelExchangeIniative',description='Project name:',disabled=False)
@@ -32,6 +36,10 @@ class createPackage:
 
 
     def _eventCreate(self, b):
+
+        """
+        Handles create button on_click event
+        """
 
         self._out2.clear_output()
 
@@ -73,6 +81,10 @@ class createPackage:
 
     def _eventCancel(self, b):
 
+        """
+        Handles cancel button on_click event
+        """
+
         self._out.clear_output()
         self._out2.clear_output()
         return
@@ -81,12 +93,23 @@ class createPackage:
 
     def _eventBrowse(self, b):
 
+        """
+        Handles browse button on_click event
+        """
+
         self._out2.clear_output()
         self._inputPath.value = getPath()
 
 
 
     def displayMenu(self):
+
+        """
+        Displays the repository creation menu of pycrop2ml's UI.
+
+        This method is the only one available for the user in this class. Any other attribute or
+        method call may break the code.
+        """
 
         self._out.clear_output()
         self._out2.clear_output()

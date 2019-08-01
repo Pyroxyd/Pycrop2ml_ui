@@ -20,17 +20,18 @@ class mainMenu():
     menus. Refering to python's coding manners, do not use methods and class
     attributes beginning with an underscore otherwise code can break.
 
-    The class mainMenu contains 3 branches refering to creation, edition
-    and displayment :\n
+    The class mainMenu contains 4 branches refering to creation, edition,
+    transformation and repository creation :\n
+    repository creation -> createPackage\n
     creation -> class createMenu\n
     edition -> class editMenu\n
-    displayment -> class displayMenu
+    transformation -> class transformationMenu
 
     displayMenu() displays the main menu of the user interface and provides
-    three buttons clickable leading to each branch. This is the only method
+    four buttons clickable leading to each branch. This is the only method
     usable in this class and does not require any argument.
 
-    To use a mainMenu, use :\n
+    To run a mainMenu, use :\n
     mainmenu = mainMenu() #creates an instance of mainMenu\n
     mainmenu.displayMenu()       #calls displayMenu() method
     """
@@ -38,7 +39,6 @@ class mainMenu():
 
 
     def __init__(self):
-
 
         self._layout = wg.Layout(width='300px', height='60px')
         self._mkdir = wg.Button(value=False,description='Repository creation',disabled=False,layout=self._layout)

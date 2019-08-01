@@ -8,6 +8,42 @@ from pycropml.transpiler.generators import docGenerator
 
 class writeunitXML():
 
+    """
+    Class managing the writing of an xml file with all gathered data with pycrop2ml' user interface.
+
+    Parameters : \n
+        - datas : {
+                    'Path': '',
+                    'Model type': 'unit',
+                    'Model name': '',
+                    'Authors': '',
+                    'Institution': '',
+                    'Reference': '',
+                    'Abstract': ''
+                   }
+
+        - df : {'Inputs' : pandas.DataFrame,
+                'Algorithms' : [],
+                'Functions' : [],
+                'Outputs' : pandas.DataFrame -> only if iscreate is False
+               }
+
+        - paramsetdict : {paramset_name : [
+                                          {param : value},
+                                          description
+                                          ]
+                         }
+
+        - testsetdict : {name : [
+                                {testname : type(vardict)},
+                                parameterset,
+                                description
+                                ]
+                        }
+        
+        - iscreate : bool
+    """
+
 
     def __init__(self, datas, df, paramsetdict, testsetdict, iscreate=True):
         
@@ -162,19 +198,20 @@ class writeunitXML():
                     else:
                         f.write('\n\t\t<Output name="{}" description="{}" variablecategory="{}" datatype="{}" min="{}" max="{}" unit="{}" uri="{}"/>'.format(self._df['Outputs']['Name'][i],self._df['Outputs']['Description'][i],self._df['Outputs']['Category'][i],self._df['Outputs']['DataType'][i],self._df['Outputs']['Min'][i],self._df['Outputs']['Max'][i],self._df['Outputs']['Unit'][i],self._df['Outputs']['Uri'][i]))
 
-            f.write('\n\t</Outputs>')
+            f.write('\n\t</Outputs>\n')
 
             if self._df['Functions']:
                 for i in self._df['Functions']:
-                    f.write('\n\n\t<Function name="{}" language="Cyml" filename="{}" type="" description="" />'.format(i.split('.')[0].split('/')[-1], i))
+                    f.write('\n\t<Function name="{}" language="Cyml" filename="{}" type="" description="" />'.format(i.split('.')[0].split('/')[-1], i))
             
             createalgo = False
             if self._df['Algorithms']:
+                f.write('\n')
                 for i in self._df['Algorithms']:
-                    f.write('\n\n\t<Algorithm language="Cyml" platform="" filename="{}" />'.format(i))
+                    f.write('\n\t<Algorithm language="Cyml" platform="" filename="{}" />'.format(i))
             else:
                 createalgo = True
-                f.write('\n\n\t<Algorithm language="Cyml" platform="" filename="algo/pyx/{}.pyx" />'.format(self._datas['Model name']))
+                f.write('\n\t<Algorithm language="Cyml" platform="" filename="algo/pyx/{}.pyx" />'.format(self._datas['Model name']))
             
             f.write('\n\n\t<Initialization name="init.{0}" language="Cyml" filename="algo/pyx/init.{0}.pyx" description="" />'.format(self._datas['Model name']))
 

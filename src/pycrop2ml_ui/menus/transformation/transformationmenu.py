@@ -9,6 +9,10 @@ from pycropml.cyml import transpile_package
 
 class transformationMenu():
 
+    """
+    Class providing the display of the package transformation menu for pycrop2ml's user interface.
+    """
+
     def __init__(self):
 
         self._out = wg.Output()
@@ -35,6 +39,10 @@ class transformationMenu():
 
 
     def _eventApply(self, b):
+
+        """
+        Handles apply button on_click event
+        """
 
         self._out2.clear_output()
 
@@ -112,7 +120,7 @@ class transformationMenu():
     def displayMenu(self):
         
         """
-        Displays the transformation menu of pyrcop2ml's UI.
+        Displays the package transformation menu of pyrcop2ml's UI.
 
         This method is the only one available for the user in this class. Any other attribute or
         method call may break the code.
