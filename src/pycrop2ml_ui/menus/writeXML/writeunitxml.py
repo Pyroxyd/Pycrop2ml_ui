@@ -9,7 +9,7 @@ from pycropml.transpiler.generators import docGenerator
 class writeunitXML():
 
     """
-    Class managing the writing of an xml file with all gathered data with pycrop2ml' user interface.
+    Class managing the writing of a unit model xml file with all gathered data with pycrop2ml' user interface.
 
     Parameters : \n
         - datas : {
@@ -19,7 +19,8 @@ class writeunitXML():
                     'Authors': '',
                     'Institution': '',
                     'Reference': '',
-                    'Abstract': ''
+                    'Abstract': '',
+                    'Old name':'' IF iscreate=False
                    }
 
         - df : {'Inputs' : pandas.DataFrame,
@@ -228,7 +229,7 @@ class writeunitXML():
 
             f.write('\n\n\t<Testsets>')
             for testsetname, args in self._testsetdict.items():
-                f.write('\n\t\t<Testset name="{}" parameterset="{}" description="{}" >'.format(testsetname, args[2], args[1]))
+                f.write('\n\n\t\t<Testset name="{}" parameterset="{}" description="{}" >'.format(testsetname, args[2], args[1]))
                     
                 for testname, data in args[0].items():
                     f.write('\n\t\t\t<Test name="{}" >'.format(testname))
@@ -241,7 +242,7 @@ class writeunitXML():
                     
                     f.write('\n\t\t\t</Test>')
                 f.write('\n\t\t</Testset>')        
-            f.write('\n\t</Testsets>')
+            f.write('\n\n\t</Testsets>')
             f.write("\n\n</ModelUnit>")
             f.close()
 
@@ -250,5 +251,8 @@ class writeunitXML():
             if createalgo:
                 self._createAlgo()
 
+            if not self._iscreate and self._datas['Model name'] != self._datas['Old name']:
+                os.remove('{}{}unit.{}.xml'.format(self._datas['Path'], os.path.sep, self._datas['Old name']))
+                os.remove('{0}{1}algo{1}pyx{1}init.{2}.pyx'.format(self._datas['Path'], os.path.sep, self._datas['Old name']))
 
 

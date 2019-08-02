@@ -25,7 +25,8 @@ class manageTestset():
                     'Authors': '',
                     'Institution': '',
                     'Reference': '',
-                    'Abstract': ''
+                    'Abstract': '',
+                    'Old name':'' IF iscreate=False
                    }
 
         - vardict : {'inputs': {name : value},
@@ -60,10 +61,12 @@ class manageTestset():
         
         #OUTPUTS
         self._out = wg.Output()
-        self._out2 = wg.Output()
+        self._out_testset = wg.Output()
+        self._out_test = wg.Output()
         self._out3 = wg.Output()
 
         #BUTTONS
+        self._editTestset = wg.Button(value=False, description='Edit', disabled=True, button_style='primary')
         self._createTestset = wg.Button(value=False, description='Create', disabled=False, button_style='success')
         self._createTest = wg.Button(value=False, description='Create', disabled=True, button_style='success')
         self._deleteTestset = wg.Button(value=False, description='Delete', disabled=False, button_style='danger')
@@ -109,6 +112,10 @@ class manageTestset():
 
         if not self._iscreate:
             for k,v in self._testsetdict.items():
+                if v[2] not in self._paramsetdict:
+                    self._testsetdict[k][2] = ''
+                    v[2] = ''
+
                 self._testsetlist.append(k)
                 self._testsetsDataframe[k] = [dict(), v[1], v[2]]
                 self._testlist[k] = ['']
@@ -297,6 +304,7 @@ class manageTestset():
             self._createTest.disabled = False
             self._deleteTest.disabled = False
             self._testSelecter.disabled = False
+            self._editTestset.disabled = False
 
         else:
             self._testSelecter.value = ''
@@ -304,6 +312,7 @@ class manageTestset():
             self._createTest.disabled = True
             self._deleteTest.disabled = True
             self._testSelecter.disabled = True
+            self._editTestset.disabled = True
 
     
 
@@ -326,7 +335,7 @@ class manageTestset():
             self._currentQgrid = qgrid.show_grid(self._testsetsDataframe[self._testsetSelecter.value][0][self._testSelecter.value], show_toolbar=False)
             apply = wg.Button(value=False, description='Apply', disabled=False, button_style='success')
 
-            with self._out2:
+            with self._out_test:
                 display(wg.VBox([self._currentQgrid, apply]))
             
 
@@ -348,13 +357,95 @@ class manageTestset():
 
                     self._testsetSelecter.disabled = False
                     self._createTest.disabled = False
-                    self._createTestset.disabled = False
+                    if not self._editTestset.disabled:
+                        self._createTestset.disabled = False
                     self._apply.disabled = False
-                    self._out2.clear_output()
+                    self._out_test.clear_output()
 
 
             self._currentQgrid.on('cell_edited', self._cell_edited)
             apply.on_click(eventApply)
+
+
+
+    def _eventEditTestset(self, b):
+
+        """
+        Handles testset edit button on_click event
+        """
+
+        self._out3.clear_output()
+        
+        testsetname = wg.Textarea(value=self._testsetSelecter.value, description='Testset name:', disabled=False)
+        description = wg.Textarea(value=self._testsetdict[self._testsetSelecter.value][1], description='Description:', disabled=False)
+        paramset = wg.Dropdown(options=['']+[k[0] for k in self._paramsetdict.items()],value=self._testsetdict[self._testsetSelecter.value][2],description='Parameterset:',disabled=False)
+        apply = wg.Button(value=False, description='Apply', disabled=False, button_style='success')
+        cancel = wg.Button(value=False, description='Cancel', disabled=False, button_style='warning')
+
+        self._createTestset.disabled = True
+        self._editTestset.disabled = True
+        self._testsetSelecter.disabled = True
+        self._apply.disabled = True
+
+        with self._out_testset:
+            display(wg.VBox([testsetname, description, paramset, wg.HBox([apply, cancel])]))
+
+        
+        def eventApply(b):
+
+            self._out3.clear_output()
+
+            tmptestsetlist = deepcopy(self._testsetlist)
+            tmptestsetlist.remove(self._testsetSelecter.value)
+
+            if testsetname.value in tmptestsetlist:
+                with self._out3:
+                    print('This testset already exists.')
+
+            elif testsetname.value and description.value and any([paramset.value, paramset.options == ['']]):
+                self._testsetSelecter.unobserve(self._on_value_change_testset, names='value')
+
+                self._testsetlist.append(testsetname.value)
+                self._testsetlist.remove(self._testsetSelecter.value)
+
+                self._testlist[testsetname.value] = self._testlist.pop(self._testsetSelecter.value)
+
+                self._testsetdict[testsetname.value] = self._testsetdict.pop(self._testsetSelecter.value)
+                self._testsetdict[testsetname.value][1] = description.value
+                self._testsetdict[testsetname.value][2] = paramset.value
+
+                self._testsetsDataframe[testsetname.value] = self._testsetsDataframe.pop(self._testsetSelecter.value)
+                self._testsetsDataframe[testsetname.value][1] = description.value
+                self._testsetsDataframe[testsetname.value][2] = paramset.value
+
+                self._testsetSelecter.value = ''
+                self._testsetSelecter.options = self._testsetlist
+                self._testsetSelecter.value = testsetname.value
+
+                self._editTestset.disabled = False
+                self._createTestset.disabled = False
+                self._deleteTestset.disabled = False
+                self._testsetSelecter.disabled = False
+                self._apply.disabled = False
+
+                self._testsetSelecter.observe(self._on_value_change_testset, names='value')
+
+                self._out_testset.clear_output()
+
+            else:
+                with self._out3:
+                    print('Missing argument(s).')
+        
+        def eventCancel(b):
+            
+            self._out_testset.clear_output()
+            self._createTestset.disabled = False
+            self._editTestset.disabled = False
+            self._testsetSelecter.disabled = False
+            self._apply.disabled = False
+
+        apply.on_click(eventApply)
+        cancel.on_click(eventCancel)
 
 
 
@@ -380,7 +471,7 @@ class manageTestset():
         self._testSelecter.disabled = True
         self._apply.disabled = True
 
-        with self._out2:
+        with self._out_test:
             display(wg.VBox([testsetname, description, paramset, wg.HBox([apply, cancel])]))
     
 
@@ -388,10 +479,15 @@ class manageTestset():
 
             self._out3.clear_output()
 
-            if testsetname.value and description.value and any([(paramset.value and paramset.options), not paramset.options == ['']]):
+            if testsetname.value in self._testsetlist:
+                with self._out3:
+                    print('This testset already exists.')
+
+            elif testsetname.value and description.value and any([paramset.value, paramset.options == ['']]):
                 self._testsetSelecter.unobserve(self._on_value_change_testset, names='value')
 
                 self._testsetSelecter.value = ''
+                self._editTestset.disabled = True
 
                 self._testsetlist.append(testsetname.value)
                 self._testsetSelecter.options = self._testsetlist
@@ -410,7 +506,7 @@ class manageTestset():
 
                 self._testsetSelecter.observe(self._on_value_change_testset, names='value')
 
-                self._out2.clear_output()
+                self._out_test.clear_output()
 
             else:
                 with self._out3:
@@ -418,7 +514,7 @@ class manageTestset():
         
         def eventCancel(b):
             
-            self._out2.clear_output()
+            self._out_test.clear_output()
             self._createTestset.disabled = False
             self._deleteTestset.disabled = False
             self._testsetSelecter.disabled = False
@@ -439,7 +535,8 @@ class manageTestset():
         """
 
         self._out3.clear_output()
-        self._out2.clear_output()
+        self._out_test.clear_output()
+        self._out_testset.clear_output()
         
         self._apply.disabled = False
         self._testSelecter.disabled = False
@@ -458,6 +555,7 @@ class manageTestset():
             del self._testsetsDataframe[self._testsetSelecter.value]
    
             self._testsetSelecter.value = ''
+            self._editTestset.disabled = True
             self._testSelecter.value = ''
         
             self._testsetSelecter.options = self._testsetlist           
@@ -475,7 +573,7 @@ class manageTestset():
         """
         
         self._out3.clear_output()
-        self._out2.clear_output()
+        self._out_test.clear_output()
 
         testname = wg.Textarea(value='', description='Test name:', disabled=False)
         apply = wg.Button(value=False, description='Apply', disabled=False, button_style='success')
@@ -490,7 +588,7 @@ class manageTestset():
             self._testSelecter.disabled = True
             self._apply.disabled = True
 
-            with self._out2:
+            with self._out_test:
                 display(wg.VBox([testname, wg.HBox([apply, cancel])]))
         
 
@@ -498,7 +596,11 @@ class manageTestset():
 
                 self._out3.clear_output()
 
-                if testname.value:
+                if testname.value in self._testlist[self._testsetSelecter.value]:
+                    with self._out3:
+                        print('This test already exists.')
+                
+                elif testname.value:
                     self._testSelecter.unobserve(self._on_value_change_test, names='value')
 
                     self._testSelecter.value = ''
@@ -542,7 +644,7 @@ class manageTestset():
 
                     self._testSelecter.observe(self._on_value_change_test, names='value')
 
-                    self._out2.clear_output()
+                    self._out_test.clear_output()
 
                 else:
                     with self._out3:
@@ -551,7 +653,7 @@ class manageTestset():
 
             def eventCancel(b):
                 
-                self._out2.clear_output()
+                self._out_test.clear_output()
                 self._createTestset.disabled = False
                 self._deleteTestset.disabled = False
                 self._testsetSelecter.disabled = False
@@ -572,7 +674,7 @@ class manageTestset():
         """
 
         self._out3.clear_output()
-        self._out2.clear_output()
+        self._out_test.clear_output()
 
         self._apply.disabled = False
         self._testSelecter.disabled = False
@@ -606,8 +708,11 @@ class manageTestset():
         self._out3.clear_output()
 
         tmplist = []
+        tmplistset = []
 
         for testsetname,args in self._testsetsDataframe.items():
+            if any([not args[1], not args[2] and self._paramsetdict]):
+                tmplistset.append(testsetname)
             for testname,dataframe in args[0].items():
                 for x in range(0,len(dataframe['Value'])):
                     if dataframe['Value'][x]:
@@ -619,20 +724,25 @@ class manageTestset():
                         if '{}:{}'.format(testsetname,testname) not in tmplist:
                             tmplist.append('{}:{}'.format(testsetname,testname))
 
-        if not tmplist:
+        if all([not tmplist, not tmplistset]):
             self._out.clear_output()
-            self._out2.clear_output()
+            self._out_test.clear_output()
             self._out3.clear_output()
 
             try:
                 xml = writeunitXML(self._datas, self._df, self._paramsetdict, self._testsetdict, self._iscreate)
                 xml.write()
             except:
-                raise Exception('Could not load writeunitxml class.')
+                with self._out:
+                    raise Exception('Could not load writeunitxml class.')
         
         else:
             with self._out3:
-                print('Missing value(s) in tests : {}.'.format(tmplist))
+                if tmplistset:
+                    print('Missing value(s) in testsets : {}.'.format(tmplistset))
+                if tmplist:
+                    print('Missing value(s) in tests : {}.'.format(tmplist))
+                
 
 
 
@@ -643,7 +753,7 @@ class manageTestset():
         """
         
         self._out.clear_output()
-        self._out2.clear_output()
+        self._out_test.clear_output()
         self._out3.clear_output()
 
         if self._iscreate:
@@ -667,11 +777,12 @@ class manageTestset():
 
         with self._out:
             if self._iscreate:
-                display(wg.VBox([wg.HTML(value='<b><font size="5">Model creation : {}.{}.xml<br>-> TestSets</font></b>'.format(self._datas['Model type'], self._datas['Model name'])), wg.HBox([self._testsetSelecter, self._createTestset, self._deleteTestset]), wg.HBox([self._testSelecter, self._createTest, self._deleteTest]), self._out2, wg.HBox([self._apply, self._exit])]))
+                display(wg.VBox([wg.HTML(value='<b><font size="5">Model creation : {}.{}.xml<br>-> TestSets</font></b>'.format(self._datas['Model type'], self._datas['Model name'])), wg.HBox([self._testsetSelecter, self._editTestset, self._createTestset, self._deleteTestset]), self._out_testset, wg.HBox([self._testSelecter, self._createTest, self._deleteTest]), self._out_test, wg.HBox([self._apply, self._exit])]))
             else:
-                display(wg.VBox([wg.HTML(value='<b><font size="5">Model edition : {}.{}.xml<br>-> TestSets</font></b>'.format(self._datas['Model type'], self._datas['Model name'])), wg.HBox([self._testsetSelecter, self._createTestset, self._deleteTestset]), wg.HBox([self._testSelecter, self._createTest, self._deleteTest]), self._out2, wg.HBox([self._apply, self._exit])]))
+                display(wg.VBox([wg.HTML(value='<b><font size="5">Model edition : {}.{}.xml<br>-> TestSets</font></b>'.format(self._datas['Model type'], self._datas['Model name'])), wg.HBox([self._testsetSelecter, self._editTestset, self._createTestset, self._deleteTestset]), self._out_testset, wg.HBox([self._testSelecter, self._createTest, self._deleteTest]), self._out_test, wg.HBox([self._apply, self._exit])]))
 
         self._testsetSelecter.observe(self._on_value_change_testset, names='value')
+        self._editTestset.on_click(self._eventEditTestset)
         self._createTestset.on_click(self._eventCreateTestset)
         self._deleteTestset.on_click(self._eventDeleteTestset)
 

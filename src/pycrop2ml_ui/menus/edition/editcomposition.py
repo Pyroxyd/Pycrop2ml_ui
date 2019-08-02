@@ -8,6 +8,7 @@ import pandas
 from IPython.display import display
 
 from pycrop2ml_ui.menus.edition import editmenu
+from pycrop2ml_ui.menus.setsmanagement.managelink import manageLink
 
 
 
@@ -34,17 +35,17 @@ class editComposition():
         self._apply = wg.Button(value=False,description='Apply',disabled=False,button_style='success')
         self._cancel = wg.Button(value=False,description='Cancel',disabled=False,button_style='danger')
 
-        self._title = wg.Textarea(value='',description='Title',disabled=False)
-        self._authors = wg.Textarea(value='',description='Authors',disabled=False)
-        self._institution = wg.Textarea(value='',description='Institution',disabled=False)
-        self._reference = wg.Textarea(value='',description='Reference',disabled=False)
-        self._abstract = wg.Textarea(value='',description='Abstract',disabled=False)
+        self._title = wg.Textarea(value='',description='Model name:',disabled=False)
+        self._authors = wg.Textarea(value='',description='Authors:',disabled=False)
+        self._institution = wg.Textarea(value='',description='Institution:',disabled=False)
+        self._reference = wg.Textarea(value='',description='Reference:',disabled=False)
+        self._abstract = wg.Textarea(value='',description='Abstract:',disabled=False)
         self._informations = wg.VBox([self._title, self._authors, self._institution, self._reference, self._abstract])
 
         #datas
         self._datas = data
         self._listmodel = []
-        self._listlink = [[],[],[]]
+        self._listlink = []
 
 
 
@@ -58,9 +59,9 @@ class editComposition():
         """
 
         try:
+            self._out.clear_output()
+            self._out2.clear_output()
             with self._out:
-                self._out.clear_output()
-                self._out2.clear_output()
                 raise Exception('File {} has a bad syntax critical error.'.format(file))
         
         finally:
@@ -82,11 +83,9 @@ class editComposition():
                 raise Exception('File {} could not be opened in read mode. {}'.format(self._datas['Path'], ioerr))
 
         else:
-
             buffertmp = f.readline()
 
             while not re.search(r'(</Description>)', buffertmp):
-
                 title = re.search(r'<Title>(.*?)</Title>', buffertmp)
                 authors = re.search(r'<Authors>(.*?)</Authors>', buffertmp)
                 institution = re.search(r'<Institution>(.*?)</Institution>', buffertmp)
@@ -96,27 +95,24 @@ class editComposition():
                 if title:
                     if not self._title.value:
                         self._title.value = title.group(1)
+                        self._datas['Old name'] = title.group(1)
                     else:
                         self._badSyntax(f)
-
                 if authors:
                     if not self._authors.value:
                         self._authors.value = authors.group(1)
                     else:
                         self._badSyntax(f)
-
                 if institution:
                     if not self._institution.value:
                         self._institution.value = institution.group(1)
                     else:
-                        self._badSyntax(f)
-                    
+                        self._badSyntax(f)               
                 if reference:
                     if not self._reference.value:
                         self._reference.value = reference.group(1)
                     else:
                         self._badSyntax(f)
-
                 if abstract:
                     if not self._abstract.value:
                         self._abstract.value = abstract.group(1)
@@ -124,76 +120,57 @@ class editComposition():
                         self._badSyntax(f)
                 
                 buffertmp = f.readline()
-
                 if not buffertmp:
                     self._badSyntax(f)
 
-
             if any([not self._title.value, not self._authors.value, not self._institution.value, not self._reference.value, not self._abstract.value]):
-
                 self._badSyntax(f)
 
-
             for buffer in f:
-                model = re.search('filename="(.*?)" />',buffer)
-                linktype = re.search('<(.*?Link)',buffer)
-                target = re.search('target="(.*?)"',buffer)
-                source = re.search('source="(.*?)"',buffer)
+                model = re.search(r'filename="(.*?)" />',buffer)
+                linktype = re.search(r'<(.*?Link)',buffer)
+                target = re.search(r'target="(.*?)"',buffer)
+                source = re.search(r'source="(.*?)"',buffer)
 
                 if model:
                     self._listmodel.append(model.group(1))
 
                 elif linktype and target and source:
-                    self._listlink[0].append(linktype.group(1))
-                    self._listlink[1].append(target.group(1))
-                    self._listlink[2].append(source.group(1))
+                    self._listlink.append({'Link type': linktype.group(1), 'Source': source.group(1), 'Target': target.group(1)})
 
             f.close()
 
+        self._buildEdit()
 
 
-    def _write(self):
+
+    def _buildEdit(self):
 
         """
-        Writes the xml file with the new data set
+        Creates the qgrid widget fro displaying model composition
         """
 
-               
-        try:
-            fw = open('{}{}{}.{}.xml'.format(self._datas['Path'], os.path.sep, self._datas['Model type'], self._datas['Model name']), "w", encoding='utf8')
-
-        except IOError as ioerr:
-            with self._out:
-                raise Exception('File {} could not be opened in write mode. {}'.format(self._datas['Path'], ioerr))
-
+        liste = ['']
+        for buffer in os.listdir(self._datas['Path']):
+            ext = os.path.splitext(buffer)[-1].lower()
+            if (ext == '.xml' and buffer != 'composition.{}.xml'.format(self._datas['Model name'])):
+                if re.search(r'composition', buffer) or re.search(r'unit', buffer):
+                    liste.append(buffer)
+      
+        if self._listmodel:
+            self._dataframe = pandas.DataFrame(data={
+                'Model name': pandas.Categorical([i for i in self._listmodel if i in liste], categories=liste)
+                })
         else:
+            self._dataframe = pandas.DataFrame(data={
+                'Model name': pandas.Categorical([''], categories=liste)
+                })
 
-            split = []
-            path = self._datas['Path']
-            for i in range(4):
-                split.append(os.path.split(path)[-1])
-                path = os.path.split(path)[0]
+        self._datamodeltab = qgrid.show_grid(self._dataframe, show_toolbar=True)
 
-            fw.write('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE ModelComposition PUBLIC " " "https://raw.githubusercontent.com/AgriculturalModelExchangeInitiative/crop2ml/master/ModelComposition.dtd">')
-            fw.write('<ModelComposition name="{0}" id="{1}.{0}" version="001" timestep = "1">'.format(self._datas['Model name'], split[-3]))
-            fw.write('\n\t<Description>\n\t\t<Title>{}</Title>\n\t\t<Authors>{}</Authors>\n\t\t<Institution>{}</Institution>\n\t\t<Reference>{}</Reference>\n\t\t<Abstract>{}</Abstract>'.format(self._title.value, self._authors.value, self._institution.value, self._reference.value, self._abstract.value))
-            fw.write('\n\t</Description>\n\n\t<Composition>')
-
-            for i in range(0, len(self._dataframe['Model type'])):
-
-                if self._dataframe['Model type'][i] == 'Unit':
-                    fw.write('\n\t\t<Model name="{0}" id="{1}.{0}" filename="{2}" />'.format(re.search(r'unit\.(.*?)\.xml',self._dataframe['Model name'][i]).group(1), self._datas['Model name'], self._dataframe['Model name'][i]))
-                else:
-                    fw.write('\n\t\t<Model name="{0}" id="{0}" filename="{1}" />'.format(re.search(r'composition\.(.*?)\.xml',self._dataframe['Model name'][i]), self._dataframe['Model name'][i]))
-
-            fw.write("\n\n\t\t<Links>")
-            
-            for i in range(0, len(self._dataframelinks['Link type'])):
-                fw.write('\n\t\t\t<{} target="{}" source="{}" />'.format(self._dataframelinks['Link type'][i], self._dataframelinks['Target'][i], self._dataframelinks['Source'][i]))
-            
-            
-            fw.write('\n\n\t\t</Links>\n\t</Composition>\n</ModelComposition>')
-            fw.close()
+        self._tab = wg.Tab([self._informations, self._datamodeltab])
+        self._tab.set_title(0, 'Header')
+        self._tab.set_title(1, 'Model composition')
 
 
 
@@ -206,32 +183,31 @@ class editComposition():
         self._out.clear_output()
         self._out2.clear_output()
 
-        if not any([not self._title.value, not self._authors.value, not self._institution.value, not self._reference.value, not self._abstract.value]):
-
+        if all([self._title.value, self._authors.value, self._institution.value, self._reference.value, self._abstract.value]):
             self._dataframe = self._datamodeltab.get_changed_df()
             self._dataframe.reset_index(inplace=True)
 
-            self._dataframelinks = self._datalinktab.get_changed_df()
-            self._dataframelinks.reset_index(inplace=True)
+            self._datas['Model name'] = self._title.value
+            self._datas['Authors'] = self._authors.value
+            self._datas['Institution'] = self._institution.value
+            self._datas['Reference'] = self._reference.value
+            self._datas['Abstract'] = self._abstract.value
 
-            self._write()
-        
+            with self._out:
+                menu = manageLink(self._datas, [i for i in self._dataframe['Model name'] if i], self._listlink, iscreate=False)
+                menu.displayMenu()
+     
         else:
             with self._out2:
                 print("Missing argument(s) :")
-
                 if(not self._title.value):
                     print("\t- Title")
-
                 if(not self._authors.value):
                     print("\t- Authors")
-
                 if(not self._institution.value):
                     print("\t- Institution")
-
                 if(not self._reference.value):
                     print("\t- Reference")
-
                 if(not self._abstract.value):
                     print("\t- Abstract")
     
@@ -255,29 +231,14 @@ class editComposition():
         
 
 
-    def _row_added_link(self, event, widget):
-
-        """
-        Handles row addition for links tab
-        """
-
-        widget.edit_cell(event['index'], 'Link type', '')
-        widget.edit_cell(event['index'], 'Target', '')
-        widget.edit_cell(event['index'], 'Source', '')
-
-
-
-    def _row_added_model(self, event, widget):
+    def _row_added(self, event, widget):
 
         """
         Handles row addition for model list tab
         """
 
         widget.off('cell_edited', self._cell_edited)
-
         widget.edit_cell(event['index'], 'Model name', '')
-        widget.edit_cell(event['index'], 'Model type', '')
-
         widget.on('cell_edited', self._cell_edited)
 
 
@@ -288,49 +249,22 @@ class editComposition():
         Handles cell edition for model list tab
         """
 
+        widget.off('cell_edited', self._cell_edited)
         self._out2.clear_output()
-        self._datamodeltab.off('cell_edited', self._cell_edited)
+        
+        df = widget.get_changed_df()
 
-        self._dataframe = self._datamodeltab.get_changed_df()
+        names = [i for i in df['Model name']]
+        names.remove(event['new'])
 
-        if event['column'] == 'Model type':
-            
-            if event['new'] == 'Unit':
-                if event['old'] == '':
-                    self._datamodeltab.edit_cell(event['index'], 'Model name', r'unit.{modelname}.xml')
-                if event['old'] == 'Composition':
-                    self._datamodeltab.edit_cell(event['index'], 'Model name', 'unit.{}.xml'.format(re.search(r'composition\.(.*?)\.xml', self._dataframe['Model name'][event['index']]).group(1)))
-            
-            elif event['new'] == 'Composition':
-                if event['old'] == '':
-                    self._datamodeltab.edit_cell(event['index'], 'Model name', r'composition.{modelname}.xml')
-                if event['old'] == 'Unit':
-                    self._datamodeltab.edit_cell(event['index'], 'Model name', 'composition.{}.xml'.format(re.search(r'unit\.(.*?)\.xml', self._dataframe['Model name'][event['index']]).group(1)))
-            
-            else:
-                self._datamodeltab.edit_cell(event['index'], 'Model name', '')
+        if event['new'] in names:
+            widget.edit_cell(event['index'], 'Model name', event['old'])
+
+            with self._out2:
+                print('Error : this model is already in the composition.')
 
 
-        elif event['column'] == 'Model name':
-            
-            if self._dataframe['Model type'][event['index']] == '':
-                self._datamodeltab.edit_cell(event['index'], 'Model name', '')
-                with self._out2:
-                    print('You must assign a model type before giving a name.')
-
-            elif self._dataframe['Model type'][event['index']] == 'Unit':
-                if not re.search(r'(unit\..*?\.xml)', self._dataframe['Model name'][event['index']]):
-                    self._datamodeltab.edit_cell(event['index'], 'Model name', r'unit.{modelname}.xml')
-                    with self._out2:
-                        print(r'Bad format, use unit.{modelname}.xml or switch the model type to enter a composition name.')
-            
-            elif self._dataframe['Model type'][event['index']] == 'Composition':
-                if not re.search(r'(composition\..*?\.xml)', self._dataframe['Model name'][event['index']]):
-                    self._datamodeltab.edit_cell(event['index'], 'Model name', r'composition.{modelname}.xml')
-                    with self._out2:
-                        print(r'Bad format, use composition.{modelname}.xml or switch the model type to enter a unit name.')
-            
-        self._datamodeltab.on('cell_edited', self._cell_edited)
+        widget.on('cell_edited', self._cell_edited)
 
 
 
@@ -344,6 +278,7 @@ class editComposition():
         """
 
         display(self._out)
+        display(self._out2)
 
         listkeys = ['Path','Model type','Model name']
 
@@ -359,57 +294,14 @@ class editComposition():
                 else:
                     listkeys.remove(i)
 
-        display(self._out2)
-
         self._parse()
 
-
-        if self._listmodel:
-            self._dataframe = pandas.DataFrame(data={
-                'Model type': pandas.Categorical(['Unit' for i in range(0,len(self._listmodel))], categories=['','Unit','Composition']),
-                'Model name':self._listmodel
-                },index=None)
-            self._datamodeltab = qgrid.show_grid(self._dataframe, show_toolbar=True)
-
-        else:
-            self._dataframe = pandas.DataFrame(data={
-                'Model type': pandas.Categorical([''], categories=['','Unit','Composition']),
-                'Model name': ['']
-                },index=None)
-            self._datamodeltab = qgrid.show_grid(self._dataframe, show_toolbar=True)
-
-
-        if self._listlink:
-            self._dataframelinks = pandas.DataFrame(data={
-                'Link type': pandas.Categorical(self._listlink[0], categories=['','InputLink','OutputLink','InternalLink']),
-                'Target': self._listlink[1],
-                'Source': self._listlink[2]
-                },index=None)
-            self._datalinktab = qgrid.show_grid(self._dataframelinks, show_toolbar=True)
-        
-        else:
-            self._dataframelinks = pandas.DataFrame(data={
-                'Link type': pandas.Categorical([''], categories=['','InputLink','OutputLink','InternalLink']),
-                'Target': [''],
-                'Source': ['']
-                },index=None)
-            self._datalinktab = qgrid.show_grid(self._dataframelinks, show_toolbar=True)
-        
-
-        self._tab = wg.Tab([self._informations, self._datamodeltab, self._datalinktab])
-        self._tab.set_title(0, 'Header')
-        self._tab.set_title(1, 'Models')
-        self._tab.set_title(2, 'Links')
-
-
-
         with self._out:
-            display(wg.VBox([self._tab, wg.HBox([self._apply, self._cancel])]))
+            display(wg.VBox([wg.HTML(value='<font size="5"><b> Model edition : composition.{}.xml<br>-> Model composition</b></font>'.format(self._datas['Model name'])), self._tab, wg.HBox([self._apply, self._cancel])]))
         
         self._apply.on_click(self._eventApply)
         self._cancel.on_click(self._eventCancel)
 
-        self._datalinktab.on('row_added', self._row_added_link)
-        self._datamodeltab.on('row_added', self._row_added_model)
+        self._datamodeltab.on('row_added', self._row_added)
         self._datamodeltab.on('cell_edited', self._cell_edited)
         

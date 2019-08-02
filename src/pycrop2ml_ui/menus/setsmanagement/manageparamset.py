@@ -24,7 +24,8 @@ class manageParamset():
                     'Authors': '',
                     'Institution': '',
                     'Reference': '',
-                    'Abstract': ''
+                    'Abstract': '',
+                    'Old name':'' IF iscreate=False
                    }
         
         - paramdict : {param_name : value}
@@ -113,7 +114,11 @@ class manageParamset():
 
         def eventApply(b):
 
-            if paramsetName.value and description.value:
+            if paramsetName.value in self._setlist:
+                with self._out3:
+                    print('This parameterset already exists.')
+
+            elif paramsetName.value and description.value:
                 self._out2.clear_output()
                 self._out3.clear_output()
                 self._paramselecter.disabled = False

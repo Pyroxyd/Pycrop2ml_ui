@@ -5,10 +5,11 @@ from IPython.display import display
 from cookiecutter.main import cookiecutter
 
 from pycrop2ml_ui.browser.TkinterPath import getPath
+from pycrop2ml_ui.model import MainMenu
 
 
 
-class createPackage:
+class createPackage():
 
     """
     Class poviding an interface to create a model repository for pycrop2ml's user interface.
@@ -16,18 +17,21 @@ class createPackage:
 
     def __init__(self):
 
-        self._projectName = wg.Textarea(value='AgriculturalModelExchangeIniative',description='Project name:',disabled=False)
-        self._repositoryName = wg.Textarea(value='',description='Repository name:',disabled=False)
-        self._authors = wg.Textarea(value='',description='Authors:',disabled=False)
-        self._description = wg.Textarea(value='',description='Description:',disabled=False)
+        self._layout = wg.Layout(width='400px',height='57px')
+        self._projectName = wg.Textarea(value='AgriculturalModelExchangeIniative',description='Project name:',disabled=False,layout=self._layout)
+        self._repositoryName = wg.Textarea(value='',description='Repository name:',disabled=False,layout=self._layout)
+        self._authors = wg.Textarea(value='',description='Authors:',disabled=False,layout=self._layout)
+        self._description = wg.Textarea(value='',description='Description:',disabled=False,layout=self._layout)
 
-        self._inputPath = wg.Textarea(value='',description='Path:',disabled=True)
+        self._inputPath = wg.Textarea(value='',description='Path:',disabled=True,layout=self._layout)
         self._browse = wg.Button(value=False,description='Browse',disabled=False,button_style='primary')
 
         self._create = wg.Button(value=False,description='Create',disabled=False,button_style='success')
-        self._cancel = wg.Button(value=False,description='Cancel',disabled=False,button_style='danger')
+        self._cancel = wg.Button(value=False,description='Cancel',disabled=False,button_style='warning')
 
-        self._displayer = wg.VBox([self._projectName, self._repositoryName, wg.HBox([self._inputPath, self._browse]), self._authors, self._description, wg.HBox([self._create, self._cancel])], layout=wg.Layout(align_items='center'))
+        self._core = wg.VBox([self._projectName, self._repositoryName, wg.HBox([self._inputPath, self._browse]), self._authors, self._description])
+
+        self._displayer = wg.VBox([wg.HTML(value='<b><font size="5">Repository creation</font></b>'), self._core, wg.HBox([self._create, self._cancel])], layout=wg.Layout(align_items='center'))
 
         self._out = wg.Output()
         self._out2 = wg.Output()
@@ -87,7 +91,13 @@ class createPackage:
 
         self._out.clear_output()
         self._out2.clear_output()
-        return
+        
+        with self._out:
+            try:
+                tmp = MainMenu.mainMenu()
+                tmp.displayMenu()
+            except:
+                raise Exception('Could not load mainMenu.')
 
 
 

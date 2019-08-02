@@ -57,6 +57,7 @@ class editUnit():
         Creates inputs and outputs dataframes with datas collected from the xml file parsing
         """
 
+        self._datas['Old name'] = self._xmlfile.description.Title[:-6]
         self._title.value = self._xmlfile.description.Title[:-6]
         self._authors.value = self._xmlfile.description.Authors
         self._institution.value = self._xmlfile.description.Institution
@@ -1006,8 +1007,6 @@ class editUnit():
 
         for column in ['Name','Description','DataType','Len','Category','Min','Max','Unit','Uri']:
             widget.edit_cell(event['index'], column, '')
-
-        widget.edit_cell(event['index'], 'InputType', '')
 
         widget.on('cell_edited', self._cell_edited_Out)
     

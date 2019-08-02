@@ -34,7 +34,7 @@ class editMenu():
         self._pathing = wg.VBox([wg.HBox([self._modelPath, self._browse]), self._selecter])
 
         #global displayer
-        self._displayer = wg.VBox([wg.HTML(value='<font size="5"><b>Model edition : Selection</b></font>'), self._pathing, wg.HBox([self._edit, self._cancel])],layout=wg.Layout(align_items='center',border='1px'))
+        self._displayer = wg.VBox([wg.HTML(value='<font size="5"><b>Model edition : Selection</b></font>'), self._pathing, wg.HBox([self._edit, self._cancel])],layout=wg.Layout(align_items='center'))
 
         self._paths = dict()
 
