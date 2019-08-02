@@ -41,10 +41,10 @@ class mainMenu():
     def __init__(self):
 
         self._layout = wg.Layout(width='300px', height='60px')
-        self._mkdir = wg.Button(value=False,description='Repository creation',disabled=False,layout=self._layout)
+        self._mkdir = wg.Button(value=False,description='Package creation',disabled=False,layout=self._layout)
         self._create = wg.Button(value=False,description='Model creation',disabled=False,layout=self._layout)
         self._edit = wg.Button(value=False,description='Model edition',disabled=False,layout=self._layout)
-        self._transformation = wg.Button(value=False,description='Package transformation',disabled=False,layout=self._layout)
+        self._transformation = wg.Button(value=False,description='Model transformation',disabled=False,layout=self._layout)
         self._about = wg.Button(value=False,description='About',disabled=False,layout=self._layout)
 
         self._displayer = wg.VBox([wg.HTML(value='<font size="5"><b>Model manager for Pycrop2ml</b></font>'), self._mkdir, self._create, self._edit, self._transformation, self._about], layout=wg.Layout(align_items='center'))

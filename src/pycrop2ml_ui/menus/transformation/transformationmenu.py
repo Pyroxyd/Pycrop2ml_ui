@@ -31,7 +31,7 @@ class transformationMenu():
         self._r = wg.Checkbox(value=False, description='R', disabled=True)
         self._cpp = wg.Checkbox(value=False, description='C++', disabled=True)
 
-        self._displayer = wg.VBox([wg.HTML(value='<font size="5"><b>Package transformation</b></font>'), wg.HBox([self._path, self._browse]), self._java, self._csharp, self._fortran, self._python, self._r, self._cpp, wg.HBox([self._apply, self._cancel])], layout=wg.Layout(align_items='center'))
+        self._displayer = wg.VBox([wg.HTML(value='<font size="5"><b>Model transformation</b></font>'), wg.HBox([self._path, self._browse]), self._java, self._csharp, self._fortran, self._python, self._r, self._cpp, wg.HBox([self._apply, self._cancel])], layout=wg.Layout(align_items='center'))
 
         self._listlanguage = []
 

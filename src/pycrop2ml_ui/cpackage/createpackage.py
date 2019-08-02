@@ -19,7 +19,7 @@ class createPackage():
 
         self._layout = wg.Layout(width='400px',height='57px')
         self._projectName = wg.Textarea(value='AgriculturalModelExchangeIniative',description='Project name:',disabled=False,layout=self._layout)
-        self._repositoryName = wg.Textarea(value='',description='Repository name:',disabled=False,layout=self._layout)
+        self._packageName = wg.Textarea(value='',description='Package name:',disabled=False,layout=self._layout)
         self._authors = wg.Textarea(value='',description='Authors:',disabled=False,layout=self._layout)
         self._description = wg.Textarea(value='',description='Description:',disabled=False,layout=self._layout)
 
@@ -29,9 +29,9 @@ class createPackage():
         self._create = wg.Button(value=False,description='Create',disabled=False,button_style='success')
         self._cancel = wg.Button(value=False,description='Cancel',disabled=False,button_style='warning')
 
-        self._core = wg.VBox([self._projectName, self._repositoryName, wg.HBox([self._inputPath, self._browse]), self._authors, self._description])
+        self._core = wg.VBox([self._projectName, self._packageName, wg.HBox([self._inputPath, self._browse]), self._authors, self._description])
 
-        self._displayer = wg.VBox([wg.HTML(value='<b><font size="5">Repository creation</font></b>'), self._core, wg.HBox([self._create, self._cancel])], layout=wg.Layout(align_items='center'))
+        self._displayer = wg.VBox([wg.HTML(value='<b><font size="5">Package creation</font></b>'), self._core, wg.HBox([self._create, self._cancel])], layout=wg.Layout(align_items='center'))
 
         self._out = wg.Output()
         self._out2 = wg.Output()
@@ -47,17 +47,17 @@ class createPackage():
 
         self._out2.clear_output()
 
-        if(self._projectName.value and self._repositoryName.value and self._authors.value and self._description.value and self._inputPath.value):
+        if(self._projectName.value and self._packageName.value and self._authors.value and self._description.value and self._inputPath.value):
             
             with self._out2:
-                if(os.path.exists(os.path.abspath(os.path.join(self._inputPath.value, self._repositoryName.value)))):
+                if(os.path.exists(os.path.abspath(os.path.join(self._inputPath.value, self._packageName.value)))):
                     print("This repository already exists.")
                 else:
                     self._create.disabled = True
                     self._cancel.disabled = True
                     
                     try:
-                        cookiecutter("https://github.com/AgriculturalModelExchangeInitiative/cookiecutter-crop2ml", no_input=True, extra_context={'project_name':self._projectName.value, 'repo_name':self._repositoryName.value, 'author_name':self._authors.value, 'description':self._description.value}, output_dir=self._inputPath.value)
+                        cookiecutter("https://github.com/AgriculturalModelExchangeInitiative/cookiecutter-crop2ml", no_input=True, extra_context={'project_name':self._projectName.value, 'repo_name':self._packageName.value, 'author_name':self._authors.value, 'description':self._description.value}, output_dir=self._inputPath.value)
 
                     except:
                         raise Exception("Could not create the repository.")
@@ -72,7 +72,7 @@ class createPackage():
                 print("Missing argument(s) :")
                 if(not self._projectName.value):
                     print("\t- Project name")
-                if(not self._repositoryName.value):
+                if(not self._packageName.value):
                     print("\t- Repository name")
                 if(not self._inputPath.value):
                     print("\t- Path")
