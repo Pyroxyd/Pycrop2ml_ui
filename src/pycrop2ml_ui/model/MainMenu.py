@@ -136,7 +136,7 @@ class mainMenu():
         self._out2.clear_output()
 
         with self._out2:
-            print("""
+            display(wg.HTML("""
                 Class providing the launching of pycrop2ml's user interface.
                 It is aiming to enhance the model management of pycrop2ml models as well
                 as decorating the xml format used to write model attributes.
@@ -158,7 +158,7 @@ class mainMenu():
                 To create a mainMenu, use :\n
                 mainmenu = mainMenu() #creates an instance of mainMenu\n
                 mainmenu.displayMenu()       #calls displayMenu() method
-                """)
+                """))
 
 
 
