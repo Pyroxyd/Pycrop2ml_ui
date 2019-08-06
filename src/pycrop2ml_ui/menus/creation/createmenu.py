@@ -10,6 +10,7 @@ from pycrop2ml_ui.menus.creation import createcomposition
 from pycrop2ml_ui.cpackage.createpackage import createPackage
 from pycrop2ml_ui.model import MainMenu
 from pycrop2ml_ui.browser.TkinterPath import getPath
+from pycrop2ml_ui.menus.creation.externalpackage import externalPackageMenu
 
 
 class createMenu():

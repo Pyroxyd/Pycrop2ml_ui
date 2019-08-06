@@ -8,6 +8,7 @@ from IPython.display import display
 
 from pycrop2ml_ui.menus.edition import editmenu
 from pycrop2ml_ui.menus.setsmanagement.managelink import manageLink
+from pycrop2ml_ui.browser.TkinterPath import getPath
 from pycropml.topology import Topology
 
 
@@ -69,7 +70,7 @@ class editComposition():
         self._datas['Old name'] = self._title.value                    
 
         for i in self._xmlfile.model.model:
-            if i.package_name is not None:
+            if i.package_name:
                 self._listextpkg.append(i.package_name)
                 self._listmodel.append('{}:{}'.format(i.package_name, i.file))
             else:
@@ -83,13 +84,152 @@ class editComposition():
             self._listlink.append({'Link type': 'OutputLink', 'Source': l['source'], 'Target': ''})
 
 
-        ###################################################
-        # GESTION DES PACKAGES EXTERNES A FAIRE
+
+    def _manageExtpkg(self):
+
+        """
+        Manages the external package set
+        """
+
+        if self._listextpkg:
+            _listpkg = wg.Select(options=self._listextpkg,disabled=False)
+            _listpkg_Options = self._listextpkg
+            _browse = wg.Button(value=False,description='Browse',disabled=False,button_style='primary')
+        _remove = wg.Button(value=False,description='Remove',disabled=False,button_style='danger')
+
+        _listpkgAdded = wg.Select(options=[],disabled=False)
+        _listpkgAdded_Options = []
+
+        _apply = wg.Button(value=False,description='Apply',disabled=True,button_style='success')        
+        _add_new = wg.Button(value=False,description='Add',disabled=False,button_style='success')
+        _remove_new = wg.Button(value=False,description='Remove',disabled=False,button_style='danger')
+
+        if self._listextpkg:
+            _displayer = wg.VBox([wg.HTML(value='<font size="5"><b> Model edition : composition.{}.xml<br>-> External packages</b></font>'.format(self._datas['Model name'])), wg.HBox([_listpkg, _browse, _remove]), wg.HBox([_listpkgAdded, _add_new, _remove_new]), wg.HBox([_apply, self._cancel])])
+        else:
+            _apply.disabled = False
+            _displayer = wg.VBox([wg.HTML(value='<font size="5"><b> Model edition : composition.{}.xml<br>-> External packages</b></font>'.format(self._datas['Model name'])), wg.HBox([_listpkgAdded, _add_new, _remove_new]), wg.HBox([_apply, self._cancel])])            
+        
+        with self._out:
+            display(_displayer)
+
+
+        def _on_value_change(change):
+            """
+            Handles data change for apply button activation
+            """
+            self._out2.clear_output()
+            if not change['new']:
+                _apply.disabled = False
+
+
+        def _eventApply(b):
+            """
+            Handles apply button on_click event
+            """
+            self._out.clear_output()
+            self._out2.clear_output()
+            self._listextpkg = _listpkgAdded_Options
+
+            self._displayTab()
+
+
+        def _eventBrowse(b):
+            """
+            Handles add_new button on_click event
+            """
+            self._out2.clear_output()
+
+            extpkg = getPath()
+            if not 'crop2ml' in os.listdir(extpkg):
+                with self._out2:
+                    print('This repository is not a model package.')
+            
+            elif extpkg in _listpkgAdded_Options or extpkg+os.path.sep+'crop2ml' == self._datas['Path']:
+                with self._out2:
+                    print('This package is already in the list.')
+
+            else:
+                _listpkgAdded_Options.append(extpkg)
+                _listpkgAdded.options = _listpkgAdded_Options
+                _listpkg_Options.remove(extpkg)
+                _listpkg.options = _listpkg_Options
+
+
+        def _eventRemove(b):
+            """
+            Handles remove button on_click event
+            """
+            self._out2.clear_output()
+
+            if _listpkg.value:
+                _listpkg_Options.remove(_listpkg.value)
+                _listpkg.options = _listpkg_Options
+
+
+        def _eventAdd_new(b):
+            """
+            Handles add_new button on_click event
+            """
+            self._out2.clear_output()
+
+            extpkg = getPath()
+            if not 'crop2ml' in os.listdir(extpkg):
+                with self._out2:
+                    print('This repository is not a model package.')
+            
+            elif extpkg in _listpkgAdded_Options or extpkg+os.path.sep+'crop2ml' == self._datas['Path']:
+                with self._out2:
+                    print('This package is already in the list.')
+
+            else:
+                _listpkgAdded_Options.append(extpkg)
+                _listpkgAdded.options = _listpkgAdded_Options
+
+
+        def _eventRemove_new(b):
+            """
+            Handles remove_new button on_click event
+            """
+            self._out2.clear_output()
+
+            if _listpkgAdded.value:
+                _listpkgAdded_Options.remove(_listpkgAdded.value)
+                _listpkgAdded.options = _listpkgAdded_Options
+
+
+        if self._listextpkg:
+            _browse.on_click(_eventBrowse)
+            _remove.on_click(_eventRemove)
+            _listpkg.observe(_on_value_change, names='options')
+        _apply.on_click(_eventApply)
+        _add_new.on_click(_eventAdd_new)
+        _remove_new.on_click(_eventRemove_new)
+        self._cancel.on_click(self._eventCancel)
+
+
+
+    def _displayTab(self):
+
+        """
+        Finds every model able to fit in the model composition according to the external package list and the current package.
+
+        Displays the model tab interface
+        """
+        
         liste = ['']
         for buffer in os.listdir(self._datas['Path']):
             split = buffer.split('.')
             if split[0] in ['unit','composition'] and split[-1] == 'xml':
                 liste.append(buffer)
+        
+        if self._listextpkg:
+            for extpkg in self._listextpkg:
+                for name in os.listdir(extpkg+os.path.sep+'crop2ml'):
+                    split = name.split('.')
+                    if split[0] in ['unit', 'composition'] and split[-1] == 'xml':
+                        liste.append(os.path.split(extpkg)[1]+':'+name)
+
       
         if self._listmodel:
             self._dataframe = pandas.DataFrame(data={
@@ -105,7 +245,16 @@ class editComposition():
         self._tab = wg.Tab([self._informations, self._datamodeltab])
         self._tab.set_title(0, 'Header')
         self._tab.set_title(1, 'Model composition')
-        ##################################################
+
+
+        with self._out:
+            display(wg.VBox([wg.HTML(value='<font size="5"><b> Model edition : composition.{}.xml<br>-> Model composition</b></font>'.format(self._datas['Model name'])), self._tab, wg.HBox([self._apply, self._cancel])]))
+        
+        self._apply.on_click(self._eventApply)
+        self._cancel.on_click(self._eventCancel)
+
+        self._datamodeltab.on('row_added', self._row_added)
+        self._datamodeltab.on('cell_edited', self._cell_edited)
 
 
 
@@ -130,7 +279,7 @@ class editComposition():
             self._datas['Abstract'] = self._abstract.value
 
             with self._out:
-                menu = manageLink(self._datas, [i for i in self._dataframe['Model name'] if i], self._listlink, listextpkg=[], iscreate=False)
+                menu = manageLink(self._datas, [i for i in self._dataframe['Model name'] if i], self._listlink, listextpkg=self._listextpkg, iscreate=False)
                 menu.displayMenu()
      
         else:
@@ -234,13 +383,5 @@ class editComposition():
                     listkeys.remove(i)
 
         self._parse()
-
-        with self._out:
-            display(wg.VBox([wg.HTML(value='<font size="5"><b> Model edition : composition.{}.xml<br>-> Model composition</b></font>'.format(self._datas['Model name'])), self._tab, wg.HBox([self._apply, self._cancel])]))
-        
-        self._apply.on_click(self._eventApply)
-        self._cancel.on_click(self._eventCancel)
-
-        self._datamodeltab.on('row_added', self._row_added)
-        self._datamodeltab.on('cell_edited', self._cell_edited)
-        
+        self._manageExtpkg()
+       
