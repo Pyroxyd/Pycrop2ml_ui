@@ -1,4 +1,3 @@
-import re
 import os
 
 from pycropml.pparse import model_parser
@@ -16,6 +15,7 @@ class writeunitXML():
                     'Path': '',
                     'Model type': 'unit',
                     'Model name': '',
+                    'Model ID': '',
                     'Authors': '',
                     'Institution': '',
                     'Reference': '',
@@ -62,11 +62,7 @@ class writeunitXML():
         Returns the documentation of the current's model xml file
         """
 
-        split = re.split(r'\\', self._datas['Path'])
-
-        parse = ''
-        for i in split[:-1]:
-            parse += i + r'\\'
+        parse = os.path.split(self._datas['Path'])[0]
 
         parsing = model_parser(parse)
         index = None
@@ -144,14 +140,10 @@ class writeunitXML():
             raise Exception('File unit.{}.xml could not be opened. {}'.format(self._datas['Model name'], ioerr))
 
         else:
-            split = []
-            path = self._datas['Path']
-            for i in range(4):
-                split.append(os.path.split(path)[-1])
-                path = os.path.split(path)[0]
+            split = self._datas['Path'].split(os.path.sep)
 
             f.write('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE Model PUBLIC " " "https://raw.githubusercontent.com/AgriculturalModelExchangeInitiative/crop2ml/master/ModelUnit.dtd">\n')
-            f.write('<ModelUnit modelid="{0}.{1}.{2}" name="{2}" timestep="1" version="1.0">'.format(split[3],split[1],self._datas['Model name']))
+            f.write('<ModelUnit modelid="{0}.{1}.{2}" name="{2}" timestep="1" version="1.0">'.format(self._datas['Model ID'],split[-2],self._datas['Model name']))
             f.write('\n\t<Description>\n\t\t<Title>{} Model</Title>'.format(self._datas['Model name'])+
                 '\n\t\t<Authors>{}</Authors>'.format(self._datas['Authors'])+
                 '\n\t\t<Institution>{}</Institution>'.format(self._datas['Institution'])+

@@ -1,4 +1,5 @@
 import re
+import os
 from copy import deepcopy
 import ipywidgets as wg
 
@@ -39,12 +40,13 @@ class editUnit():
         self._apply = wg.Button(value=False, description='Apply', disabled=False, button_style='success')
         self._cancel = wg.Button(value=False, description='Cancel', disabled=False, button_style='warning')
 
-        self._title = wg.Textarea(value='',description='Title:',disabled=False)
+        self._title = wg.Textarea(value='',description='Model name:',disabled=False)
+        self._modelid = wg.Textarea(value='',description='Model ID:',disabled=False)
         self._authors = wg.Textarea(value='',description='Authors:',disabled=False)
         self._institution = wg.Textarea(value='',description='Institution:',disabled=False)
         self._reference = wg.Textarea(value='',description='Reference:',disabled=False)
         self._abstract = wg.Textarea(value='',description='Abstract:',disabled=False)
-        self._informations = wg.VBox([self._title, self._authors, self._institution, self._reference, self._abstract])
+        self._informations = wg.VBox([self._title, self._modelid, self._authors, self._institution, self._reference, self._abstract])
 
         self._xmlfile = None
 
@@ -59,6 +61,7 @@ class editUnit():
 
         self._datas['Old name'] = self._xmlfile.description.Title[:-6]
         self._title.value = self._xmlfile.description.Title[:-6]
+        self._modelid.value = self._xmlfile.modelid.split('.')[0]
         self._authors.value = self._xmlfile.description.Authors
         self._institution.value = self._xmlfile.description.Institution
         self._reference.value = self._xmlfile.description.Reference
@@ -94,7 +97,7 @@ class editUnit():
                 'Uri': ['']
                 })
 
-        self._qgridIn = qgrid.show_grid(self._dataframeIn, show_toolbar=True)
+        self._qgridIn = qgrid.show_grid(self._dataframeIn, show_toolbar=True, grid_options={'forceFitColumns': False, 'defaultColumnWidth': 100})
         
         if self._xmlfile.outputs:
             self._dataframeOut = pandas.DataFrame(data={
@@ -155,11 +158,7 @@ class editUnit():
         Parses the xml file and calls _buildEdit method to order collected datas
         """
 
-        split = re.split(r'\\', self._datas['Path'])
-
-        parse = ''
-        for i in split[:-1]:
-            parse += i + r'\\'
+        parse = os.path.split(self._datas['Path'])[0]
 
         parsing = pparse.model_parser(parse)
         
@@ -294,13 +293,9 @@ class editUnit():
             Checks wheter header's datas are complete or not
             """
 
-            if any([self._title.value == '',
-                    self._authors.value == '',
-                    self._institution.value == '',
-                    self._reference.value == '',
-                    self._abstract.value == '']):
-                    return False
-            return True
+            if all([self._title.value,self._authors.value,self._institution.value,self._reference.value,self._abstract.value,self._modelid.value]):
+                    return True
+            return False
 
 
         def checkInputs():
@@ -368,6 +363,7 @@ class editUnit():
             self._datas['Institution'] = self._institution.value
             self._datas['Reference'] = self._reference.value
             self._datas['Abstract'] = self._abstract.value
+            self._datas['Model ID'] = self._modelid.value
 
             self._updateSets()
 
@@ -991,6 +987,7 @@ class editUnit():
 
         for column in ['Name','Description','InputType','DataType','Len','Category','Default','Min','Max','Unit','Uri']:
             widget.edit_cell(event['index'], column, '')
+        widget._update_table(triggered_by='remove_row')
 
         widget.on('cell_edited', self._cell_edited_In)
 
@@ -1007,6 +1004,7 @@ class editUnit():
 
         for column in ['Name','Description','DataType','Len','Category','Min','Max','Unit','Uri']:
             widget.edit_cell(event['index'], column, '')
+        widget._update_table(triggered_by='remove_row')
 
         widget.on('cell_edited', self._cell_edited_Out)
     
@@ -1021,6 +1019,7 @@ class editUnit():
 
         widget.off('cell_edited', self._cell_edited_algofunc)
         widget.edit_cell(event['index'], 'Filename', '')
+        widget._update_table(triggered_by='remove_row')
         widget.on('cell_edited', self._cell_edited_algofunc)
 
 

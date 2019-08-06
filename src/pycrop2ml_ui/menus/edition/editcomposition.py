@@ -239,6 +239,7 @@ class editComposition():
 
         widget.off('cell_edited', self._cell_edited)
         widget.edit_cell(event['index'], 'Model name', '')
+        widget._update_table(triggered_by='remove_row')
         widget.on('cell_edited', self._cell_edited)
 
 

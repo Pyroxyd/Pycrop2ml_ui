@@ -1,6 +1,4 @@
 import os
-import re
-
 
 class writecompositionXML():
 
@@ -55,15 +53,15 @@ class writecompositionXML():
             raise Exception('File {} could not be opened in write mode. {}'.format(self._datas['Path'], ioerr))
 
         else:
-            split = os.path.split(self._datas['Path'])[0]
+            split = self._datas['Path'].split(os.path.sep)
 
             fw.write('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE ModelComposition PUBLIC " " "https://raw.githubusercontent.com/AgriculturalModelExchangeInitiative/crop2ml/master/ModelComposition.dtd">')
-            fw.write('<ModelComposition name="{0}" id="{1}.{0}" version="001" timestep ="1">'.format(self._datas['Model name'], os.path.split(split)[-1]))
+            fw.write('<ModelComposition name="{0}" id="{2}.{1}.{0}" version="001" timestep ="1">'.format(self._datas['Model name'], split[-2], self._datas['Model ID']))
             fw.write('\n\t<Description>\n\t\t<Title>{}</Title>\n\t\t<Authors>{}</Authors>\n\t\t<Institution>{}</Institution>\n\t\t<Reference>{}</Reference>\n\t\t<Abstract>{}</Abstract>'.format(self._datas['Model name'], self._datas['Authors'], self._datas['Institution'], self._datas['Reference'], self._datas['Abstract']))
             fw.write('\n\t</Description>\n\n\t<Composition>')
 
             for i in self._listmodel:
-                fw.write('\n\t\t<Model name="{0}" id="{1}.{0}" filename="{2}" />'.format(re.search(r'\.(.*?)\.xml', i).group(1), self._datas['Model name'], i))
+                fw.write('\n\t\t<Model name="{0}" id="{1}.{0}" filename="{2}" {3}/>'.format(i.split('.')[1], i.split(':')[0] if ':' in i else os.path.split(split)[1], i.split(':')[-1], 'package_name="{}" '.format(i.split(':')[0]) if ':' in i else ''))
 
             fw.write("\n\n\t\t<Links>")
             

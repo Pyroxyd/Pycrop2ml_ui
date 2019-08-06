@@ -22,9 +22,17 @@ class createMenu():
 
     def __init__(self):
 
+        
+        #outputs
+        self._out = wg.Output()
+        self._out2 = wg.Output()
+        self._outextpkg = wg.Output()
+        
+        
         #datas
         self._layout = wg.Layout(width='400px',height='57px')
         self._modelName = wg.Textarea(value='',description='Name:',disabled=False,layout=self._layout)
+        self._modelID = wg.Textarea(value='',description='Model ID:',disabled=False,layout=self._layout)
         self._authors = wg.Textarea(value='',description='Authors:',disabled=False,layout=self._layout)
         self._institution = wg.Textarea(value='',description='Institution:',disabled=False,layout=self._layout)
         self._abstract = wg.Textarea(value='',description='Abstract:',disabled=False,layout=self._layout)
@@ -34,6 +42,7 @@ class createMenu():
 
         #model type
         self._toggle = wg.ToggleButtons(options=["unit", "composition"], description="Type:", disabled=False, layout=self._layout)
+        self._extpkg = wg.Checkbox(value=False,description='Enable external package',indent=True)
 
         #buttons
         self._apply = wg.Button(value=False,description='Apply',disabled=False,button_style='success')
@@ -41,14 +50,10 @@ class createMenu():
         self._cancel = wg.Button(value=False,description='Cancel',disabled=False,button_style='warning')
         self._browse = wg.Button(value=False,description='Browse',disabled=False,button_style='primary')
 
-        self._header = wg.VBox([self._toggle,  wg.HBox([self._path, wg.VBox([self._browse, self._create])]), self._modelName, self._authors, self._institution, self._reference, self._abstract])
+        self._header = wg.VBox([self._toggle,  self._outextpkg, wg.HBox([self._path, wg.VBox([self._browse, self._create])]), self._modelName, self._modelID, self._authors, self._institution, self._reference, self._abstract])
 
         #global menu displayer
         self._displayer = wg.VBox([wg.HTML(value='<font size="5"><b>Model creation : Header</b></font>'), self._header, wg.HBox([self._apply, self._cancel])], layout=wg.Layout(align_items='center'))
-
-        #outputs
-        self._out = wg.Output()
-        self._out2 = wg.Output()
 
         #model datas
         self._datas = dict()
@@ -56,7 +61,7 @@ class createMenu():
 
 
 
-    def _createFile(self):
+    def _checkFile(self):
 
         """
         Initializes the model's xml file.
@@ -70,35 +75,7 @@ class createMenu():
             self._out.clear_output()
             with self._out:
                 raise Exception("File composition|unit.{}.xml already exists.".format(self._modelName.value))
-        
-        else:          
-            if(self._datas['Model type'] == 'unit'):
-
-                try:
-                    tmpFile = open("{}{}unit.{}.xml".format(self._datas["Path"], os.path.sep, self._datas['Model name']), 'w', encoding='utf8')
-                
-                except IOError as ioerr:         
-                    self._out.clear_output()
-                    with self._out:
-                        raise Exception('File {} could not be opened. {}'.format(self._datas['Path'], ioerr))
-                
-                else:
-                    tmpFile.close()
-                    return True
-                
-            else:
-
-                try:
-                    tmpFile = open("{}{}composition.{}.xml".format(self._datas["Path"], os.path.sep, self._datas['Model name']), 'w')
-
-                except IOError as ioerr:
-                    self._out.clear_output()
-                    with self._out:
-                        raise Exception('File {} could not be opened. {}'.format(self._datas['Path'], ioerr))
-
-                else:
-                    tmpFile.close()
-                    return True
+        return True
 
 
 
@@ -130,12 +107,13 @@ class createMenu():
 
         self._out2.clear_output()
 
-        if(self._modelName.value and self._authors.value and self._institution.value and self._abstract.value and self._path.value and self._reference.value):
+        if(self._modelName.value and self._authors.value and self._institution.value and self._abstract.value and self._path.value and self._reference.value and self._modelID.value):
 
             self._datas = {
                         'Path': self._path.value+os.path.sep+'crop2ml',
                         'Model type': self._toggle.value,
                         'Model name': self._modelName.value,
+                        'Model ID': self._modelID.value,
                         'Authors': self._authors.value,
                         'Institution': self._institution.value,
                         'Reference': self._reference.value,
@@ -144,52 +122,51 @@ class createMenu():
 
             self._out.clear_output()
                 
-            if self._createFile():
+            if self._checkFile():
                 with self._out:
                     if self._datas['Model type'] == 'unit':
                         try:   
                             unit = createunit.createUnit(self._datas)
                             unit.displayMenu()
-
-                        except:
-                            os.remove("{}{}unit.{}.xml".format(self._datas['Path'], os.path.sep, self._datas['Model name']))
-                            self._out.clear_output()
-                            self._out2.clear_output()                        
-                            raise Exception('Could not load unit creation model.')
+                        except:                      
+                            raise Exception('Could not load unit creation model menu.')
 
                     else:
-                        try:
-                            composition = createcomposition.createComposition(self._datas)
-                            composition.displayMenu()
+                        if self._extpkg.value:
+                            try:
+                                composition = externalPackageMenu(self._datas)
+                                composition.displayMenu()
+                            except:
+                                raise Exception('Could not load external package manager menu.')
 
-                        except:
-                            os.remove("{}{}composition.{}.xml".format(self._datas['Path'], os.path.sep, self._datas['Model name']))
-                            self._out.clear_output()
-                            self._out2.clear_output()
-                            raise Exception('Could not load composition creation model.')
+                        else:
+                            try:
+                                composition = createcomposition.createComposition(self._datas)
+                                composition.displayMenu()
+                            except:
+                                raise Exception('Could not load composition creation model menu.')
 
 
         else:
             with self._out2:
                 print("Missing argument(s) :")
-
                 if(not self._path.value):
                     print("\t- path name")
-
                 if(not self._modelName.value):
-                    print("\t- Model name")
-
+                    print("\t- model name")
+                if(not self._modelID.value):
+                    print("\t- model ID")
                 if(not self._authors.value):
-                    print("\t- Author")
+                    print("\t- authors")
 
                 if(not self._institution.value):
-                    print("\t- Institution")
+                    print("\t- institution")
 
                 if(not self._reference.value):
-                    print("\t- Reference")
+                    print("\t- reference")
 
                 if(not self._abstract.value):
-                    print("\t- Abstract")
+                    print("\t- abstract")
 
 
                   
@@ -229,6 +206,21 @@ class createMenu():
             
 
 
+    def _on_change_value(self, change):
+
+        """
+        Handles toggle widget value change
+        """
+
+        if change['new'] == 'unit':
+            self._outextpkg.clear_output()
+            self._extpkg.value = False
+        else:
+            with self._outextpkg:
+                display(self._extpkg)
+
+
+
     def displayMenu(self):
 
         """
@@ -248,3 +240,5 @@ class createMenu():
         self._cancel.on_click(self._eventCancel)
         self._create.on_click(self._eventCreate)
         self._browse.on_click(self._eventBrowse)
+
+        self._toggle.observe(self._on_change_value, names='value')

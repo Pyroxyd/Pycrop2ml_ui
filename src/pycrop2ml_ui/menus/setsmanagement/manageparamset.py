@@ -21,6 +21,7 @@ class manageParamset():
                     'Path': '',
                     'Model type': 'unit',
                     'Model name': '',
+                    'Model ID': '',
                     'Authors': '',
                     'Institution': '',
                     'Reference': '',

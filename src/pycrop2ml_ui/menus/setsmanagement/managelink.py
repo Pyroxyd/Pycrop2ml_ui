@@ -6,6 +6,7 @@ import qgrid
 from IPython.display import display
 
 from pycropml import pparse
+from pycropml.topology import Topology
 from pycrop2ml_ui.menus.writeXML import writecompositionxml
 
 
@@ -20,6 +21,7 @@ class manageLink():
                     'Path': '',
                     'Model type': 'unit',
                     'Model name': '',
+                    'Model ID': '',
                     'Authors': '',
                     'Institution': '',
                     'Reference': '',
@@ -37,11 +39,13 @@ class manageLink():
                        }
                      ]
         
+        - listpkg : []
+        
         - iscreate : bool
     """
 
 
-    def __init__(self, data, listmodel, listlink, iscreate=True):
+    def __init__(self, data, listmodel, listlink, listextpkg=[], iscreate=True):
 
         self._out = wg.Output()
         self._out2 = wg.Output()
@@ -53,6 +57,7 @@ class manageLink():
         self._listmodel = listmodel
         self._listlink = listlink # [{'Link type': '', 'Target': '', 'Source': ''}]
         self._iscreate = iscreate
+        self._listextpkg = listextpkg
 
 
     
@@ -77,6 +82,28 @@ class manageLink():
 
                 for k in i.outputs:
                     self._listLinkSource.append('{}.{}'.format(i.name, k.name))
+
+        for model in self._listmodel:
+            if ':' in model:
+                pkgname, modelname = model.split(':')
+                modelname = modelname.split('.')[1]
+                path, = [i for i in self._listextpkg if pkgname in os.path.split(i)[1]]
+                pkg = Topology(pkgname, pkg=path)
+
+                if pkg.model.name == modelname:
+                    for j in pkg.model.inputs:
+                        self._listLinkTarget.append('{}.{}'.format(modelname, j.name))
+                    for k in pkg.model.outputs:
+                        self._listLinkSource.append('{}.{}'.format(modelname, k.name))
+                else:
+                    for unit in pkg.mu:
+                        if unit.name == modelname:
+                            for y in unit.inputs:
+                                self._listLinkTarget.append('{}.{}'.format(modelname, y.name))
+                            for z in unit.outputs:
+                                self._listLinkSource.append('{}.{}'.format(modelname, z.name))
+                            break
+
 
         if self._iscreate:
             self._dfLink = pandas.DataFrame(data={
@@ -106,6 +133,7 @@ class manageLink():
 
         for column in ['Link type','Target','Source']:
             widget.edit_cell(event['index'], column, '')
+        widget._update_table(triggered_by='remove_row')
 
         widget.on('cell_edited', self._cell_edited_link)
     
@@ -137,12 +165,6 @@ class manageLink():
                 with self._out2:
                     print('Warning : Source is not required for an input link.')
             
-            elif event['new'] == df['Target'][event['index']]:
-                widget.edit_cell(event['index'], 'Source', event['old'])
-            
-                with self._out2:
-                    print('Warning : Source and Target cannot reach the same value.')
-            
             elif event['new'].split('.')[0] == df['Target'][event['index']].split('.')[0]:
                 widget.edit_cell(event['index'], 'Source', event['old'])
 
@@ -155,12 +177,6 @@ class manageLink():
 
                 with self._out2:
                     print('Warning : Target is not required for an output link.')
-            
-            elif event['new'] == df['Source'][event['index']]:
-                widget.edit_cell(event['index'], 'Target', event['old'])
-            
-                with self._out2:
-                    print('Warning : Source and Target cannot reach the same value.')
             
             elif event['new'].split('.')[0] == df['Source'][event['index']].split('.')[0]:
                 widget.edit_cell(event['index'], 'Target', event['old'])

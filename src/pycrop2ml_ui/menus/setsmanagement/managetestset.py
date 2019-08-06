@@ -22,6 +22,7 @@ class manageTestset():
                     'Path': '',
                     'Model type': 'unit',
                     'Model name': '',
+                    'Model ID': '',
                     'Authors': '',
                     'Institution': '',
                     'Reference': '',
@@ -483,7 +484,7 @@ class manageTestset():
                 with self._out3:
                     print('This testset already exists.')
 
-            elif testsetname.value and description.value and any([paramset.value, paramset.options == ['']]):
+            elif testsetname.value and description.value and any([paramset.value, not self._paramsetdict]):
                 self._testsetSelecter.unobserve(self._on_value_change_testset, names='value')
 
                 self._testsetSelecter.value = ''

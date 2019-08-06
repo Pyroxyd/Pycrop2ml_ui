@@ -25,6 +25,7 @@ class createUnit():
                         'Path': '',
                         'Model type': 'unit',
                         'Model name': '',
+                        'Model ID': '',
                         'Authors': '',
                         'Institution': '',
                         'Reference': '',
@@ -39,7 +40,7 @@ class createUnit():
         #buttons
         self._apply = wg.Button(value=False,description='Apply',disabled=False,button_style='success')
         self._apply2 = wg.Button(value=False,description='Apply',disabled=False,button_style='success')
-        self._exit = wg.Button(value=False,description='Cancel',disabled=False,button_style='danger')
+        self._exit = wg.Button(value=False,description='Exit',disabled=False,button_style='danger')
 
         #outputs
         self._out = wg.Output()
@@ -62,7 +63,7 @@ class createUnit():
             'Unit': [''],
             'Uri': ['']})
 
-        self._inouttab = qgrid.show_grid(self._dataframeInputs, show_toolbar=True)
+        self._inouttab = qgrid.show_grid(self._dataframeInputs, show_toolbar=True, grid_options={'forceFitColumns': False, 'defaultColumnWidth': 100})
 
         self._datas = data
 
@@ -183,10 +184,6 @@ class createUnit():
 
         self._out.clear_output()
         self._out2.clear_output()
-
-        os.remove("{}/unit.{}.xml".format(self._datas["Path"], self._datas['Model name']))
-
-        return
 
 
 
@@ -629,6 +626,7 @@ class createUnit():
 
         for column in ['Type','Name','Description','InputType','DataType','Len','Category','Default','Min','Max','Unit','Uri']:
             widget.edit_cell(event['index'], column, '')
+        widget._update_table(triggered_by='remove_row')
 
         widget.on('cell_edited', self._cell_edited)
 
@@ -663,6 +661,7 @@ class createUnit():
         widget.off('cell_edited', self._cell_edited_func)
 
         widget.edit_cell(event['index'], 'Filename', '')
+        widget._update_table(triggered_by='remove_row')
 
         widget.on('cell_edited', self._cell_edited_func)
 
@@ -701,6 +700,7 @@ class createUnit():
         widget.off('cell_edited', self._cell_edited_algo)
 
         widget.edit_cell(event['index'], 'Filename', '')
+        widget._update_table(triggered_by='remove_row')
 
         widget.on('cell_edited', self._cell_edited_algo)
 
@@ -718,13 +718,13 @@ class createUnit():
 
         display(self._out)
 
-        listkeys = ['Path','Model type','Model name','Authors','Institution','Reference','Abstract']
+        listkeys = ['Path','Model type','Model name','Model ID','Authors','Institution','Reference','Abstract']
 
         for i in self._datas.keys():
 
             with self._out:
                 if i not in listkeys:
-                    raise Exception("Could not display unit model creation menu : parameter data from createUnit(data) must contain these keys ['Path','Model type','Model name','Authors','Institution','Reference','Abstract']")
+                    raise Exception("Could not display unit model creation menu : parameter data from createUnit(data) must contain these keys ['Path','Model type','Model ID','Model name','Authors','Institution','Reference','Abstract']")
 
                 elif i == 'Model type' and self._datas[i] != 'unit':
                     raise Exception("Bad value error : Model type key's value must be unit.")
