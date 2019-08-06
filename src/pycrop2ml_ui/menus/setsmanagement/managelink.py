@@ -248,8 +248,6 @@ class manageLink():
         self._out.clear_output()
         self._out2.clear_output()
 
-        os.remove("{}{}composition.{}.xml".format(self._datas["Path"], os.path.sep, self._datas['Model name']))
-
 
 
     def displayMenu(self):

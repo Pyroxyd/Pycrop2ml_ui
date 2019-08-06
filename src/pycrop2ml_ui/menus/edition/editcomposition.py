@@ -1,6 +1,5 @@
 import ipywidgets as wg
 import os
-import re
 
 import qgrid
 import pandas
@@ -9,6 +8,7 @@ from IPython.display import display
 
 from pycrop2ml_ui.menus.edition import editmenu
 from pycrop2ml_ui.menus.setsmanagement.managelink import manageLink
+from pycropml.topology import Topology
 
 
 
@@ -36,36 +36,18 @@ class editComposition():
         self._cancel = wg.Button(value=False,description='Cancel',disabled=False,button_style='danger')
 
         self._title = wg.Textarea(value='',description='Model name:',disabled=False)
+        self._modelid = wg.Textarea(value='',description='Model ID:',disabled=False)
         self._authors = wg.Textarea(value='',description='Authors:',disabled=False)
         self._institution = wg.Textarea(value='',description='Institution:',disabled=False)
         self._reference = wg.Textarea(value='',description='Reference:',disabled=False)
         self._abstract = wg.Textarea(value='',description='Abstract:',disabled=False)
-        self._informations = wg.VBox([self._title, self._authors, self._institution, self._reference, self._abstract])
+        self._informations = wg.VBox([self._title, self._modelid, self._authors, self._institution, self._reference, self._abstract])
 
         #datas
         self._datas = data
         self._listmodel = []
         self._listlink = []
-
-
-
-    def _badSyntax(self, file):
-
-        """
-        Called for a bad syntax error in the parsed xml file, raises an exception.
-
-        Parameters : \n
-            - file : TextIOWrapper
-        """
-
-        try:
-            self._out.clear_output()
-            self._out2.clear_output()
-            with self._out:
-                raise Exception('File {} has a bad syntax critical error.'.format(file))
-        
-        finally:
-            file.close()
+        self._listextpkg = []
 
 
   
@@ -75,87 +57,39 @@ class editComposition():
         Parses the xml file to gather the data set
         """
         
-        try:
-            f = open('{}{}{}.{}.xml'.format(self._datas['Path'], os.path.sep, self._datas['Model type'], self._datas['Model name']),"r")
+        self._xmlfile = Topology(self._datas['Path'].split(os.path.sep)[-2], pkg=os.path.split(self._datas['Path'])[0])
 
-        except IOError as ioerr:
-            with self._out:
-                raise Exception('File {} could not be opened in read mode. {}'.format(self._datas['Path'], ioerr))
+        self._title.value = self._xmlfile.model.description.Title
+        self._modelid.value = self._xmlfile.model.id.split('.')[0]
+        self._authors.value = self._xmlfile.model.description.Authors
+        self._institution.value = self._xmlfile.model.description.Institution
+        self._reference.value = self._xmlfile.model.description.Reference
+        self._abstract.value = self._xmlfile.model.description.Abstract
 
-        else:
-            buffertmp = f.readline()
+        self._datas['Old name'] = self._title.value                    
 
-            while not re.search(r'(</Description>)', buffertmp):
-                title = re.search(r'<Title>(.*?)</Title>', buffertmp)
-                authors = re.search(r'<Authors>(.*?)</Authors>', buffertmp)
-                institution = re.search(r'<Institution>(.*?)</Institution>', buffertmp)
-                reference = re.search(r'<Reference>(.*?)</Reference>', buffertmp)
-                abstract = re.search(r'<Abstract>(.*?)</Abstract>', buffertmp)
+        for i in self._xmlfile.model.model:
+            if i.package_name is not None:
+                self._listextpkg.append(i.package_name)
+                self._listmodel.append('{}:{}'.format(i.package_name, i.file))
+            else:
+                self._listmodel.append(i.file)
 
-                if title:
-                    if not self._title.value:
-                        self._title.value = title.group(1)
-                        self._datas['Old name'] = title.group(1)
-                    else:
-                        self._badSyntax(f)
-                if authors:
-                    if not self._authors.value:
-                        self._authors.value = authors.group(1)
-                    else:
-                        self._badSyntax(f)
-                if institution:
-                    if not self._institution.value:
-                        self._institution.value = institution.group(1)
-                    else:
-                        self._badSyntax(f)               
-                if reference:
-                    if not self._reference.value:
-                        self._reference.value = reference.group(1)
-                    else:
-                        self._badSyntax(f)
-                if abstract:
-                    if not self._abstract.value:
-                        self._abstract.value = abstract.group(1)
-                    else:
-                        self._badSyntax(f)
-                
-                buffertmp = f.readline()
-                if not buffertmp:
-                    self._badSyntax(f)
-
-            if any([not self._title.value, not self._authors.value, not self._institution.value, not self._reference.value, not self._abstract.value]):
-                self._badSyntax(f)
-
-            for buffer in f:
-                model = re.search(r'filename="(.*?)" />',buffer)
-                linktype = re.search(r'<(.*?Link)',buffer)
-                target = re.search(r'target="(.*?)"',buffer)
-                source = re.search(r'source="(.*?)"',buffer)
-
-                if model:
-                    self._listmodel.append(model.group(1))
-
-                elif linktype and target and source:
-                    self._listlink.append({'Link type': linktype.group(1), 'Source': source.group(1), 'Target': target.group(1)})
-
-            f.close()
-
-        self._buildEdit()
+        for j in self._xmlfile.model.inputlink:
+            self._listlink.append({'Link type': 'InputLink', 'Source': '', 'Target': j['target']})
+        for k in self._xmlfile.model.internallink:
+            self._listlink.append({'Link type': 'InternalLink', 'Source': k['source'], 'Target': k['target']})
+        for l in self._xmlfile.model.outputlink:
+            self._listlink.append({'Link type': 'OutputLink', 'Source': l['source'], 'Target': ''})
 
 
-
-    def _buildEdit(self):
-
-        """
-        Creates the qgrid widget fro displaying model composition
-        """
-
+        ###################################################
+        # GESTION DES PACKAGES EXTERNES A FAIRE
         liste = ['']
         for buffer in os.listdir(self._datas['Path']):
-            ext = os.path.splitext(buffer)[-1].lower()
-            if (ext == '.xml' and buffer != 'composition.{}.xml'.format(self._datas['Model name'])):
-                if re.search(r'composition', buffer) or re.search(r'unit', buffer):
-                    liste.append(buffer)
+            split = buffer.split('.')
+            if split[0] in ['unit','composition'] and split[-1] == 'xml':
+                liste.append(buffer)
       
         if self._listmodel:
             self._dataframe = pandas.DataFrame(data={
@@ -171,6 +105,7 @@ class editComposition():
         self._tab = wg.Tab([self._informations, self._datamodeltab])
         self._tab.set_title(0, 'Header')
         self._tab.set_title(1, 'Model composition')
+        ##################################################
 
 
 
@@ -183,25 +118,28 @@ class editComposition():
         self._out.clear_output()
         self._out2.clear_output()
 
-        if all([self._title.value, self._authors.value, self._institution.value, self._reference.value, self._abstract.value]):
+        if all([self._title.value, self._modelid.value, self._authors.value, self._institution.value, self._reference.value, self._abstract.value]):
             self._dataframe = self._datamodeltab.get_changed_df()
             self._dataframe.reset_index(inplace=True)
 
             self._datas['Model name'] = self._title.value
+            self._datas['Model ID'] = self._modelid.value
             self._datas['Authors'] = self._authors.value
             self._datas['Institution'] = self._institution.value
             self._datas['Reference'] = self._reference.value
             self._datas['Abstract'] = self._abstract.value
 
             with self._out:
-                menu = manageLink(self._datas, [i for i in self._dataframe['Model name'] if i], self._listlink, iscreate=False)
+                menu = manageLink(self._datas, [i for i in self._dataframe['Model name'] if i], self._listlink, listextpkg=[], iscreate=False)
                 menu.displayMenu()
      
         else:
             with self._out2:
                 print("Missing argument(s) :")
                 if(not self._title.value):
-                    print("\t- Title")
+                    print("\t- Model name")
+                if(not self._modelid.value):
+                    print("\t- Model ID")
                 if(not self._authors.value):
                     print("\t- Authors")
                 if(not self._institution.value):

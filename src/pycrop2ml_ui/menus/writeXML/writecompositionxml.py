@@ -61,7 +61,7 @@ class writecompositionXML():
             fw.write('\n\t</Description>\n\n\t<Composition>')
 
             for i in self._listmodel:
-                fw.write('\n\t\t<Model name="{0}" id="{1}.{0}" filename="{2}" {3}/>'.format(i.split('.')[1], i.split(':')[0] if ':' in i else os.path.split(split)[1], i.split(':')[-1], 'package_name="{}" '.format(i.split(':')[0]) if ':' in i else ''))
+                fw.write('\n\t\t<Model name="{0}" id="{1}.{0}" filename="{2}" {3}/>'.format(i.split('.')[1], i.split(':')[0] if ':' in i else split[-2], i.split(':')[-1], ('package_name="{}" '.format(i.split(':')[0]) if ':' in i else '')))
 
             fw.write("\n\n\t\t<Links>")
             

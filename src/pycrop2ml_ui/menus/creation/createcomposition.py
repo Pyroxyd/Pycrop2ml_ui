@@ -6,7 +6,6 @@ import qgrid
 import pandas
 
 from pycropml import pparse
-from pycropml.topology import Topology
 from pycrop2ml_ui.menus.setsmanagement.managelink import manageLink
 
 from IPython.display import display
@@ -50,16 +49,15 @@ class createComposition():
     def _listdirs(self):
 
         """
-        Collects xml files list in the given directory
+        Collects xml files list in the given directory list
         """
 
         liste = ['']
 
         for buffer in os.listdir(self._datas['Path']):
-            ext = os.path.splitext(buffer)[-1].lower()
-            if (ext == '.xml' and buffer != 'composition.{}.xml'.format(self._datas['Model name'])):
-                if re.search(r'composition', buffer) or re.search(r'unit', buffer):
-                    liste.append(buffer)
+            split = buffer.split('.')
+            if split[0] in ['unit','composition'] and split[-1] == 'xml':
+                liste.append(buffer)
         
         if self._externalpkglist:
             for extpkg in self._externalpkglist:

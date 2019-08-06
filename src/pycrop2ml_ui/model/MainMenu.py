@@ -5,6 +5,7 @@ from pycrop2ml_ui.menus.creation import createmenu
 from pycrop2ml_ui.menus.edition import editmenu
 from pycrop2ml_ui.cpackage.createpackage import createPackage
 from pycrop2ml_ui.menus.transformation import transformationmenu
+from pycrop2ml_ui.menus.display.displaymenu import displayMenu
 
 
 
@@ -20,12 +21,13 @@ class mainMenu():
     menus. Refering to python's coding manners, do not use methods and class
     attributes beginning with an underscore otherwise code can break.
 
-    The class mainMenu contains 4 branches refering to creation, edition,
-    transformation and repository creation :\n
+    The class mainMenu contains 5 branches refering to creation, edition,
+    display, transformation and repository creation :\n
     repository creation -> createPackage\n
     creation -> class createMenu\n
     edition -> class editMenu\n
-    transformation -> class transformationMenu
+    transformation -> class transformationMenu\n
+    display -> class displayMenu
 
     displayMenu() displays the main menu of the user interface and provides
     four buttons clickable leading to each branch. This is the only method
@@ -45,9 +47,10 @@ class mainMenu():
         self._create = wg.Button(value=False,description='Model creation',disabled=False,layout=self._layout)
         self._edit = wg.Button(value=False,description='Model edition',disabled=False,layout=self._layout)
         self._transformation = wg.Button(value=False,description='Model transformation',disabled=False,layout=self._layout)
+        self._display = wg.Button(value=False,description='Model display',disabled=False,layout=self._layout)
         self._about = wg.Button(value=False,description='About',disabled=False,layout=self._layout)
 
-        self._displayer = wg.VBox([wg.HTML(value='<font size="5"><b>Model manager for Pycrop2ml</b></font>'), self._mkdir, self._create, self._edit, self._transformation, self._about], layout=wg.Layout(align_items='center'))
+        self._displayer = wg.VBox([wg.HTML(value='<font size="5"><b>Model manager for Pycrop2ml</b></font>'), self._mkdir, self._create, self._edit, self._transformation, self._display, self._about], layout=wg.Layout(align_items='center'))
 
         self._out = wg.Output()
         self._out2 = wg.Output()
@@ -65,8 +68,8 @@ class mainMenu():
 
         with self._out2: 
             try:
-                tmp = createPackage()
-                tmp.displayMenu()
+                menu = createPackage()
+                menu.displayMenu()
             
             except:
                 raise Exception('Could not load directory creation function.')
@@ -120,11 +123,27 @@ class mainMenu():
 
         with self._out:
             try:
-                editWg = transformationmenu.transformationMenu()
-                editWg.displayMenu()     
+                menu = transformationmenu.transformationMenu()
+                menu.displayMenu()     
             except:
                 raise Exception('Could not load transformation menu.')
 
+
+
+    def _eventDisplay(self, b):
+
+        """
+        Display the model display menu
+        """
+        self._out.clear_output()
+        self._out2.clear_output()
+
+        with self._out:
+            try:
+                menu = displayMenu()
+                menu.displayMenu()     
+            except:
+                raise Exception('Could not load model display menu.')
 
 
     def _eventAbout(self, b):
@@ -181,6 +200,7 @@ class mainMenu():
         self._create.on_click(self._eventCreate)
         self._edit.on_click(self._eventEdit)
         self._transformation.on_click(self._eventTransformation)
+        self._display.on_click(self._eventDisplay)
         self._about.on_click(self._eventAbout)
         
 
