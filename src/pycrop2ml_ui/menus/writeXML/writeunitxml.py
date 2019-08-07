@@ -4,9 +4,7 @@ from pycropml.pparse import model_parser
 from pycropml.transpiler.generators import docGenerator
 
 
-
 class writeunitXML():
-
     """
     Class managing the writing of a unit model xml file with all gathered data with pycrop2ml' user interface.
 
@@ -60,13 +58,11 @@ class writeunitXML():
 
 
     def _getDoc(self, f):
-
         """
         Returns the documentation of the current's model xml file
         """
 
         parse = os.path.split(self._datas['Path'])[0]
-
         parsing = model_parser(parse)
         index = None
 
@@ -77,21 +73,19 @@ class writeunitXML():
 
         if index is None:
             f.close()
-
             raise Exception('Critical error : model not found.')
         
         return docGenerator.DocGenerator(parsing[index])
 
 
 
-    def _createInit(self):
-        
+    def _createInit(self):   
         """
         Creates an empty init file with the model description inside of it
         """
 
         try:
-            init = open("{}\\algo\\pyx\\init.{}.pyx".format(self._datas['Path'], self._datas['Model name']), 'w', encoding='utf8')
+            init = open("{0}{2}algo{2}pyx{2}init.{1}.pyx".format(self._datas['Path'], self._datas['Model name'], os.path.sep), 'w', encoding='utf8')
 
         except IOError as ioerr:
             raise Exception("Algorithm file init.{}.pyx could not be created. {}".format(self._datas['Model name'], ioerr))
@@ -108,13 +102,12 @@ class writeunitXML():
 
 
     def _createAlgo(self):
-
         """
         Creates an empty algorithm file with the model description inside of it
         """
 
         try:
-            algo = open("{}\\algo\\pyx\\{}.pyx".format(self._datas['Path'], self._datas['Model name']), 'w', encoding='utf8')
+            algo = open("{0}{2}algo{2}pyx{2}{1}.pyx".format(self._datas['Path'], self._datas['Model name'], os.path.sep), 'w', encoding='utf8')
 
         except IOError as ioerr:
             raise Exception("Algorithm file {}.pyx could not be created. {}".format(self._datas['Model name'], ioerr))
@@ -131,7 +124,6 @@ class writeunitXML():
 
 
     def write(self):
-
         """
         Saves all gathered datas in an xml format
         """
@@ -246,7 +238,7 @@ class writeunitXML():
             if createalgo:
                 self._createAlgo()
 
-            if not self._iscreate and self._datas['Model name'] != self._datas['Old name']:
+            if all([not self._iscreate, self._datas['Model name'] != self._datas['Old name']]):
                 os.remove('{}{}unit.{}.xml'.format(self._datas['Path'], os.path.sep, self._datas['Old name']))
                 os.remove('{0}{1}algo{1}pyx{1}init.{2}.pyx'.format(self._datas['Path'], os.path.sep, self._datas['Old name']))
 

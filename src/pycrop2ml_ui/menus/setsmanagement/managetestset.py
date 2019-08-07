@@ -1,9 +1,7 @@
 import re
-import os
 
 from copy import deepcopy
 import ipywidgets as wg
-
 import qgrid
 import pandas
 
@@ -13,7 +11,6 @@ from pycrop2ml_ui.menus.writeXML.writeunitxml import writeunitXML
 
 
 class manageTestset():
-
     """
     Class providing the display of the testset edition menu for pycrop2ml's user interface.
 
@@ -62,7 +59,6 @@ class manageTestset():
 
     def __init__(self, datas, vardict, testsetdict, paramsetdict, df, iscreate=True):
 
-        
         #OUTPUTS
         self._out = wg.Output()
         self._out_testset = wg.Output()
@@ -81,7 +77,6 @@ class manageTestset():
 
         self._applyGrid = wg.Button(value=False, description='Apply', disabled=False, button_style='success')
         
-
         #SELECTERS
         self._testsetSelecter = wg.Dropdown(options=[''],value='',description='TestSet:',disabled=False)
         self._testsetlist = ['']
@@ -109,7 +104,6 @@ class manageTestset():
 
 
     def _initSet(self):
-
         """
         Initializes a dataframe for each testset in edition mode, else pass
         """
@@ -145,7 +139,6 @@ class manageTestset():
 
 
     def _cell_edited(self, event, widget):
-
         """
         Handles every cell edition in the current qgrid widget
         """
@@ -188,7 +181,7 @@ class manageTestset():
                         widget.edit_cell(event['index'], 'Value', df['Value'][event['index']][:-diff]) 
         
         else:
-            if event['new'].replace(' ','') == '':
+            if not event['new'].replace(' ',''):
                 widget.edit_cell(event['index'], 'Value', '')
 
             else:      
@@ -297,13 +290,11 @@ class manageTestset():
 
 
     def _on_value_change_testset(self, change):
-
         """
         Handles every testset selecter change
         """
 
         if change['new']:
-
             self._testSelecter.options = self._testlist[change['new']]
             self._createTest.disabled = False
             self._deleteTest.disabled = False
@@ -321,7 +312,6 @@ class manageTestset():
     
 
     def _on_value_change_test(self, change):
-
         """
         Handles every test selecter change
         """
@@ -329,7 +319,6 @@ class manageTestset():
         self._out3.clear_output()
         
         if change['new']:
-
             self._testSelecter.disabled = True
             self._testsetSelecter.disabled = True
             self._createTest.disabled = True
@@ -373,7 +362,6 @@ class manageTestset():
 
 
     def _eventEditTestset(self, b):
-
         """
         Handles testset edit button on_click event
         """
@@ -406,7 +394,7 @@ class manageTestset():
                 with self._out3:
                     print('This testset already exists.')
 
-            elif testsetname.value and description.value and any([paramset.value, paramset.options == ['']]):
+            elif all([testsetname.value, description.value, any([paramset.value, not self._paramsetdict])]):
                 self._testsetSelecter.unobserve(self._on_value_change_testset, names='value')
 
                 self._testsetlist.append(testsetname.value)
@@ -454,7 +442,6 @@ class manageTestset():
 
 
     def _eventCreateTestset(self, b):
-
         """
         Handles testset creation button on_click event
         """
@@ -487,7 +474,7 @@ class manageTestset():
                 with self._out3:
                     print('This testset already exists.')
 
-            elif testsetname.value and description.value and any([paramset.value, not self._paramsetdict]):
+            elif all([testsetname.value, description.value, any([paramset.value, not self._paramsetdict])]):
                 self._testsetSelecter.unobserve(self._on_value_change_testset, names='value')
 
                 self._testsetSelecter.value = ''
@@ -532,8 +519,7 @@ class manageTestset():
 
 
 
-    def _eventDeleteTestset(self, b):
-        
+    def _eventDeleteTestset(self, b):    
         """
         Handles testset deletion button on_click event
         """
@@ -571,7 +557,6 @@ class manageTestset():
 
     
     def _eventCreateTest(self, b):
-        
         """
         Handles test creation button on_click event
         """
@@ -672,7 +657,6 @@ class manageTestset():
     
 
     def _eventDeleteTest(self, b):
-        
         """
         Handles test deletion button on_click event
         """
@@ -703,11 +687,9 @@ class manageTestset():
 
 
     def _eventApply(self, b):
-
         """
         Handles apply button on_click event
         """
-
 
         self._out3.clear_output()
 
@@ -717,6 +699,7 @@ class manageTestset():
         for testsetname,args in self._testsetsDataframe.items():
             if any([not args[1], not args[2] and self._paramsetdict]):
                 tmplistset.append(testsetname)
+
             for testname,dataframe in args[0].items():
                 for x in range(0,len(dataframe['Value'])):
                     if dataframe['Value'][x]:
@@ -751,22 +734,18 @@ class manageTestset():
 
 
     def _eventExit(self, b):
-
         """
         Handles exit button on_click event
         """
         
         self._out.clear_output()
         self._out_test.clear_output()
+        self._out_testset.clear_output()
         self._out3.clear_output()
-
-        if self._iscreate:
-            os.remove("{}/unit.{}.xml".format(self._datas["Path"], self._datas['Model name']))
 
 
             
     def displayMenu(self):
-
         """
         Displays the testset edition menu for Pycrop2ml's UI.
 

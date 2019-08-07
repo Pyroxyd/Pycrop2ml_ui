@@ -1,5 +1,4 @@
 import os
-import re
 import ipywidgets as wg
 
 import qgrid
@@ -12,7 +11,6 @@ from IPython.display import display
 
 
 class createComposition():
-
     """
     Class providing the display of composition model creation menu for pycrop2ml's user interface.
 
@@ -49,7 +47,6 @@ class createComposition():
 
 
     def _listdirs(self):
-
         """
         Collects xml files list in the given directory list
         """
@@ -75,7 +72,6 @@ class createComposition():
 
 
     def _eventApply(self, b):
-
         """
         Handles apply button on_click event
         """
@@ -85,7 +81,6 @@ class createComposition():
         self._dataFrame.reset_index(inplace=True)
 
         listmodel = [j for j in self._dataFrame['Model name'] if j]
-        
         if listmodel:
             self._out.clear_output()
             with self._out:
@@ -102,7 +97,6 @@ class createComposition():
 
 
     def _eventExit(self, b):
-
         """
         Handles exit button on_click event
         """
@@ -113,7 +107,6 @@ class createComposition():
 
 
     def _cell_edited(self, event, widget):
-
         """
         Handles every cell edition event in model list qgrid widget
         """
@@ -138,7 +131,6 @@ class createComposition():
 
 
     def _row_added(self, event, widget):
-
         """
         Handles a row addition in the qgrid widget
         """
@@ -153,7 +145,6 @@ class createComposition():
 
 
     def displayMenu(self):
-
         """
         Displays the composition model creation menu of pyrcop2ml's UI.
 
@@ -172,7 +163,7 @@ class createComposition():
                 if i not in listekeys:
                     raise Exception("Could not display composition model creation menu : parameter data from createComposition(data) must contain these keys ['Path','Model type','Model ID','Model name','Version','Timestep','Title','Authors','Institution','Reference','Abstract']")
                 
-                elif i == 'Model type' and not self._datas[i] == 'composition':
+                elif i == 'Model type' and self._datas[i] != 'composition':
                     raise Exception("Bad value error : Model type key's value must be composition.")
 
                 else:

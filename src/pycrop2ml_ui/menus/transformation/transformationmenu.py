@@ -37,9 +37,7 @@ class transformationMenu():
 
 
 
-
     def _eventApply(self, b):
-
         """
         Handles apply button on_click event
         """
@@ -84,7 +82,6 @@ class transformationMenu():
 
 
     def _eventBrowse(self, b):
-
         """
         Handles browse button on_click event
         """
@@ -92,7 +89,7 @@ class transformationMenu():
         self._out2.clear_output()
         self._path.value = getPath() 
 
-        if not 'crop2ml' in os.listdir(self._path.value):
+        if 'crop2ml' not in os.listdir(self._path.value):
             self._path.value = ''
             with self._out2:
                 print('This repository is not a model package.')
@@ -100,7 +97,6 @@ class transformationMenu():
 
 
     def _eventCancel(self, b):
-
         """
         Handles cancel button on_click event
         """
@@ -117,8 +113,7 @@ class transformationMenu():
 
 
 
-    def displayMenu(self):
-        
+    def displayMenu(self): 
         """
         Displays the package transformation menu of pyrcop2ml's UI.
 

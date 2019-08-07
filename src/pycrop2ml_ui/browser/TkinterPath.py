@@ -3,6 +3,9 @@ import os
 import sys
 
 def getPath():
+    """
+    Returns the selected directory path.
+    """
     
     root = Tk()
     root.wm_attributes('-topmost', 1)

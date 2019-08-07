@@ -1,11 +1,10 @@
 import re
 import os
-from copy import deepcopy
-import ipywidgets as wg
 
+import ipywidgets as wg
 import qgrid
 import pandas
-
+from copy import deepcopy
 from IPython.display import display
 
 from pycrop2ml_ui.menus.edition import editmenu
@@ -15,9 +14,7 @@ from pycrop2ml_ui.menus.setsmanagement import managetestset
 from pycropml import pparse
 
 
-
 class editUnit():
-
     """
     Class providing the display of the unit model edition menu for pycrop2ml's user interface.
 
@@ -53,12 +50,10 @@ class editUnit():
         self._informations = wg.VBox([self._modelname, self._modelid, self._version, self._timestep, self._title, self._authors, self._institution, self._reference, self._abstract])
 
         self._xmlfile = None
-
-        
+ 
 
 
     def _buildEdit(self):
-
         """
         Creates inputs and outputs dataframes with datas collected from the xml file parsing
         """
@@ -161,23 +156,19 @@ class editUnit():
 
 
     def _parse(self):
-
         """
         Parses the xml file and calls _buildEdit method to order collected datas
         """
 
         parse = os.path.split(self._datas['Path'])[0]
-
         parsing = pparse.model_parser(parse)
         
         for j in parsing:
-
             if j.name == self._datas['Model name']:
                 self._xmlfile = j
                 break
 
         if self._xmlfile is None:
-
             self._out.clear_output()
             self._out2.clear_output()
             with self._out:
@@ -190,7 +181,6 @@ class editUnit():
 
 
     def _updateParam(self):
-
         """
         Fetches inputs changes and updates the parameters' list.
         """
@@ -198,9 +188,7 @@ class editUnit():
         paramdict = dict()
         paramsetdict = dict() #{paramset_name:[{param:value}, description]}
 
-
         for i in range(0, len(self._dataframeIn['Name'])):
-
             if self._dataframeIn['InputType'][i] == 'parameter':    
                 paramdict[self._dataframeIn['Name'][i]] = ''   
 
@@ -216,15 +204,13 @@ class editUnit():
 
 
 
-    def _updateVar(self):
-        
+    def _updateVar(self):  
         """
         Fetches inputs and outputs changes and updates the variables' list.
         """
 
         vardict = {'inputs':dict(),'outputs':dict()} #{inputs:{name:value},outputs:{name:value}}
         testsets = dict() #{ testsetname: [ {testname: {inputs: {name:value}, outputs:{name:value}}}, description, parameterset ] }
-
 
         for i in range(0,len(self._df['Inputs']['Name'])):
             if self._df['Inputs']['InputType'][i] == 'variable':
@@ -253,7 +239,6 @@ class editUnit():
 
 
     def _updateSets(self):
-
         """
         Updates paramters and variables to handle sets edition
         """
@@ -266,28 +251,24 @@ class editUnit():
         self._paramdict, self._paramsetdict = self._updateParam()
         self._vardict, self._testsetdict = self._updateVar()
 
-        if self._paramdict:
-            with self._out:
+        with self._out:
+            if self._paramdict:
                 try:
                     menu = manageparamset.manageParamset(self._datas, self._paramdict, self._paramsetdict, self._df, self._vardict, self._testsetdict, iscreate=False)
                     menu.displayMenu()
-                
                 except:
                     raise Exception('Could not load parametersets managing menu')
             
-        else:
-            with self._out:
+            else:
                 try:
                     menu = managetestset.manageTestset(self._datas, self._vardict, self._testsetdict, self._paramsetdict, self._df, iscreate=False)
                     menu.displayMenu()
-                
                 except:
                     raise Exception('Could not load testsets managing menu.')
 
 
 
     def _eventApply(self, b):
-
         """
         Handles apply button on_click event
         """
@@ -296,15 +277,12 @@ class editUnit():
 
 
         def checkHeader():
-
             """
             Checks wheter header's datas are complete or not
             """
 
-            if all([self._modelname.value,self._modelid.value,self._version.value,self._timestep.value,
-                    self._title.value,self._authors.value,self._institution.value,self._reference.value,self._abstract.value,]):
-                    return True
-            return False
+            return all([self._modelname.value,self._modelid.value,self._version.value,self._timestep.value,
+                        self._title.value,self._authors.value,self._institution.value,self._reference.value,self._abstract.value,])
 
 
         def checkInputs():
@@ -317,20 +295,18 @@ class editUnit():
             self._dataframeIn.reset_index(inplace=True)
 
             for i in range(0, len(self._dataframeIn['Name'])):
-
                 if any([not self._dataframeIn['Category'][i],
-                        self._dataframeIn['Name'][i]=='',
-                        self._dataframeIn['Description'][i]=='',
-                        self._dataframeIn['DataType'][i]=='',
-                        self._dataframeIn['InputType'][i]=='',
-                        self._dataframeIn['Unit'][i]=='',
-                        (self._dataframeIn['DataType'][i] in ['STRINGARRAY','DATEARRAY','INTARRAY','DOUBLEARRAY'] and self._dataframeIn['Len'][i] == '')]):
+                        not self._dataframeIn['Name'][i],
+                        not self._dataframeIn['Description'][i],
+                        not self._dataframeIn['DataType'][i],
+                        not self._dataframeIn['InputType'][i],
+                        not self._dataframeIn['Unit'][i],
+                        (self._dataframeIn['DataType'][i] in ['STRINGARRAY','DATEARRAY','INTARRAY','DOUBLEARRAY'] and not self._dataframeIn['Len'][i])]):
                     return False
             return True
         
 
         def checkOutputs():
-
             """
             Checks wheter the output list qgrid widget is complete or not
             """
@@ -339,13 +315,12 @@ class editUnit():
             self._dataframeOut.reset_index(inplace=True)
 
             for i in range(0, len(self._dataframeOut['Name'])):
-
-                if any([self._dataframeOut['Name'][i]=='',
-                        self._dataframeOut['Description'][i]=='',
+                if any([not self._dataframeOut['Name'][i],
+                        not self._dataframeOut['Description'][i],
                         not self._dataframeOut['Category'][i],
-                        self._dataframeOut['DataType'][i]=='',
-                        self._dataframeOut['Unit'][i]=='',
-                        (self._dataframeOut['DataType'][i] in ['STRINGARRAY','DATEARRAY','INTARRAY','DOUBLEARRAY'] and self._dataframeOut['Len'][i] == '')]):
+                        not self._dataframeOut['DataType'][i],
+                        not self._dataframeOut['Unit'][i],
+                        (self._dataframeOut['DataType'][i] in ['STRINGARRAY','DATEARRAY','INTARRAY','DOUBLEARRAY'] and not self._dataframeOut['Len'][i])]):
                     return False
             return True
 
@@ -400,7 +375,6 @@ class editUnit():
 
 
     def _cell_edited_In(self, event, widget):
-
         """
         Handles every event occuring when a cell is edited in the input list qgrid widget
         """
@@ -427,8 +401,7 @@ class editUnit():
         #UPDATE INPUTTYPE
         elif event['column'] == 'InputType':
 
-            if not event['new'] == event['old']:             
-                widget.edit_cell(event['index'], 'Category', '')
+            widget.edit_cell(event['index'], 'Category', '')
 
         
         #UPDATE CATEGORY
@@ -492,11 +465,11 @@ class editUnit():
         #UPDATE DEFAULT
         elif event['column'] == 'Default':
 
-            if event['new'].replace(' ','') == '':
+            if not event['new'].replace(' ',''):
                 widget.edit_cell(event['index'], 'Default', '')
 
             else:      
-                if df['DataType'][event['index']] == '':                
+                if not df['DataType'][event['index']]:                
                     widget.edit_cell(event['index'], 'Default', event['old'])
 
                 
@@ -540,7 +513,6 @@ class editUnit():
                                 print('Error : default value must be in between Min and Max.')
 
                     else:
-
                         widget.edit_cell(event['index'], 'Default', event['old'])
 
                         with self._out2:
@@ -620,7 +592,7 @@ class editUnit():
         #UPDATE MIN
         elif event['column'] == 'Min':
 
-            if event['new'].replace(' ','') == '':
+            if not event['new'].replace(' ',''):
                 widget.edit_cell(event['index'], 'Min', '')
                 
             else:
@@ -694,7 +666,7 @@ class editUnit():
         #UPDATE MAX
         elif event['column'] == 'Max':
 
-            if event['new'].replace(' ','') == '':
+            if not event['new'].replace(' ',''):
                 widget.edit_cell(event['index'], 'Max', '')
                        
             else:
@@ -767,7 +739,7 @@ class editUnit():
         #UPDATE LEN
         elif event['column'] == 'Len':
 
-            if not df['DataType'][event['index']] in ['STRINGARRAY','DATEARRAY','INTARRAY','DOUBLEARRAY']:
+            if df['DataType'][event['index']] not in ['STRINGARRAY','DATEARRAY','INTARRAY','DOUBLEARRAY']:
                 widget.edit_cell(event['index'], 'Len', '')
 
                 with self._out2:
@@ -790,8 +762,7 @@ class editUnit():
 
 
 
-    def _cell_edited_Out(self, event, widget):
-        
+    def _cell_edited_Out(self, event, widget):    
         """
         Handles every event occuring when a cell is edited in the output list qgrid widget
         """
@@ -826,7 +797,7 @@ class editUnit():
         #UPDATE MIN
         elif event['column'] == 'Min':
 
-            if event['new'].replace(' ','') == '':
+            if not event['new'].replace(' ',''):
                 widget.edit_cell(event['index'], 'Min', '')
 
             else:
@@ -881,7 +852,7 @@ class editUnit():
         #UPDATE MAX
         elif event['column'] == 'Max':
 
-            if event['new'].replace(' ','') == '':
+            if not event['new'].replace(' ',''):
                 widget.edit_cell(event['index'], 'Max', '')
 
             else:
@@ -936,7 +907,7 @@ class editUnit():
         #UPDATE LEN
         elif event['column'] == 'Len':
 
-            if not df['DataType'][event['index']] in ['STRINGARRAY','DATARRAY','INTARRAY','DOUBLEARRAY']:
+            if df['DataType'][event['index']] not in ['STRINGARRAY','DATARRAY','INTARRAY','DOUBLEARRAY']:
                 widget.edit_cell(event['index'], 'Len', '')
 
                 with self._out2:
@@ -960,7 +931,6 @@ class editUnit():
 
     
     def _cell_edited_algofunc(self, event, widget):
-
         """
         Handles a cell edition in the function or algorithm list qgrid widget
         """
@@ -970,7 +940,7 @@ class editUnit():
         widget.off('cell_edited', self._cell_edited_algofunc)
 
         if event['new']:
-            if event['new'].split('.')[-1].lower() != 'pyx':
+            if event['new'].split('.')[-1] != 'pyx':
                 widget.edit_cell(event['index'], 'Filename', event['old'])
 
                 with self._out2:
@@ -990,7 +960,6 @@ class editUnit():
 
 
     def _row_added_In(self, event, widget):
-
         """
         Handles a row addition in the input list qgrid widget
         """
@@ -1005,9 +974,7 @@ class editUnit():
 
 
 
-    def _row_added_Out(self, event, widget):
-
-        
+    def _row_added_Out(self, event, widget):     
         """
         Handles a row addition in the output list qgrid widget
         """
@@ -1023,8 +990,6 @@ class editUnit():
 
 
     def _row_added_algofunc(self, event, widget):
-
-        
         """
         Handles a row addition in the function or algorithm qgrid widget
         """
@@ -1037,7 +1002,6 @@ class editUnit():
 
 
     def displayMenu(self):
-
         """
         Displays the unit model creation menu for pyrcop2ml's UI.
 

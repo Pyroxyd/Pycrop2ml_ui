@@ -10,7 +10,6 @@ from pycrop2ml_ui.model import MainMenu
 
 
 class createPackage():
-
     """
     Class poviding an interface to create a model repository for pycrop2ml's user interface.
     """
@@ -41,17 +40,15 @@ class createPackage():
 
 
     def _eventCreate(self, b):
-
         """
         Handles create button on_click event
         """
 
         self._out2.clear_output()
 
-        if(self._projectName.value and self._packageName.value and self._authors.value and self._description.value and self._inputPath.value and self._license.value):
-            
+        if all([self._projectName.value,self._packageName.value,self._authors.value,self._description.value,self._inputPath.value,self._license.value]):    
             with self._out2:
-                if(os.path.exists(os.path.abspath(os.path.join(self._inputPath.value, self._packageName.value)))):
+                if(os.path.exists(self._inputPath.value+os.path.sep+self._packageName.value)):
                     print("This package already exists.")
                 else:
                     self._create.disabled = True
@@ -59,14 +56,11 @@ class createPackage():
                     
                     try:
                         cookiecutter("https://github.com/AgriculturalModelExchangeInitiative/cookiecutter-crop2ml", no_input=True, extra_context={'project_name':self._projectName.value, 'repo_name':self._packageName.value, 'author_name':self._authors.value, 'description':self._description.value, 'open_source_license':self._license.value}, output_dir=self._inputPath.value)
-
                     except:
-                        raise Exception("Could not create the package.")
-                    
+                        raise Exception("Could not create the package.")   
                     finally:
                         self._out.clear_output()
-                        self._out2.clear_output()
-                        
+                        self._out2.clear_output()                    
                         
         else:
             with self._out2:
@@ -87,7 +81,6 @@ class createPackage():
 
 
     def _eventCancel(self, b):
-
         """
         Handles cancel button on_click event
         """
@@ -105,7 +98,6 @@ class createPackage():
 
 
     def _eventBrowse(self, b):
-
         """
         Handles browse button on_click event
         """
@@ -116,7 +108,6 @@ class createPackage():
 
 
     def displayMenu(self):
-
         """
         Displays the repository creation menu of pycrop2ml's UI.
 

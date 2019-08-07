@@ -8,9 +8,7 @@ from pycrop2ml_ui.menus.creation import createmenu
 from IPython.display import display
 
 
-
 class externalPackageMenu():
-
     """
     Class providing the external package addition of composition model creation menu for pycrop2ml's user interface.
 
@@ -29,9 +27,7 @@ class externalPackageMenu():
         - listpkg : []
     """
 
-
     def __init__(self, data, listpkg=[]):
-
 
         self._datas = data
         self._out = wg.Output()
@@ -46,8 +42,7 @@ class externalPackageMenu():
 
     
 
-    def _eventAdd(self, b):
-        
+    def _eventAdd(self, b):    
         """
         Handles add button on_click event
         """
@@ -55,11 +50,11 @@ class externalPackageMenu():
         self._out2.clear_output()
 
         extpkg = getPath()
-        if not 'crop2ml' in os.listdir(extpkg):
+        if 'crop2ml' not in os.listdir(extpkg):
             with self._out2:
                 print('This repository is not a model package.')
         
-        elif extpkg in self._listpkg or extpkg+os.path.sep+'crop2ml' == self._datas['Path']:
+        elif any([extpkg in self._listpkg, extpkg+os.path.sep+'crop2ml' == self._datas['Path']]):
             with self._out2:
                 print('This package is already in the list.')
 
@@ -69,8 +64,7 @@ class externalPackageMenu():
 
 
 
-    def _eventRemove(self, b):
-        
+    def _eventRemove(self, b):      
         """
         Handles remove button on_click event
         """
@@ -83,8 +77,7 @@ class externalPackageMenu():
 
 
 
-    def _eventApply(self, b):
-        
+    def _eventApply(self, b):   
         """
         Handles apply button on_click event
         """
@@ -102,7 +95,6 @@ class externalPackageMenu():
 
     
     def _eventCancel(self, b):
-
         """
         Handles cancel button on_click event
         """
@@ -120,7 +112,6 @@ class externalPackageMenu():
 
 
     def displayMenu(self):
-
         """
         Displays the package selection menu of pycrop2ml's UI.
 

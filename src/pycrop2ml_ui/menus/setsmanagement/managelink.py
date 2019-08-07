@@ -10,9 +10,7 @@ from pycropml.composition import model_parser
 from pycrop2ml_ui.menus.writeXML import writecompositionxml
 
 
-
 class manageLink():
-
     """
     Class managing the display of a composition model's link list for pycrop2ml' user interface.
 
@@ -47,7 +45,6 @@ class manageLink():
         - iscreate : bool
     """
 
-
     def __init__(self, data, listmodel, listlink, listextpkg=[], iscreate=True):
 
         self._out = wg.Output()
@@ -63,10 +60,8 @@ class manageLink():
         self._listextpkg = listextpkg
 
 
-    
   
     def _buildEdit(self):
-
         """
         Creates the link qgrid widget
         """
@@ -127,8 +122,7 @@ class manageLink():
 
 
 
-    def _row_added_link(self, event, widget):
-        
+    def _row_added_link(self, event, widget):      
         """
         Handles a row addition in the link qgrid widget
         """
@@ -144,7 +138,6 @@ class manageLink():
 
     
     def _cell_edited_link(self, event, widget):
-
         """
         Handles every cell edition event in link list qgrid widget
         """
@@ -162,7 +155,7 @@ class manageLink():
                 widget.edit_cell(event['index'], 'Target', '')
 
 
-        if event['column'] == 'Source' and not event['new'] == '':
+        if event['column'] == 'Source' and event['new']:
             if df['Link type'][event['index']] == 'InputLink':
                 widget.edit_cell(event['index'], 'Source', '')
 
@@ -175,7 +168,7 @@ class manageLink():
                 with self._out2:
                     print('Warning : Source and Target cannot come from the same model.')
         
-        elif event['column'] == 'Target' and not event['new'] == '':
+        elif event['column'] == 'Target' and event['new']:
             if df['Link type'][event['index']] == 'OutputLink':
                 widget.edit_cell(event['index'], 'Target', '')
 
@@ -192,8 +185,7 @@ class manageLink():
     
 
 
-    def _eventApply(self, b):
-        
+    def _eventApply(self, b):       
         """
         Handles apply button on_click event
         """
@@ -203,19 +195,20 @@ class manageLink():
         self._dfLink.sort_values('Link type', ascending=True, inplace=True)
         self._dfLink.reset_index(inplace=True)
 
-        def checkLinks():
 
+        def checkLinks():
             """
             Checks wheter the link qgrid widget is complete or not
             """
 
             for i in range(0,len(self._dfLink['Link type'])):
-                if any([self._dfLink['Link type'][i] == '',
-                        self._dfLink['Source'][i] == '' and self._dfLink['Link type'][i] != 'InputLink',
-                        self._dfLink['Target'][i] == '' and self._dfLink['Link type'][i] != 'OutputLink'
+                if any([not self._dfLink['Link type'][i],
+                        not self._dfLink['Source'][i] and self._dfLink['Link type'][i] != 'InputLink',
+                        not self._dfLink['Target'][i] and self._dfLink['Link type'][i] != 'OutputLink'
                         ]):
                     return False
             return True
+
 
         if checkLinks():
             self._out.clear_output()
@@ -244,7 +237,6 @@ class manageLink():
 
 
     def _eventExit(self, b):
-
         """
         Handles exit button on_click event
         """
@@ -255,7 +247,6 @@ class manageLink():
 
 
     def displayMenu(self):
-
         """
         Displays the link manager menu of pyrcop2ml's UI.
 

@@ -11,19 +11,18 @@ from pycrop2ml_ui.menus.display.displaymenu import displayMenu
 
 class mainMenu():
 
-
     """
     Class providing the launching of pycrop2ml's user interface.
     It is aiming to enhance the model management of pycrop2ml models as well
     as decorating the xml format used to write model attributes.
 
-    It requires mainly ipywidgets, pandas and qgrid to run the whole set of 
+    It requires mainly pycrop2ml, ipywidgets, pandas and qgrid to run the whole set of 
     menus. Refering to python's coding manners, do not use methods and class
     attributes beginning with an underscore otherwise code can break.
 
     The class mainMenu contains 5 branches refering to creation, edition,
-    display, transformation and repository creation :\n
-    repository creation -> createPackage\n
+    display, transformation and package creation :\n
+    package creation -> createPackage\n
     creation -> class createMenu\n
     edition -> class editMenu\n
     transformation -> class transformationMenu\n
@@ -37,7 +36,6 @@ class mainMenu():
     mainmenu = mainMenu() #creates an instance of mainMenu\n
     mainmenu.displayMenu()       #calls displayMenu() method
     """
-
 
 
     def __init__(self):
@@ -58,7 +56,6 @@ class mainMenu():
 
 
     def _eventMkdir(self, b):
-
         """
         Displays repository creation menu
         """
@@ -66,18 +63,16 @@ class mainMenu():
         self._out.clear_output()
         self._out2.clear_output()
 
-        with self._out2: 
+        with self._out: 
             try:
                 menu = createPackage()
                 menu.displayMenu()
-            
             except:
-                raise Exception('Could not load directory creation function.')
+                raise Exception('Could not load package creation menu.')
 
 
 
     def _eventCreate(self, b):
-
         """
         Displays model creation menu
         """
@@ -95,7 +90,6 @@ class mainMenu():
 
 
     def _eventEdit(self, b):
-
         """
         Displays model edition menu
         """
@@ -113,7 +107,6 @@ class mainMenu():
 
 
     def _eventTransformation(self, b):
-        
         """
         Displays package transformation menu
         """
@@ -131,7 +124,6 @@ class mainMenu():
 
 
     def _eventDisplay(self, b):
-
         """
         Display the model display menu
         """
@@ -146,8 +138,8 @@ class mainMenu():
                 raise Exception('Could not load model display menu.')
 
 
-    def _eventAbout(self, b):
 
+    def _eventAbout(self, b):
         """
         Prints the description of the mainMenu class
         """
@@ -156,33 +148,30 @@ class mainMenu():
 
         with self._out2:
             display(wg.HTML("""
-                Class providing the launching of pycrop2ml's user interface.
-                It is aiming to enhance the model management of pycrop2ml models as well
-                as decorating the xml format used to write model attributes.
+                • Class providing the launching of pycrop2ml's user interface. It is aiming to enhance the model management of pycrop2ml models as well
+                as decorating the xml format used to write model attributes.<br>
 
-                It requires mainly ipywidgets, pandas and qgrid to run the whole set of 
-                menus. Refering to python's coding manners, do not use methods and class
-                attributes beginning with an underscore otherwise code can break.
+                It requires mainly pycrop2ml, ipywidgets, pandas and qgrid to run the whole set of menus. Refering to python's coding manners, do not use methods and class
+                attributes beginning with an underscore otherwise code can break.<br><br>
 
-                The class mainMenu contains 3 branches refering to creation, edition
-                and displayment :\n
-                creation -> class createMenu\n
-                edition -> class editMenu\n
-                displayment -> class displayMenu
+                • The class mainMenu contains 5 branches refering to creation, edition, display, transformation and package creation :<br>
+                - package creation -> createPackage<br>
+                - creation -> class createMenu<br>
+                - edition -> class editMenu<br>
+                - transformation -> class transformationMenu<br>
+                - display -> class displayMenu<br><br>
 
-                displayMenu() displays the main menu of the user interface and provides
-                three buttons clickable leading to each branch. This is the only method
-                usable in this class and does not require any argument.
+                • displayMenu() displays the main menu of the user interface and provides three buttons clickable leading to each branch. This is the only method
+                usable in this class and does not require any argument.<br>
 
-                To create a mainMenu, use :\n
-                mainmenu = mainMenu() #creates an instance of mainMenu\n
-                mainmenu.displayMenu()       #calls displayMenu() method
+                To create a mainMenu, use :<br>
+                - mainmenu = mainMenu() #creates an instance of mainMenu<br>
+                - mainmenu.displayMenu()       #calls displayMenu() method
                 """))
 
 
 
     def displayMenu(self):
-
         """
         Displays the main menu of pycrop2ml's UI.
         

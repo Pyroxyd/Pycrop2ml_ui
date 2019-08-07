@@ -1,7 +1,6 @@
 import os
 
 class writecompositionXML():
-
     """
     Class managing the writing of a composition model xml file with all gathered data with pycrop2ml' user interface.
 
@@ -45,7 +44,6 @@ class writecompositionXML():
 
 
     def write(self):
-
         """
         Writes the xml file with the new data set
         """
@@ -76,5 +74,5 @@ class writecompositionXML():
             fw.close()
         
 
-            if not self._iscreate and self._datas['Model name'] != self._datas['Old name']:
+            if all([not self._iscreate, self._datas['Model name'] != self._datas['Old name']]):
                 os.remove('{}{}composition.{}.xml'.format(self._datas['Path'], os.path.sep, self._datas['Old name']))

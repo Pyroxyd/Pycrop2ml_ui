@@ -12,9 +12,7 @@ from pycrop2ml_ui.browser.TkinterPath import getPath
 from pycropml.composition import model_parser
 
 
-
 class editComposition():
-
     """
     Class providing the display of the composition model edition menu for pycrop2ml's user interface.
 
@@ -57,7 +55,6 @@ class editComposition():
 
   
     def _parse(self):
-
         """
         Parses the xml file to gather the data set
         """
@@ -93,7 +90,6 @@ class editComposition():
 
 
     def _manageExtpkg(self):
-
         """
         Manages the external package set
         """
@@ -220,7 +216,6 @@ class editComposition():
 
 
     def _displayTab(self):
-
         """
         Finds every model able to fit in the model composition according to the external package list and the current package.
 
@@ -269,7 +264,6 @@ class editComposition():
 
 
     def _eventApply(self, b):
-
         """
         Handles apply button on_click event
         """
@@ -320,7 +314,6 @@ class editComposition():
 
 
     def _eventCancel(self, b):
-
         """
         Handles cancel button on_click event
         """
@@ -331,14 +324,12 @@ class editComposition():
         try:
             tmp = editmenu.editMenu()
             tmp.displayMenu()
-
         except:
             raise Exception('Could not load edition menu.')
         
 
 
     def _row_added(self, event, widget):
-
         """
         Handles row addition for model list tab
         """
@@ -351,7 +342,6 @@ class editComposition():
 
 
     def _cell_edited(self, event, widget):
-
         """
         Handles cell edition for model list tab
         """
@@ -376,7 +366,6 @@ class editComposition():
 
 
     def displayMenu(self):
-
         """
         Displays the composition model edition menu of pyrcop2ml's UI.
 

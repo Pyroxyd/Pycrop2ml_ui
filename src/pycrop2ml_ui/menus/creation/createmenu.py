@@ -13,22 +13,17 @@ from pycrop2ml_ui.menus.creation.externalpackage import externalPackageMenu
 
 
 class createMenu():
-
-
     """
     Class providing a display of model creation menu for pycrop2ml's user interface.
     """
 
-
     def __init__(self):
 
-        
         #outputs
         self._out = wg.Output()
         self._out2 = wg.Output()
         self._outextpkg = wg.Output()
-        
-        
+         
         #datas
         self._layout = wg.Layout(width='400px',height='57px')
         self._path = wg.Textarea(value='',description='Path:',disabled=True,layout=self._layout)
@@ -42,7 +37,6 @@ class createMenu():
         self._abstract = wg.Textarea(value='',description='Abstract:',disabled=False,layout=self._layout) 
         self._reference = wg.Textarea(value='',description='Reference:',disabled=False,layout=self._layout)
         
-
         #model type
         self._toggle = wg.ToggleButtons(options=["unit", "composition"], description="Type:", disabled=False, layout=self._layout)
         self._extpkg = wg.Checkbox(value=False,description='Enable external package',indent=True)
@@ -62,10 +56,7 @@ class createMenu():
         self._datas = dict()
 
 
-
-
     def _checkFile(self):
-
         """
         Initializes the model's xml file.
         """
@@ -83,7 +74,6 @@ class createMenu():
 
 
     def _eventCreate(self, b):
-
         """
         Handles create button on_click event
         """
@@ -103,7 +93,6 @@ class createMenu():
 
 
     def _eventApply(self, b):
-
         """
         Handles apply button on_click event
         """
@@ -153,7 +142,6 @@ class createMenu():
                             except:
                                 raise Exception('Could not load composition creation model menu.')
 
-
         else:
             with self._out2:
                 print("Missing argument(s) :")
@@ -181,7 +169,6 @@ class createMenu():
 
                   
     def _eventCancel(self, b):
-
         """
         Handles cancel button on_click event
         """
@@ -190,18 +177,15 @@ class createMenu():
         self._out2.clear_output()
 
         with self._out:
-            
             try:
                 tmp = MainMenu.mainMenu()
                 tmp.displayMenu()
-
             except:
                 raise Exception('Could not load mainmenu.')
 
 
 
     def _eventBrowse(self, b):
-
         """
         Handles browse button on_click event
         """
@@ -209,7 +193,7 @@ class createMenu():
         self._out2.clear_output()
         self._path.value = getPath() 
 
-        if not 'crop2ml' in os.listdir(self._path.value):
+        if 'crop2ml' not in os.listdir(self._path.value):
             self._path.value = ''
             with self._out2:
                 print('This repository is not a model package.')           
@@ -217,7 +201,6 @@ class createMenu():
 
 
     def _on_change_value(self, change):
-
         """
         Handles toggle widget value change
         """
@@ -232,7 +215,6 @@ class createMenu():
 
 
     def displayMenu(self):
-
         """
         Displays the model creation menu of pycrop2ml's UI.
 

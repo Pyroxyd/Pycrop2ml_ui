@@ -1,18 +1,15 @@
 import re
-import os
+
 from copy import deepcopy
 import ipywidgets as wg
-
 import qgrid
 import pandas
-
 from IPython.display import display
 
 from pycrop2ml_ui.menus.setsmanagement import managetestset
 
 
 class manageParamset():
-
     """
     Class providing the display of the parameterset edition menu for pycrop2ml's user interface.
 
@@ -63,8 +60,7 @@ class manageParamset():
     """
 
     def __init__(self, datas, paramdict, paramsetdict, df, vardict, testsetdict, iscreate=True):
-
-        
+    
         self._out = wg.Output()
         self._out2 = wg.Output()
         self._out3 = wg.Output()
@@ -75,16 +71,13 @@ class manageParamset():
         self._paramsetdictDataframe = dict()  #{paramset_name:[dataframe, description]}
         self._vardict = vardict
         self._testsetdict = testsetdict
-        self._isCreate = iscreate
+        self._iscreate = iscreate
         self._setlist = ['']
-
         self._df = df
-
 
         self._paramselecter = wg.Dropdown(options=[''],value='',description='ParameterSet:',disabled=False)
         self._description = wg.Textarea(value='',description='Description:',disabled=False)
         self._currentQgrid = None
-
 
         self._apply = wg.Button(value=False, description='Apply', disabled=False, button_style='success')
         self._exit = wg.Button(value=False, description='Cancel', disabled=False, button_style='danger')
@@ -94,9 +87,7 @@ class manageParamset():
 
 
 
-
     def _eventCreate(self, b):
-
         """
         Handles create button on_click event
         """
@@ -160,7 +151,6 @@ class manageParamset():
 
 
     def _eventDelete(self, b):
-
         """
         Handles delete button on_click event
         """
@@ -191,7 +181,6 @@ class manageParamset():
 
 
     def _cell_edited(self, event, widget):
-
         """
         Handles every cell edition in the current qgrid widget
         """
@@ -202,11 +191,11 @@ class manageParamset():
 
         df = widget.get_changed_df()
 
-        if not event['column'] == 'Value':
+        if event['column'] != 'Value':
             widget.edit_cell(event['index'], event['column'], event['old'])
         
         else:
-            if event['new'].replace(' ','') == '':
+            if not event['new'].replace(' ',''):
                 widget.edit_cell(event['index'], 'Value', '')
 
             else:      
@@ -275,7 +264,6 @@ class manageParamset():
 
 
     def _on_value_change(self, change):
-
         """
         Handles every change in the parameterset selecter
         """
@@ -305,7 +293,7 @@ class manageParamset():
                     def checkQgrid():
 
                         for i in range(0, len(self._paramsetdictDataframe[self._paramselecter.value][0]['Value'])):
-                            if self._paramsetdictDataframe[self._paramselecter.value][0]['Value'][i] == '':
+                            if not self._paramsetdictDataframe[self._paramselecter.value][0]['Value'][i]:
                                 return False
                         return True
 
@@ -333,8 +321,7 @@ class manageParamset():
 
 
 
-    def _eventApply(self, b):
-        
+    def _eventApply(self, b):    
         """
         Handles apply button on_click event
         """
@@ -361,9 +348,8 @@ class manageParamset():
 
             with self._out:
                 try:
-                    menu = managetestset.manageTestset(self._datas, self._vardict, self._testsetdict, self._paramsetdict, self._df, self._isCreate)
+                    menu = managetestset.manageTestset(self._datas, self._vardict, self._testsetdict, self._paramsetdict, self._df, self._iscreate)
                     menu.displayMenu()
-
                 except:
                     raise Exception('Could not load testset unit model edition menu.')
         
@@ -374,7 +360,6 @@ class manageParamset():
 
                 
     def _eventExit(self, b):
-
         """
         Handles exit button on_click event
         """
@@ -383,13 +368,9 @@ class manageParamset():
         self._out2.clear_output()
         self._out3.clear_output()
 
-        if self._isCreate:
-            os.remove("{}/unit.{}.xml".format(self._datas["Path"], self._datas['Model name']))
-
 
 
     def displayMenu(self):
-
         """
         Displays the parameterset edition menu for Pycrop2ml's UI.
 
@@ -397,9 +378,8 @@ class manageParamset():
         method call may break the code.
         """
 
-        if not self._isCreate:
+        if not self._iscreate:
             for paramset,value in self._paramsetdict.items():
-
                 self._paramsetdictDataframe[paramset] = [pandas.DataFrame(data={
                     'Name': [i[0] for i in value[0].items()],
                     'DataType': [self._df['Inputs']['DataType'][k] for k in range(0,len(self._df['Inputs']['Name'])) for i in value[0].items() if self._df['Inputs']['Name'][k] == i[0]],
@@ -416,7 +396,7 @@ class manageParamset():
         display(self._out3)
 
         with self._out:
-            if self._isCreate:
+            if self._iscreate:
                 display(wg.VBox([wg.HTML(value='<b><font size="5">Model creation : {}.{}.xml<br>-> ParametersSet</font></b>'.format(self._datas['Model type'], self._datas['Model name'])), wg.HBox([self._paramselecter, self._create, self._delete]), self._out2, wg.HBox([self._apply, self._exit])]))
             else:
                 display(wg.VBox([wg.HTML(value='<b><font size="5">Model edition : {}.{}.xml<br>-> ParametersSet</font></b>'.format(self._datas['Model type'], self._datas['Model name'])), wg.HBox([self._paramselecter, self._create, self._delete]), self._out2, wg.HBox([self._apply, self._exit])]))

@@ -8,7 +8,6 @@ from pycrop2ml_ui.browser.TkinterPath import getPath
 from pycropml.topology import Topology
 
 
-
 class displayMenu():
 
     """
@@ -36,7 +35,6 @@ class displayMenu():
 
 
     def _eventBrowse(self, b):
-
         """
         Handles browse button on_click event
         """
@@ -44,7 +42,7 @@ class displayMenu():
         self._out2.clear_output()
         self._modelPath.value = getPath()
 
-        if not 'crop2ml' in os.listdir(self._modelPath.value):
+        if 'crop2ml' not in os.listdir(self._modelPath.value):
             self._modelPath.value = ''
             with self._out2:
                 print('This repository is not a model package.')
@@ -52,7 +50,6 @@ class displayMenu():
 
 
     def _eventCancel(self, b):
-
         """
         Handles cancel button on_click event
         """
@@ -70,7 +67,6 @@ class displayMenu():
 
 
     def _on_value_change(self, change):
-
         """
         Handles changes from the attribute _modelPath.
 
@@ -89,7 +85,6 @@ class displayMenu():
 
 
     def displayMenu(self):
-
         """
         Displays the model edition menu of pyrcop2ml's UI.
 
