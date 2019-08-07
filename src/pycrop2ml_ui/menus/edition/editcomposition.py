@@ -9,7 +9,7 @@ from IPython.display import display
 from pycrop2ml_ui.menus.edition import editmenu
 from pycrop2ml_ui.menus.setsmanagement.managelink import manageLink
 from pycrop2ml_ui.browser.TkinterPath import getPath
-from pycropml.topology import Topology
+from pycropml.composition import model_parser
 
 
 
@@ -58,29 +58,29 @@ class editComposition():
         Parses the xml file to gather the data set
         """
         
-        self._xmlfile = Topology(self._datas['Path'].split(os.path.sep)[-2], pkg=os.path.split(self._datas['Path'])[0])
+        self._xmlfile, = model_parser(self._datas['Path']+os.path.sep+'composition.{}.xml'.format(self._datas['Model name']))
 
-        self._title.value = self._xmlfile.model.description.Title
-        self._modelid.value = self._xmlfile.model.id.split('.')[0]
-        self._authors.value = self._xmlfile.model.description.Authors
-        self._institution.value = self._xmlfile.model.description.Institution
-        self._reference.value = self._xmlfile.model.description.Reference
-        self._abstract.value = self._xmlfile.model.description.Abstract
+        self._title.value = self._xmlfile.description.Title
+        self._modelid.value = self._xmlfile.id.split('.')[0]
+        self._authors.value = self._xmlfile.description.Authors
+        self._institution.value = self._xmlfile.description.Institution
+        self._reference.value = self._xmlfile.description.Reference
+        self._abstract.value = self._xmlfile.description.Abstract
 
         self._datas['Old name'] = self._title.value                    
 
-        for i in self._xmlfile.model.model:
+        for i in self._xmlfile.model:
             if i.package_name:
                 self._listextpkg.append(i.package_name)
                 self._listmodel.append('{}:{}'.format(i.package_name, i.file))
             else:
                 self._listmodel.append(i.file)
 
-        for j in self._xmlfile.model.inputlink:
+        for j in self._xmlfile.inputlink:
             self._listlink.append({'Link type': 'InputLink', 'Source': '', 'Target': j['target']})
-        for k in self._xmlfile.model.internallink:
+        for k in self._xmlfile.internallink:
             self._listlink.append({'Link type': 'InternalLink', 'Source': k['source'], 'Target': k['target']})
-        for l in self._xmlfile.model.outputlink:
+        for l in self._xmlfile.outputlink:
             self._listlink.append({'Link type': 'OutputLink', 'Source': l['source'], 'Target': ''})
 
 
@@ -152,8 +152,11 @@ class editComposition():
             else:
                 _listpkgAdded_Options.append(extpkg)
                 _listpkgAdded.options = _listpkgAdded_Options
-                _listpkg_Options.remove(extpkg)
+                _listpkg_Options.remove(_listpkg.value)
                 _listpkg.options = _listpkg_Options
+                if not _listpkg_Options:
+                    _browse.disabled = True
+                    _remove.disabled = True
 
 
         def _eventRemove(b):

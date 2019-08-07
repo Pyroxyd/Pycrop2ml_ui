@@ -6,7 +6,7 @@ import qgrid
 from IPython.display import display
 
 from pycropml import pparse
-from pycropml.topology import Topology
+from pycropml.composition import model_parser
 from pycrop2ml_ui.menus.writeXML import writecompositionxml
 
 
@@ -70,10 +70,9 @@ class manageLink():
 
         self._listLinkSource = ['']
         self._listLinkTarget = ['']
-
-            
-        parse = os.path.split(self._datas['Path'])
-        parsing = pparse.model_parser(parse[0])
+      
+        parse = os.path.split(self._datas['Path'])[0]
+        parsing = pparse.model_parser(parse)
 
         for i in parsing:
             if 'unit.{}.xml'.format(i.name) in self._listmodel: 
@@ -85,23 +84,25 @@ class manageLink():
 
         for model in self._listmodel:
             if ':' in model:
-                pkgname, modelname = model.split(':')
-                modelname = modelname.split('.')[1]
+                pkgname, model_attr = model.split(':')
+                model_attr = model_attr.split('.')
                 path, = [i for i in self._listextpkg if pkgname in os.path.split(i)[1]]
-                pkg = Topology(pkgname, pkg=path)
 
-                if pkg.model.name == modelname:
-                    for j in pkg.model.inputs:
-                        self._listLinkTarget.append('{}.{}'.format(modelname, j.name))
-                    for k in pkg.model.outputs:
-                        self._listLinkSource.append('{}.{}'.format(modelname, k.name))
+                if model_attr[0] == 'composition':
+                    pkg, = model_parser(path+os.path.sep+'crop2ml'+os.path.sep+'composition.{}.xml'.format(model_attr[1]))
+                    for j in pkg.inputs:
+                        self._listLinkTarget.append('{}.{}'.format(model_attr[1], j))
+                    for k in pkg.outputs:
+                        self._listLinkSource.append('{}.{}'.format(model_attr[1], k))
+                
                 else:
-                    for unit in pkg.mu:
-                        if unit.name == modelname:
-                            for y in unit.inputs:
-                                self._listLinkTarget.append('{}.{}'.format(modelname, y.name))
-                            for z in unit.outputs:
-                                self._listLinkSource.append('{}.{}'.format(modelname, z.name))
+                    pkg = pparse.model_parser(path)
+                    for m in pkg:
+                        if m.name == model_attr[1]:
+                            for y in m.inputs:
+                                self._listLinkTarget.append('{}.{}'.format(model_attr[1], y.name))
+                            for z in m.outputs:
+                                self._listLinkSource.append('{}.{}'.format(model_attr[1], z.name))
                             break
 
 

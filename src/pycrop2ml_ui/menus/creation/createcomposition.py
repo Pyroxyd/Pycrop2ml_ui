@@ -5,7 +5,6 @@ import ipywidgets as wg
 import qgrid
 import pandas
 
-from pycropml import pparse
 from pycrop2ml_ui.menus.setsmanagement.managelink import manageLink
 
 from IPython.display import display
