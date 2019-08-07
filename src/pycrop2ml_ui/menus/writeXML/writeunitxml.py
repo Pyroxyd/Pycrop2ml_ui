@@ -16,6 +16,9 @@ class writeunitXML():
                     'Model type': 'unit',
                     'Model name': '',
                     'Model ID': '',
+                    'Version': '',
+                    'Timestep': '',
+                    'Title': '',
                     'Authors': '',
                     'Institution': '',
                     'Reference': '',
@@ -143,8 +146,8 @@ class writeunitXML():
             split = self._datas['Path'].split(os.path.sep)
 
             f.write('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE Model PUBLIC " " "https://raw.githubusercontent.com/AgriculturalModelExchangeInitiative/crop2ml/master/ModelUnit.dtd">\n')
-            f.write('<ModelUnit modelid="{0}.{1}.{2}" name="{2}" timestep="1" version="1.0">'.format(self._datas['Model ID'],split[-2],self._datas['Model name']))
-            f.write('\n\t<Description>\n\t\t<Title>{} Model</Title>'.format(self._datas['Model name'])+
+            f.write('<ModelUnit modelid="{0}.{1}.{2}" name="{2}" timestep="{3}" version="{4}">'.format(self._datas['Model ID'],split[-2],self._datas['Model name'],self._datas['Timestep'], self._datas['Version']))
+            f.write('\n\t<Description>\n\t\t<Title>{}</Title>'.format(self._datas['Title'])+
                 '\n\t\t<Authors>{}</Authors>'.format(self._datas['Authors'])+
                 '\n\t\t<Institution>{}</Institution>'.format(self._datas['Institution'])+
                 '\n\t\t<Reference>{}</Reference>'.format(self._datas['Reference'])+

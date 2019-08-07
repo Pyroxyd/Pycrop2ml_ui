@@ -40,13 +40,17 @@ class editUnit():
         self._apply = wg.Button(value=False, description='Apply', disabled=False, button_style='success')
         self._cancel = wg.Button(value=False, description='Cancel', disabled=False, button_style='warning')
 
-        self._title = wg.Textarea(value='',description='Model name:',disabled=False)
+        self._modelname = wg.Textarea(value='',description='Model name:',disabled=False)
         self._modelid = wg.Textarea(value='',description='Model ID:',disabled=False)
+        self._version = wg.Textarea(value='',description='Version:',disabled=False)
+        self._timestep = wg.Textarea(value='',description='Timestep:',disabled=False)
+
+        self._title = wg.Textarea(value='',description='Title:',disabled=False)
         self._authors = wg.Textarea(value='',description='Authors:',disabled=False)
         self._institution = wg.Textarea(value='',description='Institution:',disabled=False)
         self._reference = wg.Textarea(value='',description='Reference:',disabled=False)
         self._abstract = wg.Textarea(value='',description='Abstract:',disabled=False)
-        self._informations = wg.VBox([self._title, self._modelid, self._authors, self._institution, self._reference, self._abstract])
+        self._informations = wg.VBox([self._modelname, self._modelid, self._version, self._timestep, self._title, self._authors, self._institution, self._reference, self._abstract])
 
         self._xmlfile = None
 
@@ -59,9 +63,13 @@ class editUnit():
         Creates inputs and outputs dataframes with datas collected from the xml file parsing
         """
 
-        self._datas['Old name'] = self._xmlfile.description.Title[:-6]
-        self._title.value = self._xmlfile.description.Title[:-6]
+        self._datas['Old name'] = self._xmlfile.name
+        self._modelname.value = self._xmlfile.name
         self._modelid.value = self._xmlfile.modelid.split('.')[0]
+        self._version.value = self._xmlfile.version
+        self._timestep.value = self._xmlfile.timestep
+
+        self._title.value = self._xmlfile.description.Title
         self._authors.value = self._xmlfile.description.Authors
         self._institution.value = self._xmlfile.description.Institution
         self._reference.value = self._xmlfile.description.Reference
@@ -97,7 +105,7 @@ class editUnit():
                 'Uri': ['']
                 })
 
-        self._qgridIn = qgrid.show_grid(self._dataframeIn, show_toolbar=True, grid_options={'forceFitColumns': False, 'defaultColumnWidth': 100})
+        self._qgridIn = qgrid.show_grid(self._dataframeIn, show_toolbar=True)
         
         if self._xmlfile.outputs:
             self._dataframeOut = pandas.DataFrame(data={
@@ -293,7 +301,8 @@ class editUnit():
             Checks wheter header's datas are complete or not
             """
 
-            if all([self._title.value,self._authors.value,self._institution.value,self._reference.value,self._abstract.value,self._modelid.value]):
+            if all([self._modelname.value,self._modelid.value,self._version.value,self._timestep.value,
+                    self._title.value,self._authors.value,self._institution.value,self._reference.value,self._abstract.value,]):
                     return True
             return False
 
@@ -358,12 +367,15 @@ class editUnit():
             self._dataframeFunction = self._qgridFunction.get_changed_df()
             self._dataframeAlgo = self._qgridAlgo.get_changed_df()
 
-            self._datas['Model name'] = self._title.value
+            self._datas['Model name'] = self._modelname.value
+            self._datas['Model ID'] = self._modelid.value
+            self._datas['Version'] = self._version.value
+            self._datas['Timestep'] = self._timestep.value
+            self._datas['Title'] = self._title.value
             self._datas['Authors'] = self._authors.value
             self._datas['Institution'] = self._institution.value
             self._datas['Reference'] = self._reference.value
             self._datas['Abstract'] = self._abstract.value
-            self._datas['Model ID'] = self._modelid.value
 
             self._updateSets()
 
@@ -1034,6 +1046,7 @@ class editUnit():
         """
 
         display(self._out)
+        display(self._out2)
 
         listkeys = ['Path','Model type','Model name']
 
@@ -1050,9 +1063,6 @@ class editUnit():
                     listkeys.remove(i)
 
         self._parse()
-
-        
-        display(self._out2)
 
         tab = wg.Tab()
         tab.children = [self._informations, self._qgridIn, self._qgridOut, self._qgridAlgo, self._qgridFunction]

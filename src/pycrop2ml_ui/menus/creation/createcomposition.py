@@ -22,6 +22,9 @@ class createComposition():
                         'Model type': 'composition',
                         'Model name': '',
                         'Model ID': '',
+                        'Version': '',
+                        'Timestep': '',
+                        'Title': '',
                         'Authors': '',
                         'Institution': '',
                         'Reference': '',
@@ -158,7 +161,7 @@ class createComposition():
         method call may break the code.
         """
 
-        listekeys = ['Path','Model type','Model ID','Model name','Authors','Institution','Reference','Abstract']
+        listekeys = ['Path','Model type','Model ID','Version','Timestep','Title','Model name','Authors','Institution','Reference','Abstract']
 
         display(self._out)
         display(self._out2)
@@ -167,7 +170,7 @@ class createComposition():
 
             with self._out:
                 if i not in listekeys:
-                    raise Exception("Could not display composition model creation menu : parameter data from createComposition(data) must contain these keys ['Path','Model type','Model ID','Model name','Authors','Institution','Reference','Abstract']")
+                    raise Exception("Could not display composition model creation menu : parameter data from createComposition(data) must contain these keys ['Path','Model type','Model ID','Model name','Version','Timestep','Title','Authors','Institution','Reference','Abstract']")
                 
                 elif i == 'Model type' and not self._datas[i] == 'composition':
                     raise Exception("Bad value error : Model type key's value must be composition.")

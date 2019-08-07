@@ -10,6 +10,10 @@ class writecompositionXML():
                     'Path': '',
                     'Model type': 'unit',
                     'Model name': '',
+                    'Model ID': '',
+                    'Version': '',
+                    'Timestep': '',
+                    'Title': '',
                     'Authors': '',
                     'Institution': '',
                     'Reference': '',
@@ -56,8 +60,8 @@ class writecompositionXML():
             split = self._datas['Path'].split(os.path.sep)
 
             fw.write('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE ModelComposition PUBLIC " " "https://raw.githubusercontent.com/AgriculturalModelExchangeInitiative/crop2ml/master/ModelComposition.dtd">')
-            fw.write('<ModelComposition name="{0}" id="{2}.{1}.{0}" version="001" timestep ="1">'.format(self._datas['Model name'], split[-2], self._datas['Model ID']))
-            fw.write('\n\t<Description>\n\t\t<Title>{}</Title>\n\t\t<Authors>{}</Authors>\n\t\t<Institution>{}</Institution>\n\t\t<Reference>{}</Reference>\n\t\t<Abstract>{}</Abstract>'.format(self._datas['Model name'], self._datas['Authors'], self._datas['Institution'], self._datas['Reference'], self._datas['Abstract']))
+            fw.write('<ModelComposition name="{0}" id="{2}.{1}.{0}" version="{3}" timestep ="{4}">'.format(self._datas['Model name'], split[-2], self._datas['Model ID'], self._datas['Version'], self._datas['Timestep']))
+            fw.write('\n\t<Description>\n\t\t<Title>{}</Title>\n\t\t<Authors>{}</Authors>\n\t\t<Institution>{}</Institution>\n\t\t<Reference>{}</Reference>\n\t\t<Abstract>{}</Abstract>'.format(self._datas['Title'], self._datas['Authors'], self._datas['Institution'], self._datas['Reference'], self._datas['Abstract']))
             fw.write('\n\t</Description>\n\n\t<Composition>')
 
             for i in self._listmodel:

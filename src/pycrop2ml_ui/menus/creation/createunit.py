@@ -10,10 +10,6 @@ from IPython.display import display
 from pycrop2ml_ui.menus.setsmanagement import manageparamset
 from pycrop2ml_ui.menus.setsmanagement import managetestset
 
-from pycropml.transpiler.generators import docGenerator
-
-
-
 
 class createUnit():
 
@@ -26,6 +22,9 @@ class createUnit():
                         'Model type': 'unit',
                         'Model name': '',
                         'Model ID': '',
+                        'Version': '',
+                        'Timestep': '',
+                        'Title': '',
                         'Authors': '',
                         'Institution': '',
                         'Reference': '',
@@ -63,7 +62,7 @@ class createUnit():
             'Unit': [''],
             'Uri': ['']})
 
-        self._inouttab = qgrid.show_grid(self._dataframeInputs, show_toolbar=True, grid_options={'forceFitColumns': False, 'defaultColumnWidth': 100})
+        self._inouttab = qgrid.show_grid(self._dataframeInputs, show_toolbar=True)
 
         self._datas = data
 
@@ -718,13 +717,13 @@ class createUnit():
 
         display(self._out)
 
-        listkeys = ['Path','Model type','Model name','Model ID','Authors','Institution','Reference','Abstract']
+        listkeys = ['Path','Model type','Model name','Model ID','Version','Timestep','Title','Authors','Institution','Reference','Abstract']
 
         for i in self._datas.keys():
 
             with self._out:
                 if i not in listkeys:
-                    raise Exception("Could not display unit model creation menu : parameter data from createUnit(data) must contain these keys ['Path','Model type','Model ID','Model name','Authors','Institution','Reference','Abstract']")
+                    raise Exception("Could not display unit model creation menu : parameter data from createUnit(data) must contain these keys ['Path','Model type','Model ID','Model name','Version','Timestep','Title','Authors','Institution','Reference','Abstract']")
 
                 elif i == 'Model type' and self._datas[i] != 'unit':
                     raise Exception("Bad value error : Model type key's value must be unit.")

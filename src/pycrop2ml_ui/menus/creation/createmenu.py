@@ -1,6 +1,5 @@
 import ipywidgets as wg
 import os
-import sys
 
 from IPython.display import display
 
@@ -32,12 +31,15 @@ class createMenu():
         
         #datas
         self._layout = wg.Layout(width='400px',height='57px')
+        self._path = wg.Textarea(value='',description='Path:',disabled=True,layout=self._layout)
         self._modelName = wg.Textarea(value='',description='Name:',disabled=False,layout=self._layout)
         self._modelID = wg.Textarea(value='',description='Model ID:',disabled=False,layout=self._layout)
+        self._version = wg.Textarea(value='1.0',description='Version:',disabled=False,layout=self._layout)
+        self._timestep = wg.Textarea(value='1',description='Timestep:',disabled=False,layout=self._layout)
+        self._title = wg.Textarea(value='',description='Title:',disabled=False,layout=self._layout)
         self._authors = wg.Textarea(value='',description='Authors:',disabled=False,layout=self._layout)
         self._institution = wg.Textarea(value='',description='Institution:',disabled=False,layout=self._layout)
-        self._abstract = wg.Textarea(value='',description='Abstract:',disabled=False,layout=self._layout)
-        self._path = wg.Textarea(value='',description='Path:',disabled=True,layout=wg.Layout(height='57px',width='400px')) 
+        self._abstract = wg.Textarea(value='',description='Abstract:',disabled=False,layout=self._layout) 
         self._reference = wg.Textarea(value='',description='Reference:',disabled=False,layout=self._layout)
         
 
@@ -51,7 +53,7 @@ class createMenu():
         self._cancel = wg.Button(value=False,description='Cancel',disabled=False,button_style='warning')
         self._browse = wg.Button(value=False,description='Browse',disabled=False,button_style='primary')
 
-        self._header = wg.VBox([self._toggle,  self._outextpkg, wg.HBox([self._path, wg.VBox([self._browse, self._create])]), self._modelName, self._modelID, self._authors, self._institution, self._reference, self._abstract])
+        self._header = wg.VBox([self._toggle,  self._outextpkg, wg.HBox([self._path, wg.VBox([self._browse, self._create])]), self._modelName, self._modelID, self._version, self._timestep, self._title, self._authors, self._institution, self._reference, self._abstract])
 
         #global menu displayer
         self._displayer = wg.VBox([wg.HTML(value='<font size="5"><b>Model creation : Header</b></font>'), self._header, wg.HBox([self._apply, self._cancel])], layout=wg.Layout(align_items='center'))
@@ -108,13 +110,17 @@ class createMenu():
 
         self._out2.clear_output()
 
-        if(self._modelName.value and self._authors.value and self._institution.value and self._abstract.value and self._path.value and self._reference.value and self._modelID.value):
+        if all([self._modelName.value,self._modelID.value,self._timestep.value,self._version.value,self._title.value,
+                self._authors.value,self._institution.value,self._abstract.value,self._path.value,self._reference.value]):
 
             self._datas = {
                         'Path': self._path.value+os.path.sep+'crop2ml',
                         'Model type': self._toggle.value,
                         'Model name': self._modelName.value,
                         'Model ID': self._modelID.value,
+                        'Version': self._version.value,
+                        'Timestep': self._timestep.value,
+                        'Title': self._title.value,
                         'Authors': self._authors.value,
                         'Institution': self._institution.value,
                         'Reference': self._reference.value,
@@ -157,15 +163,18 @@ class createMenu():
                     print("\t- model name")
                 if(not self._modelID.value):
                     print("\t- model ID")
+                if(not self._version.value):
+                    print("\t- version")
+                if(not self._timestep.value):
+                    print("\t- timestep")
+                if(not self._title.value):
+                    print("\t- title")
                 if(not self._authors.value):
                     print("\t- authors")
-
                 if(not self._institution.value):
                     print("\t- institution")
-
                 if(not self._reference.value):
                     print("\t- reference")
-
                 if(not self._abstract.value):
                     print("\t- abstract")
 
