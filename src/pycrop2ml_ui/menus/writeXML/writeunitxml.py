@@ -137,6 +137,16 @@ class writeunitXML():
         Saves all gathered datas in an xml format
         """
 
+        try:
+            if self._change_algo:
+                open("{0}{2}algo{2}pyx{2}{1}.pyx".format(self._datas['Path'], self._datas['Model name'], os.path.sep), 'w', encoding='utf8').close()
+            if self._change_init:
+                open("{0}{2}algo{2}pyx{2}init.{1}.pyx".format(self._datas['Path'], self._datas['Model name'], os.path.sep), 'w', encoding='utf8').close()
+        except IOError as ioerr:
+            with self._out:
+                raise Exception(ioerr)
+
+        
         split = self._datas['Path'].split(os.path.sep)
         buffer = ''
 

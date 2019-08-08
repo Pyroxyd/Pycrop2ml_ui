@@ -234,7 +234,7 @@ class editUnit():
         self._out.clear_output()
         self._out2.clear_output()
 
-        self._df = {'Functions': dict(zip([i for i in self._dataframeFunction['Filename']],[j for j in self._dataframeFunction['Type']])),'Inputs':self._dataframeIn,'Outputs':self._dataframeOut}
+        self._df = {'Functions': dict(zip([i for i in self._dataframeFunction['Filename'] if i],[j for j in self._dataframeFunction['Type'] if j])),'Inputs':self._dataframeIn,'Outputs':self._dataframeOut}
 
         self._paramdict, self._paramsetdict = self._updateParam()
         self._vardict, self._testsetdict = self._updateVar()
@@ -318,7 +318,18 @@ class editUnit():
             Checks wheter the function list qgrid widget is complete or not
             """
             self._dataframeFunction = self._qgridFunction.get_changed_df()
-            return '' not in [i for i in self._dataframeFunction['Filename']]+[j for j in self._dataframeFunction['Type']]
+            filenames = [i for i in self._dataframeFunction['Filename']]
+            types = [j for j in self._dataframeFunction['Type']]
+            count = 0
+            for f in range(len(filenames)):
+                if not filenames[f-count] and not types[f-count]:
+                    del types[f-count]
+                    del filenames[f-count]
+                    count += 1
+            with self._out2:
+                print(filenames, types)                  
+
+            return '' not in filenames+types
 
 
         if not _checkHeader():

@@ -115,8 +115,20 @@ class createUnit():
             Checks wheter the whole required data set is verified in the function dataframe
             """
             self._dataframeFunc = self._functionqgrid.get_changed_df()
+            filenames = [i for i in self._dataframeFunc['Filename']]
+            types = [j for j in self._dataframeFunc['Type']]
+            count = 0
+            for f in range(len(filenames)):
+                if not filenames[f-count] and not types[f-count]:
+                    del types[f-count]
+                    del filenames[f-count]
+                    count += 1
+            with self._out2:
+                print(filenames, types)                  
 
-            return '' not in [i for i in self._dataframeFunc['Filename']]+[j for j in self._dataframeFunc['Type']]
+            return '' not in filenames+types
+
+
 
         if _checkQgrid() and _checkInOut() and _checkFunc():
             
@@ -139,7 +151,7 @@ class createUnit():
             with self._out:
                 if paramdict:
                     try:
-                        menu = manageparamset.manageParamset(self._datas, paramdict, dict(), {'Inputs': self._dataframeInputs, 'Functions': dict(zip([i for i in self._dataframeFunc['Filename']],[j for j in self._dataframeFunc['Type']]))}, vardict, dict(), iscreate=True)
+                        menu = manageparamset.manageParamset(self._datas, paramdict, dict(), {'Inputs': self._dataframeInputs, 'Functions': dict(zip([i for i in self._dataframeFunc['Filename'] if i],[j for j in self._dataframeFunc['Type'] if j]))}, vardict, dict(), iscreate=True)
                         menu.displayMenu()
                     except:
                         raise Exception('Could not load parametersets managing menu')
