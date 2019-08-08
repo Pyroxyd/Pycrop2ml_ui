@@ -111,7 +111,7 @@ class writeunitXML():
 
     def _createAlgo(self):
         """
-        Creates an empty algorithm file with the model description inside of it
+        Creates the algorithm file with the model description inside of it
         """
 
         try:
@@ -235,7 +235,7 @@ class writeunitXML():
         if self._change_algo:
             self._createAlgo()
 
-        if all([not self._iscreate, self._datas['Model name'] != self._datas['Old name']]):
+        if not self._iscreate and self._datas['Model name'] != self._datas['Old name']:
             os.remove('{}{}unit.{}.xml'.format(self._datas['Path'], os.path.sep, self._datas['Old name']))
             os.remove('{0}{1}algo{1}pyx{1}init.{2}.pyx'.format(self._datas['Path'], os.path.sep, self._datas['Old name']))
             os.remove('{0}{1}algo{1}pyx{1}{2}.pyx'.format(self._datas['Path'], os.path.sep, self._datas['Old name']))
