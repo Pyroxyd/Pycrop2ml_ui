@@ -122,9 +122,7 @@ class createUnit():
                 if not filenames[f-count] and not types[f-count]:
                     del types[f-count]
                     del filenames[f-count]
-                    count += 1
-            with self._out2:
-                print(filenames, types)                  
+                    count += 1                  
 
             return '' not in filenames+types
 
