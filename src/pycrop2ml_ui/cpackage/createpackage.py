@@ -115,9 +115,6 @@ class createPackage():
         method call may break the code.
         """
 
-        self._out.clear_output()
-        self._out2.clear_output()
-
         display(self._out)
         display(self._out2)
 

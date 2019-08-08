@@ -6,7 +6,6 @@ from IPython.display import display
 from pycrop2ml_ui.menus.creation import createunit
 from pycrop2ml_ui.menus.creation import createcomposition
 
-from pycrop2ml_ui.cpackage.createpackage import createPackage
 from pycrop2ml_ui.model import MainMenu
 from pycrop2ml_ui.browser.TkinterPath import getPath
 from pycrop2ml_ui.menus.creation.externalpackage import externalPackageMenu
@@ -43,11 +42,10 @@ class createMenu():
 
         #buttons
         self._apply = wg.Button(value=False,description='Apply',disabled=False,button_style='success')
-        self._create = wg.Button(value=False,description='Create',disabled=False,button_style='success')
         self._cancel = wg.Button(value=False,description='Cancel',disabled=False,button_style='warning')
         self._browse = wg.Button(value=False,description='Browse',disabled=False,button_style='primary')
 
-        self._header = wg.VBox([self._toggle,  self._outextpkg, wg.HBox([self._path, wg.VBox([self._browse, self._create])]), self._modelName, self._modelID, self._version, self._timestep, self._title, self._authors, self._institution, self._reference, self._abstract])
+        self._header = wg.VBox([self._toggle,  self._outextpkg, wg.HBox([self._path, self._browse]), self._modelName, self._modelID, self._version, self._timestep, self._title, self._authors, self._institution, self._reference, self._abstract])
 
         #global menu displayer
         self._displayer = wg.VBox([wg.HTML(value='<font size="5"><b>Model creation : Header</b></font>'), self._header, wg.HBox([self._apply, self._cancel])], layout=wg.Layout(align_items='center'))
@@ -70,25 +68,6 @@ class createMenu():
             with self._out:
                 raise Exception("File composition|unit.{}.xml already exists.".format(self._modelName.value))
         return True
-
-
-
-    def _eventCreate(self, b):
-        """
-        Handles create button on_click event
-        """
-
-        self._out2.clear_output()
-
-        with self._out2:        
-            try:
-                tmp = createPackage()
-                tmp.displayMenu()
-            
-            except:
-                self._out.clear_output()
-                with self._out:
-                    raise Exception('Could not load directory creation function.')
 
 
 
@@ -230,7 +209,6 @@ class createMenu():
         
         self._apply.on_click(self._eventApply)
         self._cancel.on_click(self._eventCancel)
-        self._create.on_click(self._eventCreate)
         self._browse.on_click(self._eventBrowse)
 
         self._toggle.observe(self._on_change_value, names='value')

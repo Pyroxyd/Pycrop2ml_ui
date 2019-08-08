@@ -42,7 +42,7 @@ class createUnit():
         self._out = wg.Output()
         self._out2 = wg.Output()
 
-        #IN AND OUT table
+        #dataframes and QGRID
         self._dataframeInputs = pandas.DataFrame(data={
             'Type': pandas.Categorical([''], categories=['','input','output','input & output']),
             'Name':[''],
@@ -55,10 +55,17 @@ class createUnit():
             'Min': [''],
             'Max': [''],
             'Unit': [''],
-            'Uri': ['']})
-
+            'Uri': ['']
+            })
         self._inouttab = qgrid.show_grid(self._dataframeInputs, show_toolbar=True)
 
+        self._dataframeFunc = pandas.DataFrame(data={
+            'Filename':[''],
+            'Type': pandas.Categorical([''], categories=['','internal','external'])
+            })
+        self._functionqgrid = qgrid.show_grid(self._dataframeFunc, show_toolbar=True)
+
+        #data
         self._datas = data
 
 
@@ -70,7 +77,7 @@ class createUnit():
 
         self._out2.clear_output()
 
-        def checkInOut():
+        def _checkInOut():
             """
             Checks wheter the dataframe has at least one input and one output
             """
@@ -80,16 +87,11 @@ class createUnit():
                 if i not in listType:
                     listType.append(i)
             
-            if any([not ('input' in listType or 'input & output' in listType),
-                    not ('output' in listType or 'input & output' in listType)
-                    ]):
-                    return False
-            return True
-
+            return not any([not ('input' in listType or 'input & output' in listType), not ('output' in listType or 'input & output' in listType)])
 
         def _checkQgrid():
             """
-            Checks wheter the whole required data set is verified in the dataframe
+            Checks wheter the whole required data set is verified in the inout dataframe
             """
 
             self._dataframeInputs = self._inouttab.get_changed_df()
@@ -108,8 +110,15 @@ class createUnit():
                     return False
             return True
 
+        def _checkFunc():
+            """
+            Checks wheter the whole required data set is verified in the function dataframe
+            """
+            self._dataframeFunc = self._functionqgrid.get_changed_df()
 
-        if _checkQgrid() and checkInOut():
+            return '' not in [i for i in self._dataframeFunc['Filename']]+[j for j in self._dataframeFunc['Type']]
+
+        if _checkQgrid() and _checkInOut() and _checkFunc():
             
             paramdict = dict()
             vardict = {'inputs':dict(),'outputs':dict()}
@@ -130,14 +139,14 @@ class createUnit():
             with self._out:
                 if paramdict:
                     try:
-                        menu = manageparamset.manageParamset(self._datas, paramdict, dict(), {'Inputs': self._dataframeInputs, 'Functions': [i for i in self._functionqgrid.get_changed_df()['Filename'] if i != ''], 'Algorithms': [i for i in self._algoqgrid.get_changed_df()['Filename'] if i != '']}, vardict, dict(), iscreate=True)
+                        menu = manageparamset.manageParamset(self._datas, paramdict, dict(), {'Inputs': self._dataframeInputs, 'Functions': dict(zip([i for i in self._dataframeFunc['Filename']],[j for j in self._dataframeFunc['Type']]))}, vardict, dict(), iscreate=True)
                         menu.displayMenu()
                     except:
                         raise Exception('Could not load parametersets managing menu')
             
                 elif vardict:      
                     try:
-                        menu = managetestset.manageTestset(self._datas, vardict, dict(), dict(), {'Inputs': self._dataframeInputs, 'Functions': [i for i in self._functionqgrid.get_changed_df()['Filename'] if i != ''], 'Algorithms': [i for i in self._algoqgrid.get_changed_df()['Filename'] if i != '']}, iscreate=True)
+                        menu = managetestset.manageTestset(self._datas, vardict, dict(), dict(), {'Inputs': self._dataframeInputs, 'Functions': dict(zip([i for i in self._dataframeFunc['Filename']],[j for j in self._dataframeFunc['Type']]))}, iscreate=True)
                         menu.displayMenu()
                     except:
                         raise Exception('Could not load testsets managing menu')
@@ -147,11 +156,13 @@ class createUnit():
 
         else:
             with self._out2:
-                if not checkInOut():
+                if not _checkInOut():
                     print('Model must contain at least one input and one output.')
-                else:
+                if not _checkQgrid:
                     print('Missing argument(s), these columns are required :\n\t- Type\n\t- Name\n\t- Description\n\t- InputType\n\t- Category\n\t- DataType\n\t- Len (for array)\n\t- Unit')
-            
+                if not _checkFunc:
+                    print('Missing argument(s) in Functions tab.')
+
 
 
     def _eventExit(self, b):
@@ -610,11 +621,21 @@ class createUnit():
 
         widget.off('cell_edited', self._cell_edited_func)
 
-        if event['new'].split('.')[-1].lower() != 'pyx':
-            widget.edit_cell(event['index'], 'Filename', event['old'])
+        if event['column'] == 'Filename' and event['new']:
+            if event['new'].split('.')[-1] != 'pyx':
+                widget.edit_cell(event['index'], 'Filename', event['old'])
 
-            with self._out2:
-                print('File must be .pyx format.')
+                with self._out2:
+                    print('File must be .pyx format.')
+            else:
+                df = widget.get_changed_df()
+                tmplist = [i for i in df['Filename']]
+                tmplist.remove(event['new'])
+                if event['new'] in tmplist:
+                    widget.edit_cell(event['index'], 'Filename', event['old'])
+
+                    with self._out2:
+                        print('This filename is already in the list.')
         
         widget.on('cell_edited', self._cell_edited_func)
 
@@ -628,46 +649,10 @@ class createUnit():
         widget.off('cell_edited', self._cell_edited_func)
 
         widget.edit_cell(event['index'], 'Filename', '')
+        widget.edit_cell(event['index'], 'Type', '')
         widget._update_table(triggered_by='remove_row')
 
         widget.on('cell_edited', self._cell_edited_func)
-
-
-
-    def _cell_edited_algo(self, event, widget):
-        """
-        Handles a cell edition in the algorithm list qgrid widget
-        """
-
-        self._out2.clear_output()
-
-        widget.off('cell_edited', self._cell_edited_algo)
-
-        if event['new']:
-            df = widget.get_changed_df()
-            tmplist = [i for i in df['Filename']]
-            tmplist.remove(event['new'])
-            if event['new'] in tmplist:
-                widget.edit_cell(event['index'], 'Filename', event['old'])
-
-                with self._out2:
-                    print('This filename is already in the algorithm list.')
-
-        widget.on('cell_edited', self._cell_edited_algo)
-
-
-
-    def _row_added_algo(self, event, widget):
-        """
-        Handles a row addition in the function list qgrid widget
-        """
-
-        widget.off('cell_edited', self._cell_edited_algo)
-
-        widget.edit_cell(event['index'], 'Filename', '')
-        widget._update_table(triggered_by='remove_row')
-
-        widget.on('cell_edited', self._cell_edited_algo)
 
 
 
@@ -696,22 +681,15 @@ class createUnit():
                 else:
                     listkeys.remove(i)
 
-
-        tmpcategories = ['']+[i for i in os.listdir(self._datas['Path']+os.path.sep+'Algo'+os.path.sep+'pyx') if i.split('.')[-1] == 'pyx']
-        self._functionqgrid = qgrid.show_grid(pandas.DataFrame(data={'Filename':['']}), show_toolbar=True)
-        self._algoqgrid = qgrid.show_grid(pandas.DataFrame(data={'Filename': pandas.Categorical([''], categories=tmpcategories)}), show_toolbar=True)
-        self._tab = wg.Tab([self._inouttab, self._algoqgrid, self._functionqgrid])
+        self._tab = wg.Tab([self._inouttab, self._functionqgrid])
         self._tab.set_title(0, 'Inputs & Outputs')
-        self._tab.set_title(1, 'Algorithms')
-        self._tab.set_title(2, 'Functions')
+        self._tab.set_title(1, 'Functions')
    
         with self._out:
             display(wg.VBox([wg.HTML(value='<b>Model creation : unit.{}.xml<br>-> Inputs and Outputs</b>'.format(self._datas['Model name'])), self._tab, wg.HBox([self._apply, self._exit])]))
         
         self._inouttab.on('cell_edited', self._cell_edited)
         self._inouttab.on('row_added', self._row_added)
-        self._algoqgrid.on('cell_edited', self._cell_edited_algo)
-        self._algoqgrid.on('row_added', self._row_added_algo)
         self._functionqgrid.on('cell_edited', self._cell_edited_func)
         self._functionqgrid.on('row_added', self._row_added_func)
         self._apply.on_click(self._eventApply)

@@ -49,8 +49,7 @@ class manageTestset():
 
         - df : {
                 'Inputs' : pandas.DataFrame,
-                'Algorithms' : [],
-                'Functions' : [],
+                'Functions' : dict(),
                 'Outputs' : pandas.DataFrame -> only if iscreate is False
                }
 
@@ -716,11 +715,11 @@ class manageTestset():
             self._out_test.clear_output()
             self._out3.clear_output()
 
-            try:
-                xml = writeunitXML(self._datas, self._df, self._paramsetdict, self._testsetdict, self._iscreate)
-                xml.write()
-            except:
-                with self._out:
+            with self._out:
+                try:
+                    xml = writeunitXML(self._datas, self._df, self._paramsetdict, self._testsetdict, self._iscreate)
+                    xml.displayMenu()
+                except:
                     raise Exception('Could not load writeunitxml class.')
         
         else:
@@ -730,7 +729,6 @@ class manageTestset():
                 if tmplist:
                     print('Missing value(s) in tests : {}.'.format(tmplist))
                 
-
 
 
     def _eventExit(self, b):

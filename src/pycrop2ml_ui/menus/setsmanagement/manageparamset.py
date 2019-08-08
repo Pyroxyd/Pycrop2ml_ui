@@ -39,8 +39,7 @@ class manageParamset():
 
         - df : {
                 'Inputs' : pandas.DataFrame,
-                'Algorithms' : [],
-                'Functions' : [],
+                'Functions' : dict(),
                 'Outputs' : pandas.DataFrame -> only if iscreate is False
                }
 

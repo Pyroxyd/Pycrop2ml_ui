@@ -129,26 +129,16 @@ class editUnit():
                 })
 
         self._qgridOut = qgrid.show_grid(self._dataframeOut, show_toolbar=True)
-
-        if self._xmlfile.algorithms:
-            self._dataframeAlgo = pandas.DataFrame(data={
-                'Filename': [i.filename for i in self._xmlfile.algorithms]
-            })
-        else:
-            self._dataframeAlgo = pandas.DataFrame(data={
-                'Filename': ['']
-            })
-
-        self._qgridAlgo = qgrid.show_grid(self._dataframeAlgo, show_toolbar=True)
-
         
         if self._xmlfile.function:
             self._dataframeFunction = pandas.DataFrame(data={
-                'Filename': [i.filename for i in self._xmlfile.function]
+                'Filename': [i.filename for i in self._xmlfile.function],
+                'Type': pandas.Categorical([i.type for i in self._xmlfile.function], categories=['','internal','external'])
             })
         else:
             self._dataframeFunction = pandas.DataFrame(data={
-                'Filename': ['']
+                'Filename': [''],
+                'Type': pandas.Categorical([''], categories=['','internal','external'])
             })
 
         self._qgridFunction = qgrid.show_grid(self._dataframeFunction, show_toolbar=True)
@@ -174,8 +164,6 @@ class editUnit():
             with self._out:
                 raise Exception('Critical error while parsing the file.')
 
-                
-        
         self._buildEdit()
 
 
@@ -246,7 +234,7 @@ class editUnit():
         self._out.clear_output()
         self._out2.clear_output()
 
-        self._df = {'Algorithms': [i for i in self._dataframeAlgo['Filename'] if i != ''],'Functions': [i for i in self._dataframeFunction['Filename'] if i != ''],'Inputs':self._dataframeIn,'Outputs':self._dataframeOut}
+        self._df = {'Functions': dict(zip([i for i in self._dataframeFunction['Filename']],[j for j in self._dataframeFunction['Type']])),'Inputs':self._dataframeIn,'Outputs':self._dataframeOut}
 
         self._paramdict, self._paramsetdict = self._updateParam()
         self._vardict, self._testsetdict = self._updateVar()
@@ -276,7 +264,7 @@ class editUnit():
         self._out2.clear_output()
 
 
-        def checkHeader():
+        def _checkHeader():
             """
             Checks wheter header's datas are complete or not
             """
@@ -285,7 +273,7 @@ class editUnit():
                         self._title.value,self._authors.value,self._institution.value,self._reference.value,self._abstract.value,])
 
 
-        def checkInputs():
+        def _checkInputs():
 
             """
             Checks wheter the input list qgrid widget is complete or not
@@ -306,7 +294,7 @@ class editUnit():
             return True
         
 
-        def checkOutputs():
+        def _checkOutputs():
             """
             Checks wheter the output list qgrid widget is complete or not
             """
@@ -325,22 +313,32 @@ class editUnit():
             return True
 
 
+        def _checkFunc():
+            """
+            Checks wheter the function list qgrid widget is complete or not
+            """
+            self._dataframeFunction = self._qgridFunction.get_changed_df()
+            return '' not in [i for i in self._dataframeFunction['Filename']]+[j for j in self._dataframeFunction['Type']]
 
-        if not checkHeader():
+
+        if not _checkHeader():
             with self._out2:
                 print('Missing argument(s) in the header.')
         
-        elif not checkInputs():
+        elif not _checkInputs():
             with self._out2:
                 print('Missing argument(s) in the input list, these columns are required :\n\t- Name\n\t- Description\n\t- InputType\n\t- Category\n\t- DataType\n\t- Len (if DataType is ARRAY)\n\t- Unit')
 
-        elif not checkOutputs():           
+        elif not _checkOutputs():           
             with self._out2:
                 print('Missing argument(s) in the output list, these columns are required :\n\t- Name\n\t- Description\n\t- Category\n\t- DataType\n\t- Unit')
+        
+        elif not _checkFunc():
+            with self._out2:
+                print('Missing argument(s) in the function list.')
 
         else:
             self._dataframeFunction = self._qgridFunction.get_changed_df()
-            self._dataframeAlgo = self._qgridAlgo.get_changed_df()
 
             self._datas['Model name'] = self._modelname.value
             self._datas['Model ID'] = self._modelid.value
@@ -939,7 +937,7 @@ class editUnit():
 
         widget.off('cell_edited', self._cell_edited_algofunc)
 
-        if event['new']:
+        if event['column'] == 'Filename' and event['new']:
             if event['new'].split('.')[-1] != 'pyx':
                 widget.edit_cell(event['index'], 'Filename', event['old'])
 
@@ -995,8 +993,11 @@ class editUnit():
         """
 
         widget.off('cell_edited', self._cell_edited_algofunc)
+
         widget.edit_cell(event['index'], 'Filename', '')
+        widget.edit_cell(event['index'], 'Type', '')
         widget._update_table(triggered_by='remove_row')
+        
         widget.on('cell_edited', self._cell_edited_algofunc)
 
 
@@ -1029,12 +1030,11 @@ class editUnit():
         self._parse()
 
         tab = wg.Tab()
-        tab.children = [self._informations, self._qgridIn, self._qgridOut, self._qgridAlgo, self._qgridFunction]
+        tab.children = [self._informations, self._qgridIn, self._qgridOut, self._qgridFunction]
         tab.set_title(0, 'Header')
         tab.set_title(1, 'Inputs')
         tab.set_title(2, 'Outputs')
-        tab.set_title(3, 'Algorithms')
-        tab.set_title(4, 'Functions')
+        tab.set_title(3, 'Functions')
 
         with self._out:
             display(wg.VBox([wg.HTML(value='<b><font size="5">Model edition : {}.{}.xml<br>-> Header and Data</font></b>'.format(self._datas['Model type'], self._datas['Model name'])), tab, wg.HBox([self._apply, self._cancel])]))
@@ -1045,9 +1045,6 @@ class editUnit():
 
         self._qgridOut.on('cell_edited', self._cell_edited_Out)
         self._qgridOut.on('row_added', self._row_added_Out)
-
-        self._qgridAlgo.on('cell_edited', self._cell_edited_algofunc)
-        self._qgridAlgo.on('row_added', self._row_added_algofunc)
 
         self._qgridFunction.on('cell_edited', self._cell_edited_algofunc)
         self._qgridFunction.on('row_added', self._row_added_algofunc)

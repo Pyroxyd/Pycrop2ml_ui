@@ -57,7 +57,7 @@ class mainMenu():
 
     def _eventMkdir(self, b):
         """
-        Displays repository creation menu
+        Displays package creation menu
         """
 
         self._out.clear_output()
