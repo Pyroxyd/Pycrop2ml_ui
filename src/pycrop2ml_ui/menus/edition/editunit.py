@@ -132,7 +132,7 @@ class editUnit():
         
         if self._xmlfile.function:
             self._dataframeFunction = pandas.DataFrame(data={
-                'Filename': [i.filename for i in self._xmlfile.function],
+                'Filename': [i.filename if i.type == 'external' else i.filename.split('/')[-1] for i in self._xmlfile.function],
                 'Type': pandas.Categorical([i.type for i in self._xmlfile.function], categories=['','internal','external'])
             })
         else:

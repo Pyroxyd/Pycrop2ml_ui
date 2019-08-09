@@ -1,8 +1,10 @@
 import os
+import re
 
 import ipywidgets as wg
 from IPython.display import display
 
+from pycrop2ml_ui.model import MainMenu
 from pycropml.pparse import model_parser
 from pycropml.transpiler.generators import docGenerator
 
@@ -60,6 +62,7 @@ class writeunitXML():
         self._iscreate = iscreate
         self._change_algo = True
         self._change_init = True
+        self._listFilesToOpen = dict()
 
 
 
@@ -92,18 +95,24 @@ class writeunitXML():
         """
 
         try:
+            init = open("{0}{2}algo{2}pyx{2}init.{1}.pyx".format(self._datas['Path'], self._datas['Model name'], os.path.sep), 'r', encoding='utf8')
+            buffer = [i for i in init if not re.search(r'^ *#',i)]
+            init.close()
             init = open("{0}{2}algo{2}pyx{2}init.{1}.pyx".format(self._datas['Path'], self._datas['Model name'], os.path.sep), 'w', encoding='utf8')
 
         except IOError as ioerr:
             with self._out:
-                raise Exception("Initialization file init.{}.pyx could not be created. {}".format(self._datas['Model name'], ioerr))
+                raise Exception("Initialization file init.{}.pyx could not be edited. {}".format(self._datas['Model name'], ioerr))
 
         else:     
             doc = self._getDoc(init)
 
             init.write(doc.desc)
             init.write('\n{}'.format(doc.inputs_doc))
-            init.write('\n{}'.format(doc.outputs_doc))
+            init.write('\n{}\n'.format(doc.outputs_doc))
+            if buffer:
+                for j in buffer:
+                    init.write(j)
 
             init.close()
 
@@ -115,37 +124,93 @@ class writeunitXML():
         """
 
         try:
+            algo = open("{0}{2}algo{2}pyx{2}{1}.pyx".format(self._datas['Path'], self._datas['Model name'], os.path.sep), 'r', encoding='utf8')
+            buffer = [i for i in algo if not re.search(r'^ *#',i)]
+            algo.close()
             algo = open("{0}{2}algo{2}pyx{2}{1}.pyx".format(self._datas['Path'], self._datas['Model name'], os.path.sep), 'w', encoding='utf8')
 
         except IOError as ioerr:
             with self._out:
-                raise Exception("Algorithm file {}.pyx could not be created. {}".format(self._datas['Model name'], ioerr))
+                raise Exception("Algorithm file {}.pyx could not be edited. {}".format(self._datas['Model name'], ioerr))
 
         else:
             doc = self._getDoc(algo)
 
             algo.write(doc.desc)
             algo.write('\n{}'.format(doc.inputs_doc))
-            algo.write('\n{}'.format(doc.outputs_doc))
+            algo.write('\n{}\n'.format(doc.outputs_doc))
+            if buffer:
+                for j in buffer:
+                    algo.write(j)
 
             algo.close()
 
+
+    
+    def _updateMenu(self):
+        """
+        Displays a menu that allows to open a file to edit it
+        """
+
+        self._out.clear_output()
+
+        layout = wg.Layout(width='300px',height='45px')
+        mainmenu = wg.Button(value=False,description='Back to main menu',disabled=False,button_style='success',layout=layout)
+        children = []
+
+        for ftype, pfile in self._listFilesToOpen.items():
+            if ftype == 'Algorithm':
+                tmpbutton = wg.Button(value=False,description='Open algorithm',disabled=False,tooltip=pfile,layout=layout)
+                tmpbutton.style.button_color = 'Lavender'
+                children.append(tmpbutton)
+            elif ftype == 'Initialization':
+                tmpbutton = wg.Button(value=False,description='Open initialization',disabled=False,tooltip=pfile,layout=layout)
+                tmpbutton.style.button_color = 'LemonChiffon'
+                children.append(tmpbutton)
+            else:
+                for func in pfile:
+                    tmpbutton = wg.Button(value=False,description='Open function {}'.format(func.split('.')[0].split(os.path.sep)[-1].split('/')[-1]),disabled=False,tooltip=func,layout=layout)
+                    tmpbutton.style.button_color = 'MistyRose'
+                    children.append(tmpbutton)
+        children.append(mainmenu)
+        
+        displayer = wg.VBox(children, layout=wg.Layout(align_items='center'))
+        with self._out:
+            display(displayer)
+        
+        def _eventApply(b):
+            """
+            Handles mainmenu button on_click event
+            """
+            self._out.clear_output()
+            with self._out:
+                try:
+                    menu = MainMenu.mainMenu()
+                    menu.displayMenu()
+                except:
+                    raise Exception('Could not load main menu.')
+        
+
+        def _eventOpen(b):
+            """
+            Handles button open event
+            """
+            b.disabled = True
+            os.system('code '+b.tooltip)
+
+
+        for button in displayer.children:
+            if button.description == 'Back to main menu':
+                button.on_click(_eventApply)
+            else:
+                button.on_click(_eventOpen)
+                
 
 
     def _write(self):
         """
         Saves all gathered datas in an xml format
         """
-
-        try:
-            if self._change_algo:
-                open("{0}{2}algo{2}pyx{2}{1}.pyx".format(self._datas['Path'], self._datas['Model name'], os.path.sep), 'w', encoding='utf8').close()
-            if self._change_init:
-                open("{0}{2}algo{2}pyx{2}init.{1}.pyx".format(self._datas['Path'], self._datas['Model name'], os.path.sep), 'w', encoding='utf8').close()
-        except IOError as ioerr:
-            with self._out:
-                raise Exception(ioerr)
-
         
         split = self._datas['Path'].split(os.path.sep)
         buffer = ''
@@ -199,9 +264,20 @@ class writeunitXML():
         buffer += '\n\t</Outputs>\n'
 
         if self._df['Functions']:
+            self._listFilesToOpen['Function'] = []
             for i,j in self._df['Functions'].items():
-                buffer += '\n\t<Function name="{}" language="Cyml" filename="{}" type="{}" description="" />'.format(i.split('.')[0].split('/')[-1], i, j)
-        
+                if j == 'internal':
+                    self._listFilesToOpen['Function'].append("{0}{2}algo{2}pyx{2}{1}".format(self._datas['Path'], i, os.path.sep))
+                    buffer += '\n\t<Function name="{}" language="Cyml" filename="algo/pyx/{}" type="{}" description="" />'.format(i.split('.')[0], i, j)
+                    if not os.path.exists("{0}{2}algo{2}pyx{2}{1}".format(self._datas['Path'], i, os.path.sep)):
+                        try:
+                            open("{0}{2}algo{2}pyx{2}{1}".format(self._datas['Path'], i, os.path.sep), 'w', encoding='utf8').close()
+                        except IOError as ioerr:
+                            with self._out:
+                                raise Exception(ioerr)
+                else:
+                    buffer += '\n\t<Function name="{}" language="Cyml" filename="{}" type="{}" description="" />'.format(i.split('.')[0].split('/')[-1], i, j)
+
         buffer += '\n\n\t<Algorithm language="Cyml" platform="" filename="algo/pyx/{}.pyx" />'.format(self._datas['Model name'])
         buffer += '\n\n\t<Initialization name="init.{0}" language="Cyml" filename="algo/pyx/init.{0}.pyx" description="" />'.format(self._datas['Model name'])
         buffer += '\n\n\t<Parametersets>'
@@ -241,14 +317,18 @@ class writeunitXML():
 
         if self._change_init:
             self._createInit()
+            self._listFilesToOpen['Initialization'] = "{0}{2}algo{2}pyx{2}init.{1}.pyx".format(self._datas['Path'], self._datas['Model name'], os.path.sep)
         
         if self._change_algo:
             self._createAlgo()
+            self._listFilesToOpen['Algorithm'] = "{0}{2}algo{2}pyx{2}{1}.pyx".format(self._datas['Path'], self._datas['Model name'], os.path.sep)
 
         if not self._iscreate and self._datas['Model name'] != self._datas['Old name']:
             os.remove('{}{}unit.{}.xml'.format(self._datas['Path'], os.path.sep, self._datas['Old name']))
             os.remove('{0}{1}algo{1}pyx{1}init.{2}.pyx'.format(self._datas['Path'], os.path.sep, self._datas['Old name']))
             os.remove('{0}{1}algo{1}pyx{1}{2}.pyx'.format(self._datas['Path'], os.path.sep, self._datas['Old name']))
+        
+        self._updateMenu()
 
 
 
@@ -263,8 +343,8 @@ class writeunitXML():
         if not self._iscreate and self._datas['Model name'] == self._datas['Old name']:
             
             _titlemenu = wg.HTML(value='<font size="5"><b>Model edition : File update</b></font>')
-            _toggle_init = wg.ToggleButtons(options=["Yes", "No"], value='No', description="Do you want to change the initialization file ?", disabled=False)
-            _toggle_algo = wg.ToggleButtons(options=["Yes", "No"], value='No', description="Do you want to change the algorithm file ?", disabled=False)
+            _toggle_init = wg.ToggleButtons(options=["Yes", "No"], value='No', description="Update init file:", disabled=False)
+            _toggle_algo = wg.ToggleButtons(options=["Yes", "No"], value='No', description="Update algo file:", disabled=False)
             _apply = wg.Button(value=False,description='Apply',disabled=False,button_style='success')
             
             display(self._out)

@@ -73,5 +73,5 @@ class writecompositionXML():
             raise Exception('File {} could not be opened in write mode. {}'.format(self._datas['Path'], ioerr))
 
 
-        if all([not self._iscreate, self._datas['Model name'] != self._datas['Old name']]):
+        if not self._iscreate and self._datas['Model name'] != self._datas['Old name']:
             os.remove('{}{}composition.{}.xml'.format(self._datas['Path'], os.path.sep, self._datas['Old name']))

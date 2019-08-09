@@ -60,7 +60,13 @@ class createPackage():
                         raise Exception("Could not create the package.")   
                     finally:
                         self._out.clear_output()
-                        self._out2.clear_output()                    
+                        self._out2.clear_output()
+                        with self._out:
+                            try:
+                                tmp = MainMenu.mainMenu()
+                                tmp.displayMenu()
+                            except:
+                                raise Exception('Could not load mainMenu.')                   
                         
         else:
             with self._out2:
